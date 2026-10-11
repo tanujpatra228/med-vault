@@ -185,3 +185,28 @@ export const REPORT_TYPES: Array<{ value: ReportType; label: string }> = [
 ];
 
 export const MED_FORMS = ["tablet", "capsule", "syrup", "drops", "ointment", "injection", "inhaler", "other"] as const;
+
+export type AuthState =
+  | { authenticated: false }
+  | { authenticated: true; vault: { id: ID; name: string }; device: { id: ID; name: string } };
+
+export interface DeviceInfo {
+  id: ID;
+  name: string;
+  created_at: string;
+  last_seen_at: string;
+  current: boolean;
+}
+
+export interface VaultInfo {
+  id: ID;
+  name: string;
+  created_at: string;
+  devices: DeviceInfo[];
+  storage: { bytes: number; files: number };
+}
+
+export interface LinkCode {
+  code: string;
+  expires_at: string;
+}
