@@ -61,13 +61,3 @@ jobs:
 
       - name: Build and deploy
         run: npm run build && npx wrangler deploy
-
-      - name: Set APP_PASSWORD
-        env:
-          APP_PASSWORD: ${{ secrets.APP_PASSWORD }}
-        run: |
-          if [ -n "$APP_PASSWORD" ]; then
-            echo "$APP_PASSWORD" | npx wrangler secret put APP_PASSWORD
-          else
-            echo "::warning::APP_PASSWORD GitHub secret is not set; login will fail until it is."
-          fi
