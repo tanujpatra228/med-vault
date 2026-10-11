@@ -42,8 +42,9 @@ public/        PWA manifest, service worker, icons
 6. **IDs are UUIDs** from `crypto.randomUUID()`. Timestamps are ISO-8601 UTC; dates are `YYYY-MM-DD`.
 7. **Newest first is part of the API.** Every list endpoint orders by its date column `DESC`, then `created_at DESC`. The client never re-sorts.
 8. **Delete R2 objects with their owners.** D1 cascades do not reach R2.
-9. **Every `/api/*` route requires a session** except `/api/auth/*`.
+9. **Every `/api/*` route requires a linked device** (`requireDevice`) except `/api/auth/*`.
 10. **Secrets only via `wrangler secret`** (prod) or `.dev.vars` (local, git-ignored). Never commit secrets.
+11. **Tenant isolation is non-negotiable.** Every query reads `c.get("vaultId")` and filters by `vault_id`, including updates and deletes. Every inserted row gets `vault_id`. Any id coming from the client that points at another record (member, doctor, condition, prescription) is checked to belong to the same vault (`assertRefs`). New routes must be tested with a second vault trying to read and modify the first.
 
 ## 4. Database rules
 
@@ -98,7 +99,9 @@ Manually check any changed screen in the browser at phone width. When tests are 
 
 ## 10. Security & privacy
 
-- One family password (Worker secret). Sessions are random 256-bit tokens stored hashed (SHA-256) in D1, sent as an `HttpOnly; Secure; SameSite=Lax` cookie.
-- Login is rate limited per IP (10 failed attempts per 15 minutes).
-- Files are served only to logged-in sessions, with `Cache-Control: private`.
+- **No passwords, no accounts.** A vault is opened by a device key: a random 256-bit token stored hashed (SHA-256) in D1 and sent as an `HttpOnly; Secure; SameSite=Lax` cookie, refreshed daily on use.
+- New devices join with a single-use link code (8 chars, 10 minutes) or the vault's recovery key (20 chars, ~98 bits, shown once, stored hashed).
+- Vault creation and failed link/recovery attempts are rate limited per IP.
+- Files are served only to devices of the owning vault, with `Cache-Control: private`.
+- No secrets in the repo or in CI beyond the Cloudflare deploy token.
 - No analytics or third-party scripts. Fonts from Google Fonts are the only external request.
