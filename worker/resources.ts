@@ -11,7 +11,7 @@ import type {
   Report,
   ReportDetail,
 } from "../shared/types";
-import { crud, getOne, insertStmt, type Resource } from "./crud";
+import { assertRefs, crud, getOne, insertStmt, type Resource } from "./crud";
 import type { AppEnv } from "./env";
 import { deleteR2, fileIdsFor } from "./files";
 import { badRequest, notFound, readJson } from "./http";
@@ -130,7 +130,7 @@ export const membersApi = new Hono<AppEnv>();
 membersApi.get("/:id/summary", async (c) => {
   const id = c.req.param("id");
   const db = c.env.DB;
-  const member = await db.prepare("SELECT * FROM members WHERE id = ?").bind(id).first<Member>();
+  const member = await db.prepare("SELECT * FROM members WHERE id = ? AND vault_id = ?").bind(id, c.get("vaultId")).first<Member>();
   if (!member) throw notFound("Member not found");
   const [a, k, m, r, p] = await db.batch([
     db.prepare(`${allergies.select} WHERE t.member_id = ? ORDER BY ${allergies.orderBy}`).bind(id),
@@ -171,9 +171,9 @@ membersApi.get("/:id/summary", async (c) => {
 
 membersApi.delete("/:id", async (c) => {
   const id = c.req.param("id");
+  await getOne(c.env.DB, members, c.get("vaultId"), id);
   const fileIds = await fileIdsFor(c.env.DB, "member", id);
-  const res = await c.env.DB.prepare("DELETE FROM members WHERE id = ?").bind(id).run(); // cascades to all child rows
-  if (!res.meta.changes) throw notFound("Member not found");
+  await c.env.DB.prepare("DELETE FROM members WHERE id = ? AND vault_id = ?").bind(id, c.get("vaultId")).run(); // cascades to all child rows
   await deleteR2(c.env.FILES, fileIds);
   return c.json({ ok: true });
 });
@@ -196,7 +196,7 @@ export const prescriptionsApi = new Hono<AppEnv>();
 
 prescriptionsApi.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const p = await getOne<Prescription>(c.env.DB, prescriptions, id);
+  const p = await getOne<Prescription>(c.env.DB, prescriptions, c.get("vaultId"), id);
   const { results: meds } = await c.env.DB.prepare(
     `${medications.select} WHERE t.prescription_id = ? ORDER BY t.created_at ASC`,
   )
@@ -209,14 +209,16 @@ prescriptionsApi.get("/:id", async (c) => {
 // Creates the prescription and its medicines atomically. Medicines inherit member, doctor, condition and start date.
 prescriptionsApi.post("/", async (c) => {
   const body = await readJson(c);
+  const vaultId = c.get("vaultId");
   const data = validate(prescriptionSchema, body);
+  await assertRefs(c.env.DB, prescriptionSchema, vaultId, data);
   const rawMeds = body.medications ?? [];
   if (!Array.isArray(rawMeds)) throw badRequest("medications must be a list");
   if (rawMeds.length > 30) throw badRequest("Too many medicines on one prescription");
 
   const id = crypto.randomUUID();
   const db = c.env.DB;
-  const stmts = [insertStmt(db, "prescriptions", id, data)];
+  const stmts = [insertStmt(db, "prescriptions", id, vaultId, data)];
   for (const raw of rawMeds) {
     if (!raw || typeof raw !== "object") throw badRequest("Each medicine must be an object");
     const med = validate(medicationSchema, {
@@ -225,18 +227,19 @@ prescriptionsApi.post("/", async (c) => {
       member_id: data.member_id,
       prescription_id: id,
       doctor_id: data.doctor_id,
-      condition_id: (raw as Record<string, unknown>).condition_id ?? data.condition_id,
+      condition_id: data.condition_id,
     });
-    stmts.push(insertStmt(db, "medications", crypto.randomUUID(), med));
+    stmts.push(insertStmt(db, "medications", crypto.randomUUID(), vaultId, med));
   }
   await db.batch(stmts);
-  return c.json(await getOne(db, prescriptions, id), 201);
+  return c.json(await getOne(db, prescriptions, vaultId, id), 201);
 });
 
 // Deleting a prescription removes the medicines that came from it, and all their files.
 prescriptionsApi.delete("/:id", async (c) => {
   const id = c.req.param("id");
   const db = c.env.DB;
+  await getOne(db, prescriptions, c.get("vaultId"), id);
   const { results } = await db
     .prepare(
       `SELECT id FROM files WHERE (owner_type = 'prescription' AND owner_id = ?)
@@ -245,7 +248,7 @@ prescriptionsApi.delete("/:id", async (c) => {
     .bind(id, id)
     .all<{ id: string }>();
   const fileIds = results.map((r) => r.id);
-  const res = await db.batch([
+  await db.batch([
     db.prepare(
       `DELETE FROM files WHERE (owner_type = 'prescription' AND owner_id = ?)
          OR (owner_type = 'medication' AND owner_id IN (SELECT id FROM medications WHERE prescription_id = ?))`,
@@ -253,7 +256,6 @@ prescriptionsApi.delete("/:id", async (c) => {
     db.prepare("DELETE FROM medications WHERE prescription_id = ?").bind(id),
     db.prepare("DELETE FROM prescriptions WHERE id = ?").bind(id),
   ]);
-  if (!res[2].meta.changes) throw notFound("Prescription not found");
   await deleteR2(c.env.FILES, fileIds);
   return c.json({ ok: true });
 });
@@ -264,7 +266,7 @@ export const reportsApi = new Hono<AppEnv>();
 
 reportsApi.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const r = await getOne<Report>(c.env.DB, reports, id);
+  const r = await getOne<Report>(c.env.DB, reports, c.get("vaultId"), id);
   const detail: ReportDetail = { ...r, files: await filesFor(c.env.DB, "report", id) };
   return c.json(detail);
 });
