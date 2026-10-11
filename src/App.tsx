@@ -1,0 +1,84 @@
+import { useEffect } from "react";
+import { createBrowserRouter, Outlet, RouterProvider, ScrollRestoration } from "react-router";
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
+import { api, ApiError } from "@/api/client";
+import { Toaster } from "@/components/ui/sonner";
+import { Loading } from "@/components/layout";
+import { Login } from "@/pages/Login";
+import { Home } from "@/pages/Home";
+import { MemberPage } from "@/pages/Member";
+import { PrescriptionDetail } from "@/pages/PrescriptionDetail";
+import { ReportDetail } from "@/pages/ReportDetail";
+import { DoctorForm, DoctorsPage } from "@/pages/Doctors";
+import { MemberForm } from "@/pages/forms/MemberForm";
+import { AllergyForm } from "@/pages/forms/AllergyForm";
+import { ConditionForm } from "@/pages/forms/ConditionForm";
+import { MedicationForm } from "@/pages/forms/MedicationForm";
+import { PrescriptionEdit, PrescriptionNew } from "@/pages/forms/PrescriptionForm";
+import { ReportForm } from "@/pages/forms/ReportForm";
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
+    },
+  },
+});
+
+/** Shows Login until the session cookie is valid. Any 401 from the API sends the user back here. */
+function AuthGate() {
+  const qc = useQueryClient();
+  const me = useQuery({ queryKey: ["auth"], queryFn: () => api.get<{ authenticated: boolean }>("/auth/me"), staleTime: Infinity });
+  useEffect(() => {
+    const onUnauthorized = () => qc.invalidateQueries({ queryKey: ["auth"] });
+    window.addEventListener("mv:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("mv:unauthorized", onUnauthorized);
+  }, [qc]);
+
+  if (me.isPending) return <Loading label="Opening Med Vault" />;
+  if (!me.data?.authenticated) return <Login />;
+  return (
+    <>
+      <ScrollRestoration />
+      <Outlet />
+    </>
+  );
+}
+
+const router = createBrowserRouter([
+  {
+    element: <AuthGate />,
+    children: [
+      { path: "/", element: <Home /> },
+      { path: "/members/new", element: <MemberForm /> },
+      { path: "/m/:memberId/edit", element: <MemberForm /> },
+      { path: "/m/:memberId/prescriptions/new", element: <PrescriptionNew /> },
+      { path: "/m/:memberId/medications/new", element: <MedicationForm /> },
+      { path: "/m/:memberId/reports/new", element: <ReportForm /> },
+      { path: "/m/:memberId/allergies/new", element: <AllergyForm /> },
+      { path: "/m/:memberId/conditions/new", element: <ConditionForm /> },
+      { path: "/m/:memberId/:tab?", element: <MemberPage /> },
+      { path: "/prescriptions/:prescriptionId", element: <PrescriptionDetail /> },
+      { path: "/prescriptions/:prescriptionId/edit", element: <PrescriptionEdit /> },
+      { path: "/medications/:medicationId", element: <MedicationForm /> },
+      { path: "/reports/:reportId", element: <ReportDetail /> },
+      { path: "/reports/:reportId/edit", element: <ReportForm /> },
+      { path: "/allergies/:allergyId", element: <AllergyForm /> },
+      { path: "/conditions/:conditionId", element: <ConditionForm /> },
+      { path: "/doctors", element: <DoctorsPage /> },
+      { path: "/doctors/new", element: <DoctorForm /> },
+      { path: "/doctors/:doctorId", element: <DoctorForm /> },
+      { path: "*", element: <Home /> },
+    ],
+  },
+]);
+
+export function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router} />
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
