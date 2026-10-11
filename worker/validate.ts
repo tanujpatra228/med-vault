@@ -5,7 +5,9 @@ export type FieldSpec =
   | { type: "text"; required?: boolean; max?: number }
   | { type: "date"; required?: boolean }
   | { type: "enum"; values: readonly string[]; required?: boolean }
-  | { type: "id"; required?: boolean };
+  | { type: "id"; ref: RefTable; required?: boolean };
+
+export type RefTable = "members" | "doctors" | "conditions" | "prescriptions";
 
 export type Schema = Record<string, FieldSpec>;
 
