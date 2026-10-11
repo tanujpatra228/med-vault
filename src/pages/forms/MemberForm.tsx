@@ -20,7 +20,7 @@ export function MemberForm() {
   const { memberId } = useParams();
   const editing = !!memberId;
   const navigate = useNavigate();
-  const existing = useMember(memberId ?? "");
+  const existing = useMember(memberId);
   const save = useSave<Member>("members");
   const del = useDelete("members");
   const [photo, setPhoto] = useState<File | null>(null);
