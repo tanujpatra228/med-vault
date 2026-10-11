@@ -1,8 +1,9 @@
 import { Hono } from "hono";
-import { auth, requireSession } from "./auth";
+import { auth, requireDevice } from "./auth";
 import type { AppEnv } from "./env";
 import { files } from "./files";
 import { HttpError, onError } from "./http";
+import { vaultApi } from "./vault";
 import {
   allergiesApi,
   conditionsApi,
@@ -27,7 +28,8 @@ app.use("*", async (c, next) => {
 
 app.route("/auth", auth);
 
-app.use("*", requireSession);
+app.use("*", requireDevice);
+app.route("/vault", vaultApi);
 app.route("/members", membersApi);
 app.route("/doctors", doctorsApi);
 app.route("/allergies", allergiesApi);
