@@ -21,7 +21,8 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 
 1. **Newest first, everywhere.** Reports, prescriptions, medications, documents. The latest item is always at the top.
 2. **Must-haves first.** Ship a working vault, then add extras.
-3. **Simple over clever.** One shared family account, no roles, no app lock (the phone PIN is enough), no offline sync in v1.
+3. **Simple over clever.** No signup, no passwords, no roles, no app lock (the phone PIN is enough), no offline sync in v1.
+6. **Shareable.** Anyone given the URL can create their own vault for their family. Vaults never see each other.
 4. **Manual entry always works.** AI (later) only pre-fills forms you can edit.
 5. **Stay on Cloudflare.** Prefer a Cloudflare service over a third-party one. Flag anything that needs a paid plan.
 
@@ -36,8 +37,11 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 | Frontend | Vite + React + TypeScript, Cloudflare Vite plugin, shadcn/ui components. |
 | Deploys | GitHub Actions: every push to `main` deploys to Cloudflare. |
 | Git | Small commits straight to `main`; major modules on a branch with a pull request. |
-| Account | One shared family account. Any logged-in device can view and edit. |
-| Login | A single family password stored as a Worker secret. Sessions in D1. |
+| Account | **Vaults, no signup.** Anyone opening the URL creates a vault for their family in one tap. Many vaults per deployment, fully isolated. |
+| Access | Each phone holds its own device key (cookie). Every linked device can view and edit. |
+| Adding a phone | One-time link code (8 chars, 10 minutes) or link from an already linked phone. |
+| Recovery | A recovery key shown once at vault creation. Lose every phone and the key, and the vault is gone: the accepted cost of no signup. |
+| Upgrade path | Passkeys (fingerprint, synced by Google Password Manager) as an optional extra sign-in, later. |
 | App lock | Skipped. Phone PIN is enough. |
 | Medicine database | None. Free-text medication entry. |
 | Data storage | Cloud (D1/R2). Every logged-in phone sees the same data immediately. |
@@ -59,13 +63,13 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 | 6 | **Reports catalog** | Blood, urine, imaging, scans, ECG, other. Date, lab, notes, photos/PDFs. Newest first, filter by type. |
 | 7 | **Documents / photos** | Camera or gallery (images and PDFs), compressed on the phone before upload. Attached to a prescription, report, medicine or member. |
 | 8 | **Doctors** | Directory: name, specialty, clinic, phone, address. Picked from a list when adding a prescription, with "add new" inline. |
-| 9 | **Login** | One family password. Stays logged in on each device. |
+| 9 | **Vault access, no signup** | Create a vault (name only), save the recovery key, link more phones with a code, see and remove linked devices, recover with the key, delete the vault. |
 | 10 | **Installable PWA** | Add to Android home screen, full-screen, app icon. |
 
 ### Screens
 
 ```
-Login
+Welcome   create a vault | link with a code | use recovery key
 Home (family members)
  └─ Member profile
      ├─ Summary        allergies, conditions, current medicines, latest report, latest prescription
@@ -74,6 +78,7 @@ Home (family members)
      ├─ Reports        newest first, filter by type, tap to view files
      └─ Health         allergies & conditions
 Doctors (directory)
+Settings  vault name, linked devices, link code, recovery key, log out, delete vault
 + Add (bottom sheet)  ->  Prescription | Report | Medicine | Allergy | Condition
 ```
 
@@ -88,7 +93,8 @@ Doctors (directory)
 1. Open app → tap Mom → allergies, conditions and all current medicines with their doctors on **one screen**.
 2. The latest report is the **first item** in Reports.
 3. A new prescription with a photo and 3 medicines is added in **under 2 minutes**.
-4. Data added on one phone shows up on another phone logged into the same account.
+4. Data added on one phone shows up on another phone linked to the same vault.
+5. A friend opening the URL can create their own vault and cannot see ours.
 
 ---
 
@@ -133,7 +139,11 @@ Doctors (directory)
 | `medications` | member_id, prescription_id, doctor_id, condition_id, name, strength, form, dosage, timing, start_date, end_date, status, notes |
 | `reports` | member_id, doctor_id, condition_id, title, report_type, report_date, lab_name, notes |
 | `files` | member_id, owner_type, owner_id, name, mime_type, size (bytes stored in R2 under the file id) |
-| `sessions` | token_hash, expires_at |
-| `login_attempts` | ip, attempted_at |
+| `vaults` | name, recovery_hash |
+| `devices` | vault_id, name, token_hash, last_seen_at |
+| `link_codes` | code_hash, vault_id, expires_at |
+| `rate_events` | ip, kind, at |
+
+Every data table also has `vault_id`; every query is scoped by it.
 
 Every list query sorts by its date column descending, then `created_at` descending.
