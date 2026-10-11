@@ -10,7 +10,8 @@ A private vault for your whole family's medical records: current medicines, pres
 - **Reports catalog** with photos/PDFs, filter by type.
 - **Allergies & conditions**, **doctors directory** with tap-to-call.
 - Camera capture with in-browser image compression.
-- One shared family password, installable on the Android home screen.
+- **No signup:** anyone with the URL creates their own vault in one tap. Link more phones with a one-time code; a recovery key restores access.
+- Installable on the Android home screen.
 
 What comes next is in [docs/PLAN.md](docs/PLAN.md).
 
@@ -22,7 +23,6 @@ React + Vite + TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query, React Rou
 
 ```bash
 npm install
-cp .dev.vars.example .dev.vars        # set APP_PASSWORD
 npm run db:migrate:local
 npm run dev                           # http://localhost:5173
 ```
@@ -31,7 +31,7 @@ The Cloudflare Vite plugin runs the Worker in the real Workers runtime with loca
 
 ## Deploy
 
-Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`). Required repository secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, `APP_PASSWORD`. Enable R2 once in the Cloudflare dashboard before the first deploy. Details and manual steps: [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md).
+Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`). Required repository secrets: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`. Enable R2 once in the Cloudflare dashboard before the first deploy. Details and manual steps: [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md).
 
 ## Scripts
 
@@ -58,7 +58,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 docs/        product, design, engineering, infrastructure
 migrations/  D1 SQL migrations
 shared/      types shared by API and app
-worker/      Hono API (auth, CRUD, files)
+worker/      Hono API (vault auth, CRUD, files)
 src/         React app (components/ui = shadcn)
 public/      PWA manifest, service worker, icons
 ```
