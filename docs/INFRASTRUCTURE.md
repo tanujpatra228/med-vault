@@ -11,7 +11,7 @@ Android phone (installed PWA)
 Cloudflare Worker  "med-vault"
  ├─ Static assets (Vite build of the React app, SPA fallback)
  └─ /api/*  Hono API
-       ├─ D1  "med-vault"        (SQLite: all records, sessions)
+       ├─ D1  "med-vault"        (SQLite: vaults, devices, all records)
        └─ R2  "med-vault-files"  (photos and PDFs)
 ```
 
@@ -25,7 +25,6 @@ One Worker serves both the app and the API, so there is one deploy, one domain a
 | **Workers Static Assets** | React build (HTML/JS/CSS/icons) | `assets` | Asset requests are free and unlimited | No |
 | **D1** | Database | `DB` | 5 GB storage, 5M rows read/day, 100k rows written/day | No |
 | **R2** | Photos and PDFs | `FILES` | 10 GB storage, 1M writes/month, 10M reads/month, no egress fees | No, but **R2 must be enabled with a payment method on the account**. You are not charged while under the free limits. |
-| **Worker secrets** | `APP_PASSWORD` | env | Free | No |
 | **workers.dev subdomain** | URL `med-vault.<account>.workers.dev` | n/a | Free | No. A custom domain is optional (domain cost only). |
 | **Cron Triggers** (Phase 3) | Reminder scheduling | n/a | Free (limited number per account) | No |
 | **Workers AI** (Phase 2) | Reading prescriptions/medicine photos | `AI` | Daily free allowance (10,000 Neurons/day) | No, unless usage grows |
@@ -35,14 +34,30 @@ One Worker serves both the app and the API, so there is one deploy, one domain a
 
 | Option | Why not |
 |---|---|
-| Cloudflare Access / Zero Trust for login | Heavier setup for a single family password, and the account usually needs a payment method on file. A Worker secret + D1 sessions is enough. Can switch later. |
+| Cloudflare Access / Zero Trust for login | Built for a known team, not for strangers creating their own vaults. Needs identity providers and per-user setup. |
+| Email/password accounts | Explicitly not wanted: no signup. |
 | Cloudflare Images | Costs money beyond the free tier. Images are compressed in the browser before upload instead. |
 | Pages | Workers with Static Assets is Cloudflare's current recommended path and lets one Worker serve app + API. |
-| KV for sessions | D1 is already there and gives instant logout. KV is eventually consistent. |
+| KV for device keys | D1 is already there and gives instant device removal. KV is eventually consistent. |
+
+## Multi-vault capacity and abuse protection
+
+Anyone with the URL can create a vault, so one deployment is shared by every family using it.
+
+| Protection | Value | Where |
+|---|---|---|
+| New vaults per IP | 5 per day | `worker/auth.ts` |
+| Wrong link codes / recovery keys per IP | 10 per 15 minutes | `worker/auth.ts` |
+| Storage per vault | 2 GB | `worker/files.ts` |
+| Link code lifetime | 10 minutes, single use | `worker/auth.ts` |
+
+Rough capacity on the free tier: R2's 10 GB fits about 5 full vaults or many light ones (a family with 200 compressed photos uses ~100 MB). Beyond that, R2 is $0.015/GB-month.
+
+Next step if bots ever create vaults: **Cloudflare Turnstile** (free) on the "Create my vault" form.
 
 ## Constraints that shape the code
 
-1. **10 ms CPU per request (free plan).** No image processing, PDF parsing or heavy crypto in the Worker. Images are resized/compressed in the browser. Login compares SHA-256 digests of the password (cheap) instead of running a slow hash in the Worker. File downloads stream from R2 without buffering.
+1. **10 ms CPU per request (free plan).** No image processing, PDF parsing or heavy crypto in the Worker. Images are resized/compressed in the browser. Device keys, link codes and recovery keys are high-entropy random values, so a single SHA-256 is enough to store them (no slow password hashing in the Worker). File downloads stream from R2 without buffering.
 2. **D1 is SQLite.** Use `?` bound parameters, `db.batch()` for multi-statement writes (it runs as one transaction), and indexes on `member_id` + date columns. Foreign keys are enforced, so deletes cascade.
 3. **D1 write budget (100k rows/day).** Far above family use. Don't write on every read (e.g. no "last seen" updates per request).
 4. **R2 is not cleaned up by D1 cascades.** Any route that deletes a member, prescription, report or medication must also delete its R2 objects.
@@ -63,7 +78,7 @@ One Worker serves both the app and the API, so there is one deploy, one domain a
 | Trigger | Jobs |
 |---|---|
 | Pull request | `check`: `npm ci`, typecheck, build |
-| Push to `main` (or manual run) | `check`, then `deploy`: create D1/R2 if missing, inject the D1 id, apply migrations, build, `wrangler deploy`, set `APP_PASSWORD` |
+| Push to `main` (or manual run) | `check`, then `deploy`: create D1/R2 if missing, inject the D1 id, apply migrations, build, `wrangler deploy` |
 
 GitHub repository secrets:
 
@@ -71,7 +86,6 @@ GitHub repository secrets:
 |---|---|---|
 | `CLOUDFLARE_ACCOUNT_ID` | Set | Which Cloudflare account to deploy to |
 | `CLOUDFLARE_API_TOKEN` | Set | Deploy permission |
-| `APP_PASSWORD` | **To add** | The family login password, pushed to the Worker as a secret on each deploy |
 
 The API token needs these **Account** permissions: *Workers Scripts: Edit*, *D1: Edit*, *Workers R2 Storage: Edit* (plus *Account Settings: Read*, which the "Edit Cloudflare Workers" template includes).
 
@@ -84,11 +98,10 @@ npx wrangler login
 npx wrangler d1 create med-vault           # copy database_id into wrangler.jsonc
 npx wrangler r2 bucket create med-vault-files
 npm run db:migrate:remote
-npx wrangler secret put APP_PASSWORD       # the family password
 npm run deploy
 ```
 
-Local: copy `.dev.vars.example` to `.dev.vars`, set `APP_PASSWORD`, then `npm run db:migrate:local` and `npm run dev`.
+Local: `npm run db:migrate:local`, then `npm run dev`. No secrets are needed.
 
 ## Backups
 
