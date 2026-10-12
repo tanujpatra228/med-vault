@@ -28,6 +28,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
   del: <T = { ok: true }>(path: string) => request<T>("DELETE", path),
+  /** DELETE with a JSON body (e.g. a typed confirmation). */
+  del2: <T = { ok: true }>(path: string, body: unknown) => request<T>("DELETE", path, body),
 };
 
 export const fileUrl = (id: string) => `/api/files/${id}`;

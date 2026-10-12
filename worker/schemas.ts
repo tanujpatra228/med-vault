@@ -23,7 +23,7 @@ export const doctorSchema: Schema = {
 };
 
 export const allergySchema: Schema = {
-  member_id: { type: "id", required: true },
+  member_id: { type: "id", ref: "members", required: true },
   allergen: { type: "text", required: true, max: 200 },
   kind: { type: "enum", values: ["drug", "food", "other"] },
   reaction: { type: "text", max: 500 },
@@ -33,7 +33,7 @@ export const allergySchema: Schema = {
 };
 
 export const conditionSchema: Schema = {
-  member_id: { type: "id", required: true },
+  member_id: { type: "id", ref: "members", required: true },
   name: { type: "text", required: true, max: 200 },
   status: { type: "enum", values: ["active", "resolved"] },
   diagnosed_on: { type: "date" },
@@ -41,10 +41,10 @@ export const conditionSchema: Schema = {
 };
 
 export const medicationSchema: Schema = {
-  member_id: { type: "id", required: true },
-  prescription_id: { type: "id" },
-  doctor_id: { type: "id" },
-  condition_id: { type: "id" },
+  member_id: { type: "id", ref: "members", required: true },
+  prescription_id: { type: "id", ref: "prescriptions" },
+  doctor_id: { type: "id", ref: "doctors" },
+  condition_id: { type: "id", ref: "conditions" },
   name: { type: "text", required: true, max: 200 },
   strength: { type: "text", max: 80 },
   form: { type: "enum", values: MED_FORMS },
@@ -57,17 +57,17 @@ export const medicationSchema: Schema = {
 };
 
 export const prescriptionSchema: Schema = {
-  member_id: { type: "id", required: true },
-  doctor_id: { type: "id" },
-  condition_id: { type: "id" },
+  member_id: { type: "id", ref: "members", required: true },
+  doctor_id: { type: "id", ref: "doctors" },
+  condition_id: { type: "id", ref: "conditions" },
   prescribed_on: { type: "date", required: true },
   notes: long,
 };
 
 export const reportSchema: Schema = {
-  member_id: { type: "id", required: true },
-  doctor_id: { type: "id" },
-  condition_id: { type: "id" },
+  member_id: { type: "id", ref: "members", required: true },
+  doctor_id: { type: "id", ref: "doctors" },
+  condition_id: { type: "id", ref: "conditions" },
   title: { type: "text", required: true, max: 200 },
   report_type: { type: "enum", values: ["blood", "urine", "imaging", "scan", "ecg", "other"] },
   report_date: { type: "date", required: true },

@@ -27,7 +27,8 @@ const qs = (params: Record<string, string | undefined>) => {
 // ---------- queries ----------
 
 export const useMembers = () => useQuery({ queryKey: ["members"], queryFn: () => api.get<MemberListItem[]>("/members") });
-export const useMember = (id: string) => useQuery({ queryKey: ["members", id], queryFn: () => api.get<MemberListItem>(`/members/${id}`) });
+export const useMember = (id: string | undefined) =>
+  useQuery({ queryKey: ["members", id], queryFn: () => api.get<MemberListItem>(`/members/${id}`), enabled: !!id });
 export const useSummary = (id: string) =>
   useQuery({ queryKey: ["summary", id], queryFn: () => api.get<MemberSummary>(`/members/${id}/summary`) });
 export const useDoctors = () => useQuery({ queryKey: ["doctors"], queryFn: () => api.get<DoctorListItem[]>("/doctors") });

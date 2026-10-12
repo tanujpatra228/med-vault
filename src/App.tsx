@@ -1,10 +1,12 @@
 import { useEffect } from "react";
-import { createBrowserRouter, Outlet, RouterProvider, ScrollRestoration } from "react-router";
-import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError } from "@/api/client";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration } from "react-router";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { ApiError } from "@/api/client";
+import { useAuth } from "@/api/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { Loading } from "@/components/layout";
-import { Login } from "@/pages/Login";
+import { Welcome } from "@/pages/Welcome";
+import { SettingsPage } from "@/pages/Settings";
 import { Home } from "@/pages/Home";
 import { MemberPage } from "@/pages/Member";
 import { PrescriptionDetail } from "@/pages/PrescriptionDetail";
@@ -26,10 +28,10 @@ const queryClient = new QueryClient({
   },
 });
 
-/** Shows Login until the session cookie is valid. Any 401 from the API sends the user back here. */
+/** Shows Welcome until this device is linked to a vault. Any 401 from the API sends the user back here. */
 function AuthGate() {
   const qc = useQueryClient();
-  const me = useQuery({ queryKey: ["auth"], queryFn: () => api.get<{ authenticated: boolean }>("/auth/me"), staleTime: Infinity });
+  const me = useAuth();
   useEffect(() => {
     const onUnauthorized = () => qc.invalidateQueries({ queryKey: ["auth"] });
     window.addEventListener("mv:unauthorized", onUnauthorized);
@@ -37,7 +39,7 @@ function AuthGate() {
   }, [qc]);
 
   if (me.isPending) return <Loading label="Opening Med Vault" />;
-  if (!me.data?.authenticated) return <Login />;
+  if (!me.data?.authenticated) return <Welcome />;
   return (
     <>
       <ScrollRestoration />
@@ -66,6 +68,8 @@ const router = createBrowserRouter([
       { path: "/reports/:reportId/edit", element: <ReportForm /> },
       { path: "/allergies/:allergyId", element: <AllergyForm /> },
       { path: "/conditions/:conditionId", element: <ConditionForm /> },
+      { path: "/settings", element: <SettingsPage /> },
+      { path: "/link", element: <Navigate to="/" replace /> },
       { path: "/doctors", element: <DoctorsPage /> },
       { path: "/doctors/new", element: <DoctorForm /> },
       { path: "/doctors/:doctorId", element: <DoctorForm /> },

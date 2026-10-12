@@ -4,6 +4,8 @@ import type { AppEnv } from "./env";
 import { badRequest, HttpError, notFound } from "./http";
 
 const MAX_BYTES = 15 * 1024 * 1024;
+/** Per-vault storage cap, so one family cannot use up the R2 free tier (10 GB) shared by everyone. */
+const VAULT_QUOTA_BYTES = 2 * 1024 * 1024 * 1024;
 const OWNER_TABLES: Record<FileOwner, string> = {
   member: "members",
   prescription: "prescriptions",
@@ -43,11 +45,14 @@ files.post("/", async (c) => {
   if (!ownerId) throw badRequest("owner_id is required");
   if (file.size > MAX_BYTES) throw new HttpError(413, "File is larger than 15 MB");
   if (!allowedMime(file.type)) throw badRequest("Only images and PDFs are allowed");
+  const vaultId = c.get("vaultId");
+  const used = await c.env.DB.prepare("SELECT COALESCE(SUM(size), 0) AS n FROM files WHERE vault_id = ?").bind(vaultId).first<number>("n");
+  if ((used ?? 0) + file.size > VAULT_QUOTA_BYTES) throw new HttpError(413, "This vault has reached its 2 GB storage limit");
 
   const owner = await c.env.DB.prepare(
-    `SELECT ${ownerType === "member" ? "id AS member_id, photo_file_id" : "member_id"} FROM ${OWNER_TABLES[ownerType]} WHERE id = ?`,
+    `SELECT ${ownerType === "member" ? "id AS member_id, photo_file_id" : "member_id"} FROM ${OWNER_TABLES[ownerType]} WHERE id = ? AND vault_id = ?`,
   )
-    .bind(ownerId)
+    .bind(ownerId, vaultId)
     .first<{ member_id: string; photo_file_id?: string | null }>();
   if (!owner) throw notFound("Owner record not found");
 
@@ -56,8 +61,8 @@ files.post("/", async (c) => {
 
   const stmts = [
     c.env.DB.prepare(
-      "INSERT INTO files (id, member_id, owner_type, owner_id, name, mime_type, size) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    ).bind(id, owner.member_id, ownerType, ownerId, file.name.slice(0, 200) || null, file.type, file.size),
+      "INSERT INTO files (id, vault_id, member_id, owner_type, owner_id, name, mime_type, size) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    ).bind(id, vaultId, owner.member_id, ownerType, ownerId, file.name.slice(0, 200) || null, file.type, file.size),
   ];
   if (ownerType === "member") {
     stmts.push(c.env.DB.prepare("UPDATE members SET photo_file_id = ?, updated_at = ? WHERE id = ?").bind(id, new Date().toISOString(), ownerId));
@@ -66,7 +71,7 @@ files.post("/", async (c) => {
   await c.env.DB.batch(stmts);
   if (ownerType === "member" && owner.photo_file_id) await deleteR2(c.env.FILES, [owner.photo_file_id]);
 
-  const meta = await c.env.DB.prepare("SELECT * FROM files WHERE id = ?").bind(id).first<FileMeta>();
+  const meta = await c.env.DB.prepare("SELECT * FROM files WHERE id = ? AND vault_id = ?").bind(id, vaultId).first<FileMeta>();
   return c.json(meta, 201);
 });
 
@@ -74,15 +79,15 @@ files.get("/", async (c) => {
   const ownerType = c.req.query("owner_type") ?? "";
   const ownerId = c.req.query("owner_id") ?? "";
   if (!(ownerType in OWNER_TABLES) || !ownerId) throw badRequest("owner_type and owner_id are required");
-  const { results } = await c.env.DB.prepare("SELECT * FROM files WHERE owner_type = ? AND owner_id = ? ORDER BY created_at ASC")
-    .bind(ownerType, ownerId)
+  const { results } = await c.env.DB.prepare("SELECT * FROM files WHERE owner_type = ? AND owner_id = ? AND vault_id = ? ORDER BY created_at ASC")
+    .bind(ownerType, ownerId, c.get("vaultId"))
     .all<FileMeta>();
   return c.json(results);
 });
 
 files.get("/:id", async (c) => {
   const id = c.req.param("id");
-  const meta = await c.env.DB.prepare("SELECT mime_type, name FROM files WHERE id = ?").bind(id).first<{ mime_type: string; name: string | null }>();
+  const meta = await c.env.DB.prepare("SELECT mime_type, name FROM files WHERE id = ? AND vault_id = ?").bind(id, c.get("vaultId")).first<{ mime_type: string; name: string | null }>();
   if (!meta) throw notFound("File not found");
   const obj = await c.env.FILES.get(id);
   if (!obj) throw notFound("File not found");
@@ -100,9 +105,10 @@ files.get("/:id", async (c) => {
 
 files.delete("/:id", async (c) => {
   const id = c.req.param("id");
+  const vaultId = c.get("vaultId");
   const res = await c.env.DB.batch([
-    c.env.DB.prepare("UPDATE members SET photo_file_id = NULL WHERE photo_file_id = ?").bind(id),
-    c.env.DB.prepare("DELETE FROM files WHERE id = ?").bind(id),
+    c.env.DB.prepare("UPDATE members SET photo_file_id = NULL WHERE photo_file_id = ? AND vault_id = ?").bind(id, vaultId),
+    c.env.DB.prepare("DELETE FROM files WHERE id = ? AND vault_id = ?").bind(id, vaultId),
   ]);
   if (!res[1].meta.changes) throw notFound("File not found");
   await deleteR2(c.env.FILES, [id]);

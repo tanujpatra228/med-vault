@@ -1,7 +1,6 @@
 import { Link } from "react-router";
-import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Stethoscope, UserPlus } from "lucide-react";
-import { api } from "@/api/client";
+import { Settings, Stethoscope, UserPlus } from "lucide-react";
+import { useAuth } from "@/api/auth";
 import { useMembers } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +11,8 @@ import { age, countWord, plural } from "@/lib/format";
 
 export function Home() {
   const members = useMembers();
-  const qc = useQueryClient();
-  const logout = async () => {
-    await api.post("/auth/logout");
-    qc.clear();
-    qc.invalidateQueries({ queryKey: ["auth"] });
-  };
+  const auth = useAuth();
+  const vaultName = auth.data?.authenticated ? auth.data.vault.name : "";
 
   const list = members.data ?? [];
   const totalMeds = list.reduce((n, m) => n + m.active_med_count, 0);
@@ -32,13 +27,16 @@ export function Home() {
               <Stethoscope />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" aria-label="Log out" onClick={logout}>
-            <LogOut />
+          <Button asChild variant="ghost" size="icon" aria-label="Settings">
+            <Link to="/settings">
+              <Settings />
+            </Link>
           </Button>
         </div>
       </header>
       <Page>
-        <h1 className="mt-6 display-lg">Family</h1>
+        {vaultName && <div className="meta mt-6 text-ink-faint">{vaultName}</div>}
+        <h1 className="mt-2 display-lg">Family</h1>
         {list.length > 0 && (
           <p className="mt-3 mb-8 statement-md text-ink-muted">
             {capitalizeFirst(countWord(list.length))} {list.length === 1 ? "person" : "people"},{" "}
