@@ -237,7 +237,10 @@ export interface PrescriptionScan {
   doctor_name: string | null;
   doctor_specialty: string | null;
   prescribed_on: string | null;
+  /** First diagnosis, linked to the prescription. */
   condition: string | null;
+  /** Every diagnosis written, one per condition. */
+  conditions: string[];
   notes: string | null;
   medications: ScannedMedicine[];
 }

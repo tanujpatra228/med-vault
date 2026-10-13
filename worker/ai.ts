@@ -31,7 +31,7 @@ const PROMPTS: Record<ScanKind, string> = {
   prescription: `${COMMON}
 This is a doctor's prescription. Return:
 {"doctor_name": string|null, "doctor_specialty": string|null, "prescribed_on": "YYYY-MM-DD"|null,
- "condition": string|null (diagnosis if written), "notes": string|null (advice, follow-up, tests advised),
+ "conditions": string[] (each diagnosis separately, as written; [] if none), "notes": string|null (advice, follow-up, tests advised),
  "medications": [{"name": string (brand or generic as written, without the Tab/Cap prefix),
    "strength": string|null (e.g. "500 mg"), "form": one of ${JSON.stringify(MED_FORMS)} or null,
    "dosage": string|null (morning-afternoon-night like "1-0-1"; convert OD="1-0-0", BD="1-0-1", TDS="1-1-1", HS="0-0-1", SOS="As needed"),
@@ -189,6 +189,25 @@ export function checkMedicine(m: RawMed & { name: string }): string[] {
   return warnings;
 }
 
+// Only a trailing code after a dash/colon/bracket ("... - M45.9", "(I10)"), so "Vitamin B12 deficiency" keeps "B12".
+const ICD_CODE = /\s*[-–:(]\s*[A-Z]\d{2}(?:\.\d{1,3})?\)?\s*$/i;
+
+/** "ANKYLOSING SPONDYLITIS - M45.9 | PRIMARY HYPERTENSION - I10" -> ["Ankylosing Spondylitis", "Primary Hypertension"] */
+export function splitDiagnoses(raw: unknown[]): string[] {
+  const out: string[] = [];
+  for (const item of raw) {
+    const text = str(item, 500);
+    if (!text) continue;
+    for (const part of text.split(/\s*(?:[|,;\n]|\band\b|\s\+\s)\s*/i)) {
+      let name = part.replace(ICD_CODE, "").replace(/^[-–:.\s]+|[-–:.\s]+$/g, "").trim();
+      if (name.length < 3) continue;
+      if (name === name.toUpperCase()) name = name.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+      if (!out.some((x) => x.toLowerCase() === name.toLowerCase())) out.push(name.slice(0, 200));
+    }
+  }
+  return out.slice(0, 8);
+}
+
 export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanResult {
   switch (kind) {
     case "prescription": {
@@ -200,10 +219,13 @@ export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanRes
         doctor_name: str(raw.doctor_name, 120),
         doctor_specialty: str(raw.doctor_specialty, 120),
         prescribed_on: date(raw.prescribed_on),
-        condition: str(raw.condition),
+        condition: null,
+        conditions: [],
         notes: str(raw.notes, 2000),
         medications: meds,
       };
+      data.conditions = splitDiagnoses([...(Array.isArray(raw.conditions) ? raw.conditions : []), raw.condition]);
+      data.condition = data.conditions[0] ?? null;
       return { kind, data };
     }
     case "medicine": {
@@ -243,7 +265,7 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
     doctor_name: "Dr. Hetal Vyas",
     doctor_specialty: "Rheumatologist",
     prescribed_on: "05/10/2026",
-    condition: "Ankylosing spondylitis",
+    conditions: ["ANKYLOSING SPONDYLITIS - M45.9 | PERIPHERAL SPONDYLOARTHRITIS - M46.90 | PRIMARY HYPERTENSION - I10"],
     notes: "To start MTX 15 mg/week.",
     // Replays what the real model returned for this prescription, so the corrections can be checked locally.
     medications: [

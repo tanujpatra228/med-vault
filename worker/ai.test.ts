@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dosage, normalize, parseJsonObject } from "./ai";
+import { dosage, normalize, parseJsonObject, splitDiagnoses } from "./ai";
 
 describe("parseJsonObject", () => {
   it("reads plain JSON", () => expect(parseJsonObject('{"a":1}')).toEqual({ a: 1 }));
@@ -196,5 +196,30 @@ describe("sanity checks", () => {
     const w = check({ name: "X", schedule: { type: "weekly", days: { sat: [2, 0, 0] } }, frequency_text: "3 tablet per week" });
     expect(w[0]).toMatch(/3 per week, but these days add up to 2/);
     expect(check({ name: "Y", schedule: { type: "weekly", days: { mon: [1, 0, 0] } }, frequency_text: "5 days a week" })[0]).toMatch(/5 days a week, but 1 day is selected/);
+  });
+});
+
+describe("splitDiagnoses", () => {
+  it("splits the prescription's diagnosis line and drops ICD codes", () => {
+    expect(splitDiagnoses(["ANKYLOSING SPONDYLITIS - M45.9 | PERIPHERAL SPONDYLOARTHRITIS - M46.90 | PRIMARY HYPERTENSION - I10"])).toEqual([
+      "Ankylosing Spondylitis",
+      "Peripheral Spondyloarthritis",
+      "Primary Hypertension",
+    ]);
+  });
+  it("accepts a list, commas and 'and', keeps normal casing, removes duplicates", () => {
+    expect(splitDiagnoses([["Type 2 diabetes", "Hypertension"], "hypertension and Acute left eye uveitis"].flat())).toEqual([
+      "Type 2 diabetes",
+      "Hypertension",
+      "Acute left eye uveitis",
+    ]);
+    expect(splitDiagnoses([null, "", "  "])).toEqual([]);
+  });
+  it("does not mistake vitamin names for ICD codes", () => {
+    expect(splitDiagnoses(["Vitamin B12 deficiency - E53.8", "Hypertension (I10)"])).toEqual(["Vitamin B12 deficiency", "Hypertension"]);
+  });
+  it("fills condition and conditions on a prescription scan", () => {
+    const r = normalize("prescription", { conditions: ["Uveitis, Arthritis"] });
+    expect(r.kind === "prescription" && [r.data.condition, r.data.conditions]).toEqual(["Uveitis", ["Uveitis", "Arthritis"]]);
   });
 });
