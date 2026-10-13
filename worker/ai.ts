@@ -10,7 +10,7 @@ import {
   type ScanResult,
   type ScannedMedicine,
 } from "../shared/types";
-import { normalizeSchedule, scheduleFromDosage } from "../shared/schedule";
+import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDays, type Pattern, type Schedule } from "../shared/schedule";
 import type { AppEnv } from "./env";
 import { badRequest, HttpError, readJson } from "./http";
 
@@ -35,7 +35,12 @@ This is a doctor's prescription. Return:
  "medications": [{"name": string (brand or generic as written, without the Tab/Cap prefix),
    "strength": string|null (e.g. "500 mg"), "form": one of ${JSON.stringify(MED_FORMS)} or null,
    "dosage": string|null (morning-afternoon-night like "1-0-1"; convert OD="1-0-0", BD="1-0-1", TDS="1-1-1", HS="0-0-1", SOS="As needed"),
-   "schedule": SCHEDULE|null, "timing": string|null (e.g. "After food"), "duration_days": number|null}]}
+   "schedule": SCHEDULE|null, "timing": string|null (e.g. "After food"), "duration_days": number|null,
+   "dose_text": string|null (copy the Dose cell EXACTLY as written, in its original script, e.g. "हर शनिवार 2-0-0 हर रविवार 1-0-0"),
+   "frequency_text": string|null (copy the Frequency cell exactly, e.g. "3 tablet per week After breakfast")}]}
+
+Table rows: one entry per medicine. A row with an empty medicine cell, or an arrow from the row above, CONTINUES the medicine above:
+put both rows into that ONE medicine as a changing-dose schedule (phases), using each row's Duration as the phase length. Never list the same medicine twice.
 
 SCHEDULE describes how often and how much. A dose is [morning, afternoon, night] (or breakfast, lunch, dinner); halves allowed, e.g. "1-1/2-0" = [1, 0.5, 0].
 - Every day: {"type":"daily","dose":[1,0,1]}
@@ -101,27 +106,96 @@ export function dosage(v: unknown): string | null {
   return DOSAGE_CODES[s.toUpperCase().replace(/[^A-Z]/g, "")] ?? s;
 }
 
-function medicine(raw: unknown): ScannedMedicine | null {
+interface RawMed extends Omit<ScannedMedicine, "name" | "warnings"> {
+  name: string | null;
+  frequency_text: string | null;
+}
+
+function medicine(raw: unknown): RawMed | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
   const name = str(r.name)?.replace(/^(tab|cap|syp|inj|oint|gtt)\.?\s+/i, "") ?? null;
-  if (!name) return null;
   const days = Number(r.duration_days);
+  const dose_text = str(r.dose_text, 300);
+  const frequency_text = str(r.frequency_text, 300);
+  // Weekdays are parsed from the written text in code: the model's own weekday mapping is unreliable.
+  const schedule = parseDoseText(dose_text) ?? parseDoseText(frequency_text) ?? normalizeSchedule(r.schedule) ?? scheduleFromDosage(dosage(r.dosage));
   return {
     name,
     strength: str(r.strength, 80),
     form: oneOf(r.form, MED_FORMS),
     dosage: dosage(r.dosage),
-    schedule: normalizeSchedule(r.schedule) ?? scheduleFromDosage(dosage(r.dosage)),
+    schedule,
     timing: str(r.timing, 120),
     duration_days: Number.isInteger(days) && days > 0 && days <= 365 ? days : null,
+    dose_text,
+    frequency_text,
   };
+}
+
+const sameMedicine = (a: string, b: string) => {
+  const key = (s: string) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/[^a-z0-9]/g, "");
+  return key(a) === key(b);
+};
+
+/** A single-phase schedule's pattern, so two rows can become two phases. */
+const onlyPattern = (s: Schedule | null): Pattern | null => (s && s.phases.length === 1 ? s.phases[0].pattern : null);
+
+/**
+ * Joins a medicine with the row(s) that continue it (same name, or no name) into one
+ * changing-dose schedule, phase lengths taken from each row's duration.
+ */
+export function mergeContinuations(rows: RawMed[]): RawMed[] {
+  const out: RawMed[] = [];
+  for (const row of rows) {
+    const prev = out.at(-1);
+    const continues = prev && (!row.name || (prev.name && sameMedicine(prev.name, row.name)));
+    const prevPhases = prev?.schedule?.phases;
+    const nextPattern = onlyPattern(row.schedule);
+    const lastPhase = prevPhases?.at(-1);
+    if (prev && continues && prevPhases && nextPattern && lastPhase && (lastPhase.days ?? prev.duration_days)) {
+      const fixed = prevPhases.map((p, i) => (i === prevPhases.length - 1 ? { ...p, days: p.days ?? prev.duration_days } : p));
+      prev.schedule = normalizeSchedule({ phases: [...fixed, { days: row.duration_days, pattern: nextPattern }] }) ?? prev.schedule;
+      prev.duration_days = prev.schedule ? totalDays(prev.schedule) : null;
+      prev.dose_text = [prev.dose_text, row.dose_text].filter(Boolean).join(" → ") || null;
+      prev.frequency_text = [prev.frequency_text, row.frequency_text].filter(Boolean).join(" → ") || null;
+      prev.dosage = null;
+      continue;
+    }
+    if (row.name) out.push({ ...row });
+  }
+  return out;
+}
+
+const METHOTREXATE = /methotrex|\bmtx\b|meditrex|folitrax|imutrex|oncotrex/i;
+
+/** Cross-checks the schedule against the written frequency. Returns human-readable warnings. */
+export function checkMedicine(m: RawMed & { name: string }): string[] {
+  const warnings: string[] = [];
+  const s = m.schedule;
+  const freq = (m.frequency_text ?? "").toLowerCase();
+  const weeklyWords = /(per|a|\/)\s*week|weekly|days? a week|हफ्त|સપ્તાહ|અઠવાડ/.test(freq);
+  const pattern = onlyPattern(s);
+  if (s && METHOTREXATE.test(m.name) && !isWeekly(s)) warnings.push("Methotrexate is usually taken once a week. Check that this schedule is right.");
+  if (pattern?.type === "daily" && weeklyWords) warnings.push(`The prescription says "${m.frequency_text}" but this was read as every day. Check the days.`);
+  if (pattern?.type === "weekly") {
+    const perWeek = freq.match(/(\d+(?:\.\d+)?)\s*(?:tab|tablet|tablets|cap|capsule|capsules|dose|doses)?\s*(?:per|a|\/)\s*week/);
+    const total = Object.values(pattern.days).reduce((n, d) => n + d![0] + d![1] + d![2], 0);
+    if (perWeek && Number(perWeek[1]) !== total) warnings.push(`The prescription says ${perWeek[1]} per week, but these days add up to ${total}. Check the doses.`);
+    const daysWeek = freq.match(/(\d)\s*days?\s*(?:a|per|\/)\s*week/);
+    const count = Object.keys(pattern.days).length;
+    if (daysWeek && Number(daysWeek[1]) !== count) warnings.push(`The prescription says ${daysWeek[1]} days a week, but ${count} ${count === 1 ? "day is" : "days are"} selected. Check the days.`);
+  }
+  return warnings;
 }
 
 export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanResult {
   switch (kind) {
     case "prescription": {
-      const meds = Array.isArray(raw.medications) ? raw.medications.map(medicine).filter((m): m is ScannedMedicine => !!m).slice(0, 30) : [];
+      const rows = Array.isArray(raw.medications) ? raw.medications.map(medicine).filter((m): m is RawMed => !!m) : [];
+      const meds: ScannedMedicine[] = mergeContinuations(rows)
+        .slice(0, 30)
+        .map(({ frequency_text: _f, ...m }) => ({ ...m, name: m.name!, warnings: checkMedicine({ ...m, frequency_text: _f, name: m.name! }) }));
       const data: PrescriptionScan = {
         doctor_name: str(raw.doctor_name, 120),
         doctor_specialty: str(raw.doctor_specialty, 120),
@@ -171,14 +245,18 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
     prescribed_on: "05/10/2026",
     condition: "Ankylosing spondylitis",
     notes: "To start MTX 15 mg/week.",
+    // Replays what the real model returned for this prescription, so the corrections can be checked locally.
     medications: [
-      { name: "Meditrex 5mg Tablet", strength: "5 mg", form: "tablet", dosage: null, timing: "After breakfast", duration_days: 7,
-        schedule: { type: "weekly", days: { "शनिवार": "2-0-0", sunday: [1, 0, 0] } } },
-      { name: "Homin", strength: null, form: "tablet", dosage: "1-0-0", timing: "After meal", duration_days: 7,
-        schedule: { type: "weekly", days: { mon: [1, 0, 0], tue: [1, 0, 0], wed: [1, 0, 0], thu: [1, 0, 0], fri: [1, 0, 0] } } },
-      { name: "Omnacortil 20 Tablet DT", strength: "20 mg", form: "tablet", dosage: "1-1-0", timing: "After meal", duration_days: 7,
-        schedule: { phases: [{ days: 4, pattern: { type: "daily", dose: [1, 1, 0] } }, { days: 3, pattern: { type: "daily", dose: "1-1/2-0" } }] } },
-      { name: "Tab. Moxicip", strength: "400 mg", form: "tablet", dosage: "BD", timing: "After food", duration_days: 5 },
+      { name: "Meditrex 5mg Tablet (Methotrexate)", strength: "5mg", form: "tablet", timing: "After breakfast", duration_days: null,
+        schedule: { type: "weekly", days: { fri: [1, 0, 0], sat: [2, 0, 0] } },
+        dose_text: "हर शनिवार 2-0-0 हर रविवार 1-0-0", frequency_text: "3 tablet per week After breakfast" },
+      { name: "Homin (B6+B9+B12)", form: "tablet", timing: "After Meal", dosage: "1-0-0",
+        schedule: { type: "daily", dose: [1, 0, 0] }, dose_text: "हर सोम से शुक्र 1-0-0", frequency_text: "5 days a week After Meal" },
+      { name: "Omnacortil 20 Tablet DT (Prednisolone)", strength: "20mg", form: "tablet", timing: "After Meal", duration_days: 4,
+        schedule: { type: "daily", dose: [1, 1, 0] }, dose_text: "1 tablet", frequency_text: "1-1-0 After Meal" },
+      { name: "Omnacortil 20 Tablet DT (Prednisolone)", strength: "20mg", form: "tablet", timing: "After Meal", duration_days: 3,
+        schedule: { type: "daily", dose: [1, 0.5, 0] }, dose_text: null, frequency_text: "1-1/2-0 After Meal" },
+      { name: "Folitrax 7.5", form: "tablet", schedule: { type: "daily", dose: [1, 0, 0] }, dose_text: "1-0-0", frequency_text: "Daily" },
     ],
   },
   medicine: { name: "Dolo 650", strength: "650 mg", form: "tablet", notes: "Paracetamol, Micro Labs" },

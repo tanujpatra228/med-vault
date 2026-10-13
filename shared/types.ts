@@ -227,6 +227,10 @@ export interface ScannedMedicine {
   schedule: Schedule | null;
   timing: string | null;
   duration_days: number | null;
+  /** Dose and frequency exactly as written, for the user to compare. */
+  dose_text: string | null;
+  /** Plausibility problems found after reading (e.g. weekly frequency read as daily). */
+  warnings: string[];
 }
 
 export interface PrescriptionScan {
