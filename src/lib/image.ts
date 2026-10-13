@@ -26,3 +26,25 @@ export async function compressImage(file: File): Promise<File> {
   const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
   return new File([blob], name, { type: "image/jpeg", lastModified: Date.now() });
 }
+
+/**
+ * Downscaled JPEG data URL for AI scanning: small enough to send as JSON and for the
+ * Worker to pass straight to Workers AI without any image work of its own.
+ */
+export async function imageToDataUrl(file: File, maxBytes: number): Promise<string> {
+  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+  try {
+    for (const [side, quality] of [[1600, 0.8], [1280, 0.7], [1024, 0.6]] as const) {
+      const scale = Math.min(1, side / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      const url = canvas.toDataURL("image/jpeg", quality);
+      if (url.length <= maxBytes) return url;
+    }
+  } finally {
+    bitmap.close();
+  }
+  throw new Error("Photo is too large to scan");
+}
