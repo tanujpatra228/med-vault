@@ -15,6 +15,7 @@ import { assertRefs, crud, getOne, insertStmt, type Resource } from "./crud";
 import type { AppEnv } from "./env";
 import { deleteR2, fileIdsFor } from "./files";
 import { badRequest, notFound, readJson } from "./http";
+import { prepareMedication } from "./medication";
 import {
   allergySchema,
   conditionSchema,
@@ -36,7 +37,7 @@ const members: Resource = {
   table: "members",
   schema: memberSchema,
   select: `SELECT t.*,
-    (SELECT COUNT(*) FROM medications m WHERE m.member_id = t.id AND m.status = 'active') AS active_med_count,
+    (SELECT COUNT(*) FROM medications m WHERE m.member_id = t.id AND m.status = 'active' AND (m.end_date IS NULL OR m.end_date >= date('now'))) AS active_med_count,
     (SELECT COUNT(*) FROM allergies a WHERE a.member_id = t.id) AS allergy_count,
     (SELECT COUNT(*) FROM conditions k WHERE k.member_id = t.id AND k.status = 'active') AS active_condition_count,
     (SELECT MAX(d) FROM (
@@ -87,6 +88,7 @@ const medications: Resource = {
   orderBy: "t.status = 'stopped', COALESCE(t.start_date, substr(t.created_at, 1, 10)) DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", status: "t.status", prescription_id: "t.prescription_id" },
   fileOwner: "medication",
+  prepare: prepareMedication,
 };
 
 const prescriptions: Resource = {
@@ -221,14 +223,14 @@ prescriptionsApi.post("/", async (c) => {
   const stmts = [insertStmt(db, "prescriptions", id, vaultId, data)];
   for (const raw of rawMeds) {
     if (!raw || typeof raw !== "object") throw badRequest("Each medicine must be an object");
-    const med = validate(medicationSchema, {
+    const med = validate(medicationSchema, prepareMedication({
       start_date: data.prescribed_on,
       ...(raw as Record<string, unknown>),
       member_id: data.member_id,
       prescription_id: id,
       doctor_id: data.doctor_id,
       condition_id: data.condition_id,
-    });
+    }));
     stmts.push(insertStmt(db, "medications", crypto.randomUUID(), vaultId, med));
   }
   await db.batch(stmts);

@@ -8,11 +8,13 @@ import { EmptyState, ErrorState, Loading, Section, SectionLink } from "@/compone
 import { Row, RowList } from "@/components/Row";
 import { countWord, formatDate, plural, relativeDays } from "@/lib/format";
 import { MedRow } from "./MedicinesTab";
+import { medView } from "@/lib/meds";
+import { TodaySection } from "./TodaySection";
 
-function Statement({ s }: { s: MemberSummary }) {
+function Statement({ s, current }: { s: MemberSummary; current: Medication[] }) {
   const first = s.member.name.split(" ")[0];
-  const meds = s.medications.length;
-  const doctors = s.doctors.length;
+  const meds = current.length;
+  const doctors = new Set(current.map((m) => m.doctor_id).filter(Boolean)).size;
   if (meds === 0) return <p className="statement-lg">{first} is not taking any medicines right now.</p>;
   return (
     <p className="statement-lg">
@@ -45,11 +47,12 @@ export function SummaryTab({ memberId }: { memberId: string }) {
   if (q.isError) return <ErrorState error={q.error} retry={() => q.refetch()} />;
   const s = q.data;
   const base = `/m/${memberId}`;
+  const current = s.medications.filter((m) => medView(m).current);
 
   return (
     <div>
       <div className="pt-2 pb-8">
-        <Statement s={s} />
+        <Statement s={s} current={current} />
       </div>
 
       {/* The one rust block on the screen: allergies must never be missed. */}
@@ -73,6 +76,8 @@ export function SummaryTab({ memberId }: { memberId: string }) {
         </div>
       )}
 
+      <TodaySection meds={current} />
+
       <Section title="Health conditions" action={<SectionLink to={`${base}/health`}>All</SectionLink>}>
         {s.conditions.length ? (
           <div className="flex flex-wrap gap-2">
@@ -90,9 +95,9 @@ export function SummaryTab({ memberId }: { memberId: string }) {
       </Section>
 
       <Section title="Current medicines" action={<SectionLink to={`${base}/medicines`}>All</SectionLink>}>
-        {s.medications.length ? (
+        {current.length ? (
           <div className="flex flex-col gap-4">
-            {groupByDoctor(s.medications).map((g) => (
+            {groupByDoctor(current).map((g) => (
               <div key={g.title}>
                 <div className="mb-1.5 type-label text-ink-muted">{g.title}</div>
                 <RowList>

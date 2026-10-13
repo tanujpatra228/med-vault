@@ -73,6 +73,7 @@ public/        PWA manifest, service worker, icons
 7. **Every screen handles loading, empty and error states.** Empty states tell the user the next action.
 8. **Accessibility:** semantic elements (`button`, `a`, `label`), visible focus ring, text meaning beyond color.
 9. **Dates** are formatted with `Intl.DateTimeFormat('en-IN')` via `src/lib/format.ts`.
+10. **Doses come from the schedule.** Read a medicine's dosing with `scheduleOf()` / `medView()`, never by parsing the `dosage` text. `dosage` is a derived summary kept for display and old rows. All schedule logic (validation, wording, what is due today) lives in `shared/schedule.ts` and is unit-tested there.
 
 ## 6. PWA rules
 

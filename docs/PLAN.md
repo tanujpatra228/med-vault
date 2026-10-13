@@ -108,9 +108,9 @@ Settings  vault name, linked devices, link code, recovery key, log out, delete v
 - Prescription shorthand is normalized on the server: OD → 1-0-0, BD → 1-0-1, TDS → 1-1-1, HS → 0-0-1, SOS → As needed. Indian DD/MM/YYYY dates become YYYY-MM-DD; future or impossible dates are dropped.
 - Engine: Cloudflare Workers AI. Llama 4 Scout first, Mistral Small 3.1 as fallback. 30 scans per vault per day. Claude API stays the upgrade path if handwriting accuracy is not good enough on real prescriptions.
 
-## 5a. Next: Dosage Schedules (planned)
+## 5a. Dosage Schedules (built)
 
-Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–Fri), alternate days, tapers (1-1-0 for 4 days, then 1-½-0) and half tablets. Full plan: [DOSAGE_SCHEDULES.md](./DOSAGE_SCHEDULES.md).
+Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–Fri), alternate days, tapers (1-1-0 for 4 days, then 1-½-0) and half tablets. Each medicine shows what is due today; the member summary has a **Today's medicines** section; tapers finish on their own; AI scans read these schedules, including Hindi/Gujarati weekday names. Details: [DOSAGE_SCHEDULES.md](./DOSAGE_SCHEDULES.md).
 
 ## 6. Phase 3: Good-to-Haves
 
@@ -140,7 +140,7 @@ Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–
 | `allergies` | member_id, allergen, kind (drug/food/other), reaction, severity, noted_on, notes |
 | `conditions` | member_id, name, status (active/resolved), diagnosed_on, notes |
 | `prescriptions` | member_id, doctor_id, condition_id, prescribed_on, notes |
-| `medications` | member_id, prescription_id, doctor_id, condition_id, name, strength, form, dosage, timing, start_date, end_date, status, notes |
+| `medications` | member_id, prescription_id, doctor_id, condition_id, name, strength, form, dosage (summary text), schedule (JSON, see DOSAGE_SCHEDULES.md), timing, start_date, end_date, status, notes |
 | `reports` | member_id, doctor_id, condition_id, title, report_type, report_date, lab_name, notes |
 | `files` | member_id, owner_type, owner_id, name, mime_type, size (bytes stored in R2 under the file id) |
 | `vaults` | name, recovery_hash |

@@ -5,27 +5,38 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, Loading, Section, SectionLink } from "@/components/layout";
 import { Row, RowList } from "@/components/Row";
 import { formatDate } from "@/lib/format";
+import { medView, todayLine } from "@/lib/meds";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { Link } from "react-router";
 
 export function MedRow({ med, showDoctor = true }: { med: Medication; showDoctor?: boolean }) {
-  const stopped = med.status === "stopped";
-  const sub = [
-    med.timing,
-    showDoctor ? med.doctor_name : null,
-    stopped ? (med.end_date ? `stopped ${formatDate(med.end_date)}` : "stopped") : med.start_date ? `since ${formatDate(med.start_date)}` : null,
-  ].filter(Boolean);
+  const v = medView(med);
+  const muted = !v.current;
+  const status =
+    med.status === "stopped" ? (med.end_date ? `Stopped ${formatDate(med.end_date)}` : "Stopped") : v.finished && !v.today ? `Course finished ${formatDate(med.end_date)}` : todayLine(v);
+  const meta = [showDoctor ? med.doctor_name : null, v.current && med.start_date ? `since ${formatDate(med.start_date)}` : null].filter(Boolean).join(" · ");
   return (
     <Row
       to={`/medications/${med.id}`}
-      muted={stopped}
+      muted={muted}
       title={
-        <>
-          {med.name}
-          {med.strength && <span className="font-normal text-ink-muted"> {med.strength}</span>}
-        </>
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span className="truncate">
+            {med.name}
+            {med.strength && <span className="font-normal text-ink-muted"> {med.strength}</span>}
+          </span>
+          {v.current && v.weekly && <Badge variant="warn">Weekly</Badge>}
+          {v.current && v.taper && <Badge>Changing dose</Badge>}
+        </span>
       }
-      subtitle={sub.join(" · ") || undefined}
-      trailing={med.dosage ? <span className={`num text-[15px] font-medium ${stopped ? "text-ink-faint" : ""}`}>{med.dosage}</span> : undefined}
+      subtitle={
+        <span className="flex flex-col gap-0.5">
+          {v.doseLine && <span className={cn("num text-[13px] font-medium", muted ? "text-ink-faint" : "text-ink")}>{v.doseLine}</span>}
+          {status && <span className={cn(v.today?.kind === "due" && !muted ? "text-ink-muted" : "text-ink-faint")}>{status}</span>}
+          {meta && <span>{meta}</span>}
+        </span>
+      }
     />
   );
 }
@@ -35,8 +46,8 @@ export function MedicinesTab({ memberId }: { memberId: string }) {
   const [showStopped, setShowStopped] = useState(false);
   if (q.isPending) return <Loading />;
   if (q.isError) return <ErrorState error={q.error} retry={() => q.refetch()} />;
-  const active = q.data.filter((m) => m.status === "active");
-  const stopped = q.data.filter((m) => m.status === "stopped");
+  const active = q.data.filter((m) => medView(m).current);
+  const stopped = q.data.filter((m) => !medView(m).current);
 
   return (
     <div>
@@ -60,7 +71,7 @@ export function MedicinesTab({ memberId }: { memberId: string }) {
         )}
       </Section>
       {stopped.length > 0 && (
-        <Section title={`Stopped · ${stopped.length}`}>
+        <Section title={`Stopped or finished · ${stopped.length}`}>
           {showStopped ? (
             <RowList>
               {stopped.map((m) => (
@@ -69,7 +80,7 @@ export function MedicinesTab({ memberId }: { memberId: string }) {
             </RowList>
           ) : (
             <Button variant="secondary" className="w-full" onClick={() => setShowStopped(true)}>
-              Show {stopped.length} stopped {stopped.length === 1 ? "medicine" : "medicines"}
+              Show {stopped.length} past {stopped.length === 1 ? "medicine" : "medicines"}
             </Button>
           )}
         </Section>

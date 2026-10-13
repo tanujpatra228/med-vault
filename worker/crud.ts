@@ -15,6 +15,8 @@ export interface Resource {
   /** Query params allowed as equality filters, mapped to columns. */
   filters?: Record<string, string>;
   fileOwner?: FileOwner;
+  /** Runs on the raw body before validation (create and update). */
+  prepare?: (input: Record<string, unknown>) => Record<string, unknown>;
 }
 
 type Op = "list" | "get" | "create" | "update" | "delete";
@@ -70,7 +72,7 @@ export function crud(app: Hono<AppEnv>, r: Resource, skip: Op[] = []) {
 
   if (on("create"))
     app.post("/", async (c) => {
-      const data = validate(r.schema, await readJson(c));
+      const data = validate(r.schema, (r.prepare ?? ((x) => x))(await readJson(c)));
       await assertRefs(c.env.DB, r.schema, vault(c), data);
       const id = crypto.randomUUID();
       await insertStmt(c.env.DB, r.table, id, vault(c), data).run();
@@ -80,7 +82,7 @@ export function crud(app: Hono<AppEnv>, r: Resource, skip: Op[] = []) {
   if (on("update"))
     app.patch("/:id", async (c) => {
       const id = c.req.param("id");
-      const data = validate(r.schema, await readJson(c), true);
+      const data = validate(r.schema, (r.prepare ?? ((x) => x))(await readJson(c)), true);
       delete data.member_id; // records never move between members
       await assertRefs(c.env.DB, r.schema, vault(c), data);
       const cols = Object.keys(data);
