@@ -38,6 +38,32 @@ jobs:
           cache: npm
       - run: npm ci
 
+      # Fails fast with a precise message instead of Wrangler's generic "Authentication error".
+      - name: Verify Cloudflare credentials
+        run: |
+          api() { curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4$1"; }
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN or CLOUDFLARE_ACCOUNT_ID secret is empty or missing."; exit 1
+          fi
+          # User tokens and Account API tokens verify at different endpoints.
+          status=$(api /user/tokens/verify | jq -r '.result.status // empty')
+          [ "$status" = "active" ] || status=$(api "/accounts/$CLOUDFLARE_ACCOUNT_ID/tokens/verify" | jq -r '.result.status // empty')
+          if [ "$status" != "active" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is invalid, expired or pasted with extra characters."; exit 1
+          fi
+          missing=""
+          for check in "d1/database:D1 Edit" "workers/scripts:Workers Scripts Edit" "r2/buckets:Workers R2 Storage Edit"; do
+            path=${check%%:*}; perm=${check#*:}
+            [ "$(api "/accounts/$CLOUDFLARE_ACCOUNT_ID/$path" | jq -r '.success')" = "true" ] || missing="$missing, $perm"
+          done
+          missing=${missing#, }
+          if [ "$missing" = "D1 Edit, Workers Scripts Edit, Workers R2 Storage Edit" ]; then
+            echo "::error::Token works but cannot reach this account at all: CLOUDFLARE_ACCOUNT_ID is wrong, or the token's Account Resources do not include it."; exit 1
+          elif [ -n "$missing" ]; then
+            echo "::error::Token is missing these permissions for this account: $missing"; exit 1
+          fi
+          echo "Cloudflare token and account OK"
+
       # Creates the D1 database on the first run and injects its id into wrangler.jsonc.
       - name: Ensure D1 database
         run: |
