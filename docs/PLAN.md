@@ -108,6 +108,10 @@ Settings  vault name, linked devices, link code, recovery key, log out, delete v
 - Prescription shorthand is normalized on the server: OD → 1-0-0, BD → 1-0-1, TDS → 1-1-1, HS → 0-0-1, SOS → As needed. Indian DD/MM/YYYY dates become YYYY-MM-DD; future or impossible dates are dropped.
 - Engine: Cloudflare Workers AI. Llama 4 Scout first, Mistral Small 3.1 as fallback. 30 scans per vault per day. Claude API stays the upgrade path if handwriting accuracy is not good enough on real prescriptions.
 
+## 5a. Next: Dosage Schedules (planned)
+
+Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–Fri), alternate days, tapers (1-1-0 for 4 days, then 1-½-0) and half tablets. Full plan: [DOSAGE_SCHEDULES.md](./DOSAGE_SCHEDULES.md).
+
 ## 6. Phase 3: Good-to-Haves
 
 - **Visit brief:** one screen to show any doctor all current medicines from every doctor, allergies and recent reports. Print / save as PDF.
