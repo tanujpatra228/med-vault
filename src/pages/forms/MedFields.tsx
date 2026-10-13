@@ -13,12 +13,24 @@ export interface MedDraft {
   timing: string;
   end_date: string;
   plan: EditorState;
+  /** From an AI scan: what was written, and anything that looked wrong. Display only. */
+  scan?: { doseText: string | null; warnings: string[] };
 }
 
 export const emptyMed = (): MedDraft => ({ name: "", strength: "", form: "tablet", timing: "", end_date: "", plan: toEditor(null) });
 
 /** Draft from saved fields (or a scan). */
-export function medDraft(m: { name: string; strength?: string | null; form?: string | null; timing?: string | null; end_date?: string | null; schedule?: Schedule | null; dosage?: string | null }): MedDraft {
+export function medDraft(m: {
+  name: string;
+  strength?: string | null;
+  form?: string | null;
+  timing?: string | null;
+  end_date?: string | null;
+  schedule?: Schedule | null;
+  dosage?: string | null;
+  dose_text?: string | null;
+  warnings?: string[];
+}): MedDraft {
   return {
     name: m.name,
     strength: m.strength ?? "",
@@ -26,6 +38,7 @@ export function medDraft(m: { name: string; strength?: string | null; form?: str
     timing: m.timing ?? "",
     end_date: m.end_date ?? "",
     plan: toEditor(m.schedule ?? null, m.dosage),
+    scan: m.dose_text !== undefined || m.warnings ? { doseText: m.dose_text ?? null, warnings: m.warnings ?? [] } : undefined,
   };
 }
 
