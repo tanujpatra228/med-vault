@@ -10,7 +10,7 @@ Today a medicine has one free-text `dosage` like `1-0-1`, which assumes "every d
 |---|---|---|---|
 | 1 | Meditrex 5 mg (methotrexate) | हर शनिवार 2-0-0, हर रविवार 1-0-0 | **Weekly**: Saturday 2 in the morning, Sunday 1 in the morning, nothing on other days. 3 tablets = 15 mg per week. |
 | 2 | Homin (B6+B9+B12) | हर सोम से शुक्र 1-0-0 | **Specific days**: Monday to Friday, 1 in the morning. Nothing on weekends. |
-| 3 | Omnacortil 20 (prednisolone) | 1-1-0 for 4 days, then 1-½-0 for 3 days | **Taper**: the dose changes after a number of days. Includes a **half tablet**. |
+| 3 | Omnacortil 20 (prednisolone) | 1-1-0 for 4 days, then 1-½-0 for 3 days, after meal | **Taper**: 1 after breakfast and 1 after lunch for 4 days; then 1 after breakfast and **½** after lunch for 3 days. |
 
 These are not edge cases. Weekly methotrexate with folic acid on the other days is the standard arthritis/spondylitis regimen, and steroid tapers are routine.
 
@@ -56,12 +56,14 @@ Phase dates are counted from the medicine's `start_date`, so the app always know
 | Where | Shows |
 |---|---|
 | Medicine row (summary, medicines tab, prescription) | Compact text, e.g. `Sat 2-0-0 · Sun 1-0-0` with a **Weekly** flag; `Mon–Fri 1-0-0`; `1-1-0 → 1-½-0` with a **Taper** flag |
-| Medicine detail | Full sentence: "Saturday: 2 in the morning. Sunday: 1 in the morning. 3 tablets a week." / "1-1-0 for 4 days (until 9 Oct), then 1-½-0 for 3 days (until 12 Oct)." |
+| Medicine detail | Full sentence: "Saturday: 2 after breakfast. Sunday: 1 after breakfast. 3 tablets a week." / "Days 1–4 (until 9 Oct): 1 after breakfast, 1 after lunch. Days 5–7 (until 12 Oct): 1 after breakfast, ½ after lunch." |
 | **Today** line on every active medicine | "Today: 2 in the morning" or "Not today · next Saturday". The member summary gets a **Today's medicines** section built from this. |
 | Weekly total | "3 tablets a week" (for methotrexate, matches the doctor's "15 mg/week" check) |
 | Taper finished | Medicine automatically shows as finished after the last phase ends (no manual "stop" needed) |
 
 Half tablets display as `½` (and `1½`).
+
+**Meal-based wording.** The three dose slots are tied to meals, the way doctors write them. When the medicine's timing is "after food" / "before food", sentences use the meal: Omnacortil reads "Days 1–4: 1 after breakfast, 1 after lunch. Days 5–7: 1 after breakfast, ½ after lunch." Without a meal timing they fall back to morning / afternoon / night. The Today line follows the same rule ("Today: 1 after breakfast, ½ after lunch").
 
 ## 4. Entering a schedule
 
@@ -96,7 +98,7 @@ If the model can't get weekly or taper schedules right on real photos, this is w
 
 ## 7. Build order (feature branch + PR)
 
-1. Schedule types, validation, summary/sentence/"today" functions with unit tests (the risky logic, tested first).
+1. Schedule types, validation, summary/sentence/"today" functions (including meal-based wording) with unit tests, using this prescription's three medicines as test cases.
 2. Migration and API: accept and return `schedule`, keep `dosage` in sync.
 3. Display: medicine rows, detail, Weekly/Taper flags, Today line.
 4. Schedule editor in the medicine and prescription forms.
