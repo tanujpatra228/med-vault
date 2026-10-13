@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
 import type { Medication } from "@shared/types";
-import { useDelete, useMedication, useSave, useUploadFiles } from "@/api/hooks";
+import { useDelete, useMedication, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
+import { AiNotice, ScanButton } from "@/components/Scan";
 import { api } from "@/api/client";
 import { useQuery } from "@tanstack/react-query";
 import type { FileMeta } from "@shared/types";
@@ -41,6 +42,15 @@ export function MedicationForm() {
   });
   const [photos, setPhotos] = useState<File[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [scanned, setScanned] = useState(false);
+
+  const applyScan = (r: ScanResponse) => {
+    if (r.kind !== "medicine") return;
+    const d = r.data;
+    setMed((m) => ({ ...m, name: d.name ?? m.name, strength: d.strength ?? m.strength, form: d.form ?? m.form }));
+    if (d.notes) setExtra((x) => ({ ...x, notes: x.notes ? `${x.notes}\n${d.notes}` : d.notes! }));
+    setScanned(true);
+  };
 
   useEffect(() => {
     const m = existing.data;
@@ -87,6 +97,12 @@ export function MedicationForm() {
         <button type="button" onClick={stop} className="h-12 rounded-sm border border-rule bg-sheet type-label text-ink">
           Mark as stopped
         </button>
+      )}
+      {!medicationId && (
+        <>
+          <ScanButton kind="medicine" photos={photos} onPhoto={(file) => setPhotos((p) => [...p, file])} onResult={applyScan} />
+          {scanned && <AiNotice>Dosage and timing are not on the strip: add them from the prescription.</AiNotice>}
+        </>
       )}
       <MedFields value={med} onChange={setMed} />
       <FieldRow>

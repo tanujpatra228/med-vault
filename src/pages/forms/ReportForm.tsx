@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { REPORT_TYPES, type Report } from "@shared/types";
-import { useReport, useSave, useUploadFiles } from "@/api/hooks";
+import { useReport, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
+import { AiNotice, ScanButton } from "@/components/Scan";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
@@ -24,8 +25,20 @@ export function ReportForm() {
   const upload = useUploadFiles();
   const [photos, setPhotos] = useState<File[]>([]);
   const f = useFields({ title: "", report_type: "blood", report_date: today(), lab_name: "", doctor_id: "", condition_id: "", notes: "" });
+  const [scanned, setScanned] = useState(false);
   useLoadRecord(existing.data, f);
   if (reportId && existing.isPending) return <Loading />;
+
+  const applyScan = (r: ScanResponse) => {
+    if (r.kind !== "report") return;
+    const d = r.data;
+    if (d.title) f.set("title", d.title);
+    if (d.report_type) f.set("report_type", d.report_type);
+    if (d.report_date) f.set("report_date", d.report_date);
+    if (d.lab_name) f.set("lab_name", d.lab_name);
+    if (d.findings) f.set("notes", f.values.notes ? `${f.values.notes}\n${d.findings}` : d.findings);
+    setScanned(true);
+  };
   const memberId = newFor ?? existing.data?.member_id ?? "";
 
   return (
@@ -44,6 +57,8 @@ export function ReportForm() {
     >
       {existing.data && <FileGallery files={existing.data.files} />}
       <PhotoPicker files={photos} onChange={setPhotos} label={reportId ? "Add more pages" : "Photos or PDF of the report"} />
+      {!reportId && <ScanButton kind="report" photos={photos} onPhoto={(file) => setPhotos((p) => [...p, file])} onResult={applyScan} />}
+      {scanned && <AiNotice>Values marked as findings are a summary. The photo stays the source of truth.</AiNotice>}
       <FieldRow>
         <Field label="Type">
           <NativeSelect {...f.bind("report_type")}>

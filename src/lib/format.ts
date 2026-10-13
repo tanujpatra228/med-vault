@@ -49,3 +49,22 @@ const NUMBER_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven
 export const countWord = (n: number) => NUMBER_WORDS[n] ?? String(n);
 
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** '2026-10-05' + 5 -> '2026-10-10' (calendar days, no time zone drift). */
+export function addDays(iso: string, days: number): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Loose name match for linking AI-read names to existing records: "Dr. S. Rao" ~ "dr rao". */
+export function sameName(a: string, b: string): boolean {
+  const norm = (s: string) => s.toLowerCase().replace(/\bdr\b\.?/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const x = norm(a);
+  const y = norm(b);
+  if (!x || !y) return false;
+  if (x === y || x.includes(y) || y.includes(x)) return true;
+  // Same surname (last word) and compatible first initial, e.g. "s rao" vs "suresh rao".
+  const [xs, ys] = [x.split(" "), y.split(" ")];
+  return xs.at(-1) === ys.at(-1) && xs.length > 0 && ys.length > 0 && (xs.length === 1 || ys.length === 1 || xs[0][0] === ys[0][0]);
+}

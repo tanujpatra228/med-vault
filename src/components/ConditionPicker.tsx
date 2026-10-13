@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import type { Condition } from "@shared/types";
 import { useConditions, useSave } from "@/api/hooks";
@@ -6,14 +6,44 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { Field } from "@/components/Field";
+import { sameName } from "@/lib/format";
 
 const NEW = "__new__";
 
-export function ConditionPicker({ memberId, value, onChange, label = "For which condition" }: { memberId: string; value: string; onChange: (id: string) => void; label?: string }) {
+/** A `suggestion` (e.g. a diagnosis read by AI) selects a matching condition, or opens "new condition" prefilled. */
+export function ConditionPicker({
+  memberId,
+  value,
+  onChange,
+  label = "For which condition",
+  suggestion,
+  onDismissSuggestion,
+}: {
+  memberId: string;
+  value: string;
+  onChange: (id: string) => void;
+  label?: string;
+  suggestion?: string | null;
+  /** Called when the user cancels a suggested new condition. */
+  onDismissSuggestion?: () => void;
+}) {
   const conditions = useConditions(memberId);
   const save = useSave<Condition>("conditions");
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
+
+  useEffect(() => {
+    if (!suggestion || !conditions.data) return;
+    const match = conditions.data.find((c) => sameName(c.name, suggestion));
+    if (match) {
+      onChange(match.id);
+      setAdding(false);
+    } else {
+      setName(suggestion);
+      setAdding(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestion, conditions.isSuccess]);
 
   const create = async () => {
     if (!name.trim()) return toast.error("Condition name is required");
@@ -34,7 +64,7 @@ export function ConditionPicker({ memberId, value, onChange, label = "For which 
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Eye infection" autoFocus />
         </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Button type="button" variant="secondary" onClick={() => setAdding(false)}>
+          <Button type="button" variant="secondary" onClick={() => (setAdding(false), onDismissSuggestion?.())}>
             Cancel
           </Button>
           <Button type="button" onClick={create} disabled={save.isPending}>

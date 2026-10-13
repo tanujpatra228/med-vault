@@ -14,9 +14,12 @@ import type {
   PrescriptionDetail,
   Report,
   ReportDetail,
+  ScanKind,
+  ScanResult,
 } from "@shared/types";
+import { SCAN_MAX_DATA_URL } from "@shared/types";
 import { api } from "./client";
-import { compressImage } from "@/lib/image";
+import { compressImage, imageToDataUrl } from "@/lib/image";
 
 const qs = (params: Record<string, string | undefined>) => {
   const p = new URLSearchParams(Object.entries(params).filter((e): e is [string, string] => !!e[1]));
@@ -111,3 +114,13 @@ export function useUploadFiles() {
 }
 
 export type { Doctor };
+
+export type ScanResponse = ScanResult & { model: string; scans_left: number };
+
+/** Reads a photo with Workers AI. Results are suggestions for the form, never saved directly. */
+export function useScan() {
+  return useMutation({
+    mutationFn: async ({ kind, file }: { kind: ScanKind; file: File }) =>
+      api.post<ScanResponse>("/ai/scan", { kind, image: await imageToDataUrl(file, SCAN_MAX_DATA_URL) }),
+  });
+}

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { aiApi } from "./ai";
 import { auth, requireDevice } from "./auth";
 import type { AppEnv } from "./env";
 import { files } from "./files";
@@ -30,6 +31,7 @@ app.route("/auth", auth);
 
 app.use("*", requireDevice);
 app.route("/vault", vaultApi);
+app.route("/ai", aiApi);
 app.route("/members", membersApi);
 app.route("/doctors", doctorsApi);
 app.route("/allergies", allergiesApi);
