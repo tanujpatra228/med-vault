@@ -389,3 +389,71 @@ export function nextDayLabel(next: string, today: string): string {
 
 export const isWeekly = (s: Schedule) => s.phases.some((p) => p.pattern.type === "weekly");
 export const isTaper = (s: Schedule) => s.phases.length > 1;
+
+// ---------- written dose text -> weekly schedule ----------
+// Models transcribe text well but map Hindi/Gujarati weekdays unreliably, so weekdays in the
+// written dose text ("हर शनिवार 2-0-0 हर रविवार 1-0-0", "हर सोम से शुक्र 1-0-0") are parsed here.
+
+const DAY_WORDS: Array<[string, Weekday]> = [
+  ["monday", "mon"], ["mon", "mon"], ["tuesday", "tue"], ["tues", "tue"], ["tue", "tue"],
+  ["wednesday", "wed"], ["wed", "wed"], ["thursday", "thu"], ["thurs", "thu"], ["thur", "thu"], ["thu", "thu"],
+  ["friday", "fri"], ["fri", "fri"], ["saturday", "sat"], ["sat", "sat"], ["sunday", "sun"], ["sun", "sun"],
+  ["सोमवार", "mon"], ["सोम", "mon"], ["मंगलवार", "tue"], ["मंगल", "tue"], ["बुधवार", "wed"], ["बुध", "wed"],
+  ["गुरुवार", "thu"], ["गुरु", "thu"], ["शुक्रवार", "fri"], ["शुक्र", "fri"], ["शनिवार", "sat"], ["शनि", "sat"],
+  ["रविवार", "sun"], ["रवि", "sun"],
+  ["સોમવાર", "mon"], ["સોમ", "mon"], ["મંગળવાર", "tue"], ["મંગળ", "tue"], ["બુધવાર", "wed"], ["બુધ", "wed"],
+  ["ગુરુવાર", "thu"], ["ગુરુ", "thu"], ["શુક્રવાર", "fri"], ["શુક્ર", "fri"], ["શનિવાર", "sat"], ["શનિ", "sat"],
+  ["રવિવાર", "sun"], ["રવિ", "sun"],
+];
+const DAY_LOOKUP = new Map(DAY_WORDS);
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+// Longest words first so "saturday" wins over "sat"; Latin words must not be part of a longer word.
+const DAY_RE = [...DAY_LOOKUP.keys()]
+  .sort((a, b) => b.length - a.length)
+  .map((w) => (/^[a-z]+$/.test(w) ? `(?<![a-z])${w}(?![a-z])` : escapeRe(w)))
+  .join("|");
+const QTY_RE = String.raw`(?:\d+(?:\.\d+)?(?:\s*\d\/\d)?|\d\/\d|\d?½)`;
+const TOKEN_RE = new RegExp(`(${DAY_RE})|(${QTY_RE}\\s*[-–]\\s*${QTY_RE}\\s*[-–]\\s*${QTY_RE})`, "giu");
+const RANGE_RE = /^(से|सी|થી|to|till|until|through|[-–—])$/i;
+
+function dayRange(from: Weekday, to: Weekday): Weekday[] {
+  const out: Weekday[] = [];
+  for (let i = WEEKDAYS.indexOf(from); ; i = (i + 1) % 7) {
+    out.push(WEEKDAYS[i]);
+    if (WEEKDAYS[i] === to || out.length === 7) return out;
+  }
+}
+
+/**
+ * Weekly schedule from written dose text, or null when the text names no weekdays.
+ * Each dose applies to the days named just before it; "X से Y" / "X to Y" / "X-Y" is a range.
+ */
+export function parseDoseText(text: string | null | undefined): Schedule | null {
+  if (!text) return null;
+  const t = text.toLowerCase();
+  const days: Partial<Record<Weekday, Dose>> = {};
+  let pending: Weekday[] = [];
+  let lastDay: { day: Weekday; end: number } | null = null;
+  let sawDay = false;
+
+  for (const m of t.matchAll(TOKEN_RE)) {
+    const at = m.index ?? 0;
+    if (m[1]) {
+      const day = DAY_LOOKUP.get(m[1])!;
+      sawDay = true;
+      const between = lastDay ? t.slice(lastDay.end, at).trim() : "";
+      if (lastDay && RANGE_RE.test(between)) {
+        pending = [...pending.filter((d) => d !== lastDay!.day), ...dayRange(lastDay.day, day)];
+      } else {
+        pending.push(day);
+      }
+      lastDay = { day, end: at + m[1].length };
+    } else if (m[2]) {
+      const dose = parseDose(m[2].replace(/\s+/g, "").replace(/–/g, "-"));
+      if (dose && pending.length) for (const d of pending) days[d] = dose;
+      pending = [];
+      lastDay = null;
+    }
+  }
+  return sawDay ? normalizeSchedule({ type: "weekly", days }) : null;
+}

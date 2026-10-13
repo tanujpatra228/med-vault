@@ -108,3 +108,93 @@ describe("prescription schedules", () => {
     expect(b.schedule).toEqual({ phases: [{ days: null, pattern: { type: "daily", dose: [1, 0, 0] } }] });
   });
 });
+
+// What Llama 4 Scout actually returned for the methotrexate prescription (docs/DOSAGE_SCHEDULES.md):
+// wrong weekdays for Meditrex, Homin as daily, Omnacortil split into two concurrent medicines.
+const realScan = {
+  medications: [
+    {
+      name: "Meditrex 5mg Tablet (Methotrexate)", strength: "5mg", form: "tablet", timing: "After breakfast", duration_days: 7,
+      schedule: { type: "weekly", days: { fri: [1, 0, 0], sat: [2, 0, 0] } },
+      dose_text: "हर शनिवार 2-0-0 हर रविवार 1-0-0", frequency_text: "3 tablet per week After breakfast",
+    },
+    {
+      name: "Homin (B6+B9+B12)", form: "tablet", timing: "After Meal", duration_days: 7, dosage: "1-0-0",
+      schedule: { type: "daily", dose: [1, 0, 0] }, dose_text: "हर सोम से शुक्र 1-0-0", frequency_text: "5 days a week After Meal",
+    },
+    { name: "Omnacortil 20 Tablet DT (Prednisolone)", strength: "20mg", form: "tablet", timing: "After Meal", duration_days: 4,
+      schedule: { type: "daily", dose: [1, 1, 0] }, dose_text: "1 tablet", frequency_text: "1-1-0 After Meal" },
+    { name: "Omnacortil 20 Tablet DT (Prednisolone)", strength: "20mg", form: "tablet", timing: "After Meal", duration_days: 3,
+      schedule: { type: "daily", dose: [1, 0.5, 0] }, dose_text: null, frequency_text: "1-1/2-0 After Meal" },
+  ],
+};
+
+describe("real scan of the methotrexate prescription", () => {
+  const r = normalize("prescription", realScan);
+  const meds = r.kind === "prescription" ? r.data.medications : [];
+
+  it("corrects Meditrex weekdays from the written Hindi text", () => {
+    expect(meds[0].schedule).toEqual({ phases: [{ days: null, pattern: { type: "weekly", days: { sat: [2, 0, 0], sun: [1, 0, 0] } } }] });
+    expect(meds[0].warnings).toEqual([]);
+  });
+
+  it("corrects Homin to Monday to Friday", () => {
+    const p = meds[1].schedule?.phases[0].pattern;
+    expect(p?.type === "weekly" && Object.keys(p.days)).toEqual(["mon", "tue", "wed", "thu", "fri"]);
+    expect(meds[1].warnings).toEqual([]);
+  });
+
+  it("joins the two Omnacortil rows into one changing dose", () => {
+    expect(meds).toHaveLength(3);
+    expect(meds[2].schedule).toEqual({
+      phases: [
+        { days: 4, pattern: { type: "daily", dose: [1, 1, 0] } },
+        { days: 3, pattern: { type: "daily", dose: [1, 0.5, 0] } },
+      ],
+    });
+    expect(meds[2].duration_days).toBe(7);
+  });
+});
+
+describe("continuation rows", () => {
+  it("joins a nameless follow-on row to the medicine above", () => {
+    const r = normalize("prescription", {
+      medications: [
+        { name: "Wysolone 10", duration_days: 5, schedule: { type: "daily", dose: [2, 0, 0] } },
+        { name: null, duration_days: 5, schedule: { type: "daily", dose: [1, 0, 0] } },
+      ],
+    });
+    const meds = r.kind === "prescription" ? r.data.medications : [];
+    expect(meds).toHaveLength(1);
+    expect(meds[0].schedule?.phases.map((p) => p.days)).toEqual([5, 5]);
+  });
+
+  it("does not join different medicines or rows without a known first duration", () => {
+    const r = normalize("prescription", {
+      medications: [
+        { name: "Pan 40", schedule: { type: "daily", dose: [1, 0, 0] } },
+        { name: "Pan 40", schedule: { type: "daily", dose: [1, 0, 0] } },
+        { name: "Dolo 650", duration_days: 3, schedule: { type: "daily", dose: [1, 1, 1] } },
+      ],
+    });
+    expect(r.kind === "prescription" && r.data.medications).toHaveLength(3);
+  });
+});
+
+describe("sanity checks", () => {
+  const check = (m: Record<string, unknown>) => {
+    const r = normalize("prescription", { medications: [m] });
+    return r.kind === "prescription" ? r.data.medications[0].warnings : [];
+  };
+  it("flags methotrexate that is not weekly", () => {
+    expect(check({ name: "Folitrax 7.5", schedule: { type: "daily", dose: [1, 0, 0] } })[0]).toMatch(/once a week/);
+  });
+  it("flags a weekly frequency read as daily", () => {
+    expect(check({ name: "Homin", schedule: { type: "daily", dose: [1, 0, 0] }, frequency_text: "5 days a week" })[0]).toMatch(/every day/);
+  });
+  it("flags weekly totals and day counts that disagree with the frequency", () => {
+    const w = check({ name: "X", schedule: { type: "weekly", days: { sat: [2, 0, 0] } }, frequency_text: "3 tablet per week" });
+    expect(w[0]).toMatch(/3 per week, but these days add up to 2/);
+    expect(check({ name: "Y", schedule: { type: "weekly", days: { mon: [1, 0, 0] } }, frequency_text: "5 days a week" })[0]).toMatch(/5 days a week, but 1 day is selected/);
+  });
+});

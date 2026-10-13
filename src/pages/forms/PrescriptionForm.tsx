@@ -103,6 +103,7 @@ export function PrescriptionNew() {
                   </Button>
                 )}
               </div>
+              {m.scan && <ScanCheck scan={m.scan} />}
               <MedFields value={m} start={f.values.prescribed_on || null} onChange={(v) => setMeds(meds.map((x, j) => (j === i ? v : x)))} />
             </div>
           ))}
@@ -155,5 +156,25 @@ export function PrescriptionEdit() {
         <Textarea {...f.bind("notes")} />
       </Field>
     </FormPage>
+  );
+}
+
+/** What the prescription says for this medicine, and anything the scan found suspicious. */
+function ScanCheck({ scan }: { scan: NonNullable<MedDraft["scan"]> }) {
+  if (!scan.doseText && !scan.warnings.length) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      {scan.doseText && (
+        <p className="rounded-sm border border-rule bg-paper px-3 py-2 type-label text-ink-muted">
+          <span className="meta mr-2 text-ink-faint">Written</span>
+          <span className="text-ink">{scan.doseText}</span>
+        </p>
+      )}
+      {scan.warnings.map((w) => (
+        <p key={w} className="rounded-sm border border-rust bg-rust-surface px-3 py-2 type-label text-rust" role="alert">
+          {w}
+        </p>
+      ))}
+    </div>
   );
 }
