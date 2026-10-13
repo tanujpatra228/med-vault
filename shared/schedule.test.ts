@@ -9,6 +9,7 @@ import {
   isWeekly,
   normalizeSchedule,
   parseDose,
+  parseDoseText,
   scheduleFromDosage,
   scheduleOf,
   summary,
@@ -154,5 +155,30 @@ describe("normalizeSchedule (untrusted input)", () => {
     expect(scheduleOf({ schedule: null, dosage: "1-0-1" })).toEqual({ phases: [{ days: null, pattern: { type: "daily", dose: [1, 0, 1] } }] });
     expect(scheduleOf({ schedule: null, dosage: "2 puffs" })).toBeNull();
     expect(scheduleOf({ schedule: JSON.stringify(meditrex), dosage: "old" })).toEqual(meditrex);
+  });
+});
+
+describe("parseDoseText (written dose column)", () => {
+  it("reads the prescription's Hindi weekday doses", () => {
+    expect(parseDoseText("हर शनिवार 2-0-0 हर रविवार 1-0-0")).toEqual(meditrex);
+    expect(parseDoseText("हर सोम से शुक्र 1-0-0")).toEqual(homin);
+  });
+  it("handles line breaks, Gujarati, English and dash ranges", () => {
+    expect(parseDoseText("हर शनिवार\n2-0-0\nहर रविवार\n1-0-0")).toEqual(meditrex);
+    expect(parseDoseText("દર શનિવાર 2-0-0, દર રવિવાર 1-0-0")).toEqual(meditrex);
+    expect(parseDoseText("Every Saturday 2-0-0, every Sunday 1-0-0")).toEqual(meditrex);
+    expect(parseDoseText("Mon-Fri 1-0-0")).toEqual(homin);
+    expect(parseDoseText("Monday to Friday 1 - 0 - 0")).toEqual(homin);
+  });
+  it("supports halves and several days sharing one dose", () => {
+    expect(parseDoseText("Mon, Wed, Fri 1-1/2-0")).toEqual({
+      phases: [{ days: null, pattern: { type: "weekly", days: { mon: [1, 0.5, 0], wed: [1, 0.5, 0], fri: [1, 0.5, 0] } } }],
+    });
+  });
+  it("returns null when no weekday is written", () => {
+    expect(parseDoseText("1-1-0")).toBeNull();
+    expect(parseDoseText("1 tablet")).toBeNull();
+    expect(parseDoseText("once a month")).toBeNull();
+    expect(parseDoseText(null)).toBeNull();
   });
 });
