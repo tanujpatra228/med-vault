@@ -27,7 +27,7 @@ One Worker serves both the app and the API, so there is one deploy, one domain a
 | **R2** | Photos and PDFs | `FILES` | 10 GB storage, 1M writes/month, 10M reads/month, no egress fees | No, but **R2 must be enabled with a payment method on the account**. You are not charged while under the free limits. |
 | **workers.dev subdomain** | URL `med-vault.<account>.workers.dev` | n/a | Free | No. A custom domain is optional (domain cost only). |
 | **Cron Triggers** (Phase 3) | Reminder scheduling | n/a | Free (limited number per account) | No |
-| **Workers AI** | Reading prescription, medicine and report photos (`@cf/meta/llama-4-scout-17b-16e-instruct`, fallback `@cf/mistralai/mistral-small-3.1-24b-instruct`) | `AI` | 10,000 Neurons/day; one scan is roughly 50 to 150 Neurons | No, unless usage grows |
+| **Workers AI** | Reading prescription, medicine and report photos (`@cf/meta/llama-4-scout-17b-16e-instruct`, fallback `@cf/mistralai/mistral-small-3.1-24b-instruct`) | `AI` | 10,000 Neurons/day; a prescription scan measured **78.68 Neurons** (see below) | No, unless usage grows |
 | **Claude API** (future upgrade) | Better handwriting recognition if Workers AI is not accurate enough | secret | None | **Yes**, pay per use, not Cloudflare. Only if needed. |
 
 ### Things we chose NOT to use
@@ -51,6 +51,18 @@ Anyone with the URL can create a vault, so one deployment is shared by every fam
 | Storage per vault | 2 GB | `worker/files.ts` |
 | Link code lifetime | 10 minutes, single use | `worker/auth.ts` |
 | AI scans per vault | 30 per day | `worker/ai.ts` |
+
+### Workers AI usage (measured)
+
+| Date | Scan | Model used | Neurons |
+|---|---|---|---|
+| 2026-10-13 | Prescription (real photo, production) | `@cf/meta/llama-4-scout-17b-16e-instruct` (Llama 4 Scout 17B 16E Instruct, the primary model) | 78.68 |
+
+What it means:
+- The free 10,000 Neurons/day covers about **127 prescription scans per day** across all vaults (10,000 / 78.68).
+- At the 30-scans-per-vault daily cap, about 4 vaults can max out before the shared allowance runs out. Typical families scan a few times a week, so real headroom is much larger.
+- Beyond the free tier, Workers AI costs $0.011 per 1,000 Neurons, so one prescription scan costs about **$0.0009** (under ₹0.1).
+- Add new rows here as medicine and report scans are measured (Cloudflare dashboard → AI → Workers AI → usage).
 
 Rough capacity on the free tier: R2's 10 GB fits about 5 full vaults or many light ones (a family with 200 compressed photos uses ~100 MB). Beyond that, R2 is $0.015/GB-month.
 
