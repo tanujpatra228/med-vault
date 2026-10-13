@@ -10,6 +10,7 @@ import {
   type ScanResult,
   type ScannedMedicine,
 } from "../shared/types";
+import { normalizeSchedule, scheduleFromDosage } from "../shared/schedule";
 import type { AppEnv } from "./env";
 import { badRequest, HttpError, readJson } from "./http";
 
@@ -99,6 +100,7 @@ function medicine(raw: unknown): ScannedMedicine | null {
     strength: str(r.strength, 80),
     form: oneOf(r.form, MED_FORMS),
     dosage: dosage(r.dosage),
+    schedule: normalizeSchedule(r.schedule) ?? scheduleFromDosage(dosage(r.dosage)),
     timing: str(r.timing, 120),
     duration_days: Number.isInteger(days) && days > 0 && days <= 365 ? days : null,
   };

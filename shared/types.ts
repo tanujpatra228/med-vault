@@ -1,5 +1,7 @@
 // Types shared by the Worker API and the React app.
 
+import type { Schedule } from "./schedule";
+
 export type ID = string;
 
 export interface Member {
@@ -80,6 +82,8 @@ export interface Medication {
   strength: string | null;
   form: string | null;
   dosage: string | null;
+  /** JSON Schedule (shared/schedule.ts); read it with scheduleOf(). */
+  schedule: string | null;
   timing: string | null;
   start_date: string | null;
   end_date: string | null;
@@ -220,6 +224,7 @@ export interface ScannedMedicine {
   strength: string | null;
   form: (typeof MED_FORMS)[number] | null;
   dosage: string | null;
+  schedule: Schedule | null;
   timing: string | null;
   duration_days: number | null;
 }
