@@ -46,6 +46,14 @@ public/        PWA manifest, service worker, icons
 10. **Secrets only via `wrangler secret`** (prod) or `.dev.vars` (local, git-ignored). Never commit secrets.
 11. **Tenant isolation is non-negotiable.** Every query reads `c.get("vaultId")` and filters by `vault_id`, including updates and deletes. Every inserted row gets `vault_id`. Any id coming from the client that points at another record (member, doctor, condition, prescription) is checked to belong to the same vault (`assertRefs`). New routes must be tested with a second vault trying to read and modify the first.
 
+## 3a. AI rules
+
+1. **AI output is a suggestion.** It only ever pre-fills a form the user confirms. No endpoint saves AI output directly.
+2. **Normalize on the server.** Never trust the model's JSON: validate dates, enums and lengths in `worker/ai.ts` and drop what fails. Covered by `worker/ai.test.ts`.
+3. **Never lose a suggestion silently.** If AI proposes a new doctor or condition, the user must add or cancel it before saving.
+4. **Images go to the model as data URLs prepared in the browser.** The Worker does no image work (10 ms CPU limit).
+5. **Respect the shared allowance.** Every scan counts against the per-vault daily limit.
+
 ## 4. Database rules
 
 1. Schema changes only through a new numbered file in `migrations/`. Never edit an applied migration.
@@ -84,10 +92,13 @@ public/        PWA manifest, service worker, icons
 
 ```bash
 npm run typecheck   # zero errors
+npm test            # unit tests (vitest)
 npm run build       # must succeed
 ```
 
-Manually check any changed screen in the browser at phone width. When tests are added, `npm test` joins this list.
+Manually check any changed screen in the browser at phone width. CI runs the same three checks on every PR.
+
+Unit tests live next to the code (`*.test.ts`) and cover pure logic: parsing, normalization, matching. They run without the Workers runtime (`vitest.config.ts`).
 
 ## 9. Git workflow
 

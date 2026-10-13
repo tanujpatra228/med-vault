@@ -98,15 +98,15 @@ Settings  vault name, linked devices, link code, recovery key, log out, delete v
 
 ---
 
-## 5. Phase 2: AI-Assisted Entry
+## 5. Phase 2: AI-Assisted Entry (built)
 
-- Photo of a prescription → AI pre-fills doctor, date and medicines.
-- Photo of a medicine strip or box → AI pre-fills name, strength and form.
-- Photo of a report → AI pre-fills type, date and lab.
-- Always lands in an editable form. Nothing saves without confirmation.
-- Engine: Cloudflare Workers AI vision model first (stays on Cloudflare, free daily allowance). Fall back to the Claude API if accuracy on handwritten prescriptions is not good enough (paid, see INFRASTRUCTURE.md).
-
----
+- **Prescription photo** → AI fills date, doctor, condition, advice and every medicine (name, strength, form, dosage, timing, end date from the duration).
+- **Medicine strip/box photo** → AI fills name, strength, form and the generic name in notes.
+- **Report photo** → AI fills title, type, date, lab and a short summary of out-of-range values.
+- **Never saved automatically.** Results land in the normal form with a "Filled by AI" notice; every field stays editable.
+- Doctor and condition names are matched to existing records ("Dr. S. Rao" = "Dr Rao"); unknown ones open "add new" prefilled, and saving is blocked until the suggestion is added or cancelled, so nothing is silently dropped.
+- Prescription shorthand is normalized on the server: OD → 1-0-0, BD → 1-0-1, TDS → 1-1-1, HS → 0-0-1, SOS → As needed. Indian DD/MM/YYYY dates become YYYY-MM-DD; future or impossible dates are dropped.
+- Engine: Cloudflare Workers AI. Llama 4 Scout first, Mistral Small 3.1 as fallback. 30 scans per vault per day. Claude API stays the upgrade path if handwriting accuracy is not good enough on real prescriptions.
 
 ## 6. Phase 3: Good-to-Haves
 

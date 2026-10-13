@@ -11,6 +11,7 @@ A private vault for your whole family's medical records: current medicines, pres
 - **Allergies & conditions**, **doctors directory** with tap-to-call.
 - Camera capture with in-browser image compression.
 - **No signup:** anyone with the URL creates their own vault in one tap. Link more phones with a one-time code; a recovery key restores access.
+- **AI-assisted entry:** photograph a prescription, medicine strip or report and the form fills itself in (Cloudflare Workers AI). You check and save.
 - Installable on the Android home screen.
 
 What comes next is in [docs/PLAN.md](docs/PLAN.md).
@@ -24,6 +25,7 @@ React + Vite + TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Query, React Rou
 ```bash
 npm install
 npm run db:migrate:local
+echo AI_MOCK=1 > .dev.vars           # optional: canned AI scan results locally
 npm run dev                           # http://localhost:5173
 ```
 
@@ -39,6 +41,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 |---|---|
 | `npm run dev` | Local dev server (app + API) |
 | `npm run typecheck` | TypeScript across app, worker and config |
+| `npm test` | Unit tests (vitest) |
 | `npm run build` | Production build |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |
 | `npm run deploy` | Build and deploy from your machine |
