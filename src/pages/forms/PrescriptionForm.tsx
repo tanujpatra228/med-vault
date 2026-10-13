@@ -5,6 +5,7 @@ import { Plus, X } from "lucide-react";
 import { useCreatePrescription, usePrescription, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
 import type { Prescription } from "@shared/types";
 import { AiNotice, ScanButton } from "@/components/Scan";
+import { OtherDiagnoses } from "@/components/OtherDiagnoses";
 import type { DoctorSuggestion } from "@/components/DoctorPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ export function PrescriptionNew() {
   const [scanned, setScanned] = useState(false);
   const [doctorHint, setDoctorHint] = useState<DoctorSuggestion | null>(null);
   const [conditionHint, setConditionHint] = useState<string | null>(null);
+  const [otherDiagnoses, setOtherDiagnoses] = useState<string[]>([]);
 
   // AI fills what it could read; everything stays editable and nothing is saved until "Save".
   const applyScan = (r: ScanResponse) => {
@@ -43,6 +45,7 @@ export function PrescriptionNew() {
     if (d.notes) f.set("notes", f.values.notes ? `${f.values.notes}\n${d.notes}` : d.notes);
     if (d.doctor_name) setDoctorHint({ name: d.doctor_name, specialty: d.doctor_specialty });
     if (d.condition) setConditionHint(d.condition);
+    setOtherDiagnoses(d.conditions.slice(1));
     if (d.medications.length) {
       const read: MedDraft[] = d.medications.map((m) =>
         medDraft({
@@ -89,6 +92,7 @@ export function PrescriptionNew() {
         <Input type="date" {...f.bind("prescribed_on")} max={today()} />
       </Field>
       <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} suggestion={conditionHint} onDismissSuggestion={() => setConditionHint(null)} />
+      <OtherDiagnoses memberId={memberId} names={otherDiagnoses} />
 
       <div className="mt-4 border-t border-rule pt-5">
         <Eyebrow className="mb-4">Medicines on this prescription · {meds.filter((m) => m.name.trim()).length}</Eyebrow>
