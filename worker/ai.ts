@@ -35,7 +35,19 @@ This is a doctor's prescription. Return:
  "medications": [{"name": string (brand or generic as written, without the Tab/Cap prefix),
    "strength": string|null (e.g. "500 mg"), "form": one of ${JSON.stringify(MED_FORMS)} or null,
    "dosage": string|null (morning-afternoon-night like "1-0-1"; convert OD="1-0-0", BD="1-0-1", TDS="1-1-1", HS="0-0-1", SOS="As needed"),
-   "timing": string|null (e.g. "After food"), "duration_days": number|null}]}`,
+   "schedule": SCHEDULE|null, "timing": string|null (e.g. "After food"), "duration_days": number|null}]}
+
+SCHEDULE describes how often and how much. A dose is [morning, afternoon, night] (or breakfast, lunch, dinner); halves allowed, e.g. "1-1/2-0" = [1, 0.5, 0].
+- Every day: {"type":"daily","dose":[1,0,1]}
+- Only on some weekdays: {"type":"weekly","days":{"sat":[2,0,0],"sun":[1,0,0]}} (keys: mon tue wed thu fri sat sun; leave out days with nothing)
+- Every N days ("alternate days" = 2): {"type":"interval","every":2,"dose":[1,0,0]}
+- When needed (SOS): {"type":"as_needed","note":string|null}
+- Dose that changes over time (taper; an arrow or "then" between lines of the same medicine, often in the next table row):
+  {"phases":[{"days":4,"pattern":{"type":"daily","dose":[1,1,0]}},{"days":3,"pattern":{"type":"daily","dose":[1,0.5,0]}}]}
+Weekday words may be in Hindi or Gujarati: सोम/સોમ=mon, मंगल/મંગળ=tue, बुध/બુધ=wed, गुरु/ગુરુ=thu, शुक्र/શુક્ર=fri, शनि/शनिवार/શનિ=sat, रवि/रविवार/રવિ=sun.
+"हर"/"દર" = every; "से"/"થી" between two days = that range (हर सोम से शुक्र = mon, tue, wed, thu, fri).
+Use the Frequency column ("3 tablet per week", "5 days a week") to check your schedule. Methotrexate is normally weekly: never make it daily unless clearly written.
+For a simple course ("1-0-1 for 5 days") use a daily schedule plus duration_days, not phases.`,
   medicine: `${COMMON}
 This is a photo of a medicine strip, bottle or box. Return:
 {"name": string|null (brand name as printed), "strength": string|null (e.g. "10 mg"),
@@ -154,14 +166,19 @@ export function parseJsonObject(reply: unknown): Record<string, unknown> | null 
 
 const MOCKS: Record<ScanKind, Record<string, unknown>> = {
   prescription: {
-    doctor_name: "Dr. S. Rao",
-    doctor_specialty: "Ophthalmologist",
+    doctor_name: "Dr. Hetal Vyas",
+    doctor_specialty: "Rheumatologist",
     prescribed_on: "05/10/2026",
-    condition: "Conjunctivitis",
-    notes: "Review after 1 week. Avoid rubbing eyes.",
+    condition: "Ankylosing spondylitis",
+    notes: "To start MTX 15 mg/week.",
     medications: [
+      { name: "Meditrex 5mg Tablet", strength: "5 mg", form: "tablet", dosage: null, timing: "After breakfast", duration_days: 7,
+        schedule: { type: "weekly", days: { "शनिवार": "2-0-0", sunday: [1, 0, 0] } } },
+      { name: "Homin", strength: null, form: "tablet", dosage: "1-0-0", timing: "After meal", duration_days: 7,
+        schedule: { type: "weekly", days: { mon: [1, 0, 0], tue: [1, 0, 0], wed: [1, 0, 0], thu: [1, 0, 0], fri: [1, 0, 0] } } },
+      { name: "Omnacortil 20 Tablet DT", strength: "20 mg", form: "tablet", dosage: "1-1-0", timing: "After meal", duration_days: 7,
+        schedule: { phases: [{ days: 4, pattern: { type: "daily", dose: [1, 1, 0] } }, { days: 3, pattern: { type: "daily", dose: "1-1/2-0" } }] } },
       { name: "Tab. Moxicip", strength: "400 mg", form: "tablet", dosage: "BD", timing: "After food", duration_days: 5 },
-      { name: "Refresh Tears", strength: null, form: "drops", dosage: "1-1-1", timing: null, duration_days: 30 },
     ],
   },
   medicine: { name: "Dolo 650", strength: "650 mg", form: "tablet", notes: "Paracetamol, Micro Labs" },

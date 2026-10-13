@@ -81,3 +81,30 @@ describe("dosage", () => {
     expect(dosage(null)).toBeNull();
   });
 });
+
+describe("prescription schedules", () => {
+  const scan = (raw: Record<string, unknown>) => {
+    const r = normalize("prescription", raw);
+    if (r.kind !== "prescription") throw new Error("wrong kind");
+    return r.data.medications;
+  };
+
+  it("keeps a weekly schedule with Hindi day names and string doses", () => {
+    const [m] = scan({ medications: [{ name: "Meditrex", schedule: { type: "weekly", days: { "शनिवार": "2-0-0", sunday: [1, 0, 0] } } }] });
+    expect(m.schedule).toEqual({ phases: [{ days: null, pattern: { type: "weekly", days: { sat: [2, 0, 0], sun: [1, 0, 0] } } }] });
+  });
+
+  it("keeps a taper with a half tablet", () => {
+    const [m] = scan({
+      medications: [{ name: "Omnacortil", schedule: { phases: [{ days: 4, pattern: { type: "daily", dose: [1, 1, 0] } }, { days: 3, pattern: { type: "daily", dose: "1-1/2-0" } }] } }],
+    });
+    expect(m.schedule?.phases.map((p) => p.days)).toEqual([4, 3]);
+    expect(m.schedule?.phases[1].pattern).toEqual({ type: "daily", dose: [1, 0.5, 0] });
+  });
+
+  it("falls back to the dosage when the schedule is missing or broken", () => {
+    const [a, b] = scan({ medications: [{ name: "A", dosage: "BD" }, { name: "B", dosage: "1-0-0", schedule: { type: "weekly", days: { funday: [1, 0, 0] } } }] });
+    expect(a.schedule).toEqual({ phases: [{ days: null, pattern: { type: "daily", dose: [1, 0, 1] } }] });
+    expect(b.schedule).toEqual({ phases: [{ days: null, pattern: { type: "daily", dose: [1, 0, 0] } }] });
+  });
+});
