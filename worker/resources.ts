@@ -37,7 +37,7 @@ const members: Resource = {
   table: "members",
   schema: memberSchema,
   select: `SELECT t.*,
-    (SELECT COUNT(*) FROM medications m WHERE m.member_id = t.id AND m.status = 'active') AS active_med_count,
+    (SELECT COUNT(*) FROM medications m WHERE m.member_id = t.id AND m.status = 'active' AND (m.end_date IS NULL OR m.end_date >= date('now'))) AS active_med_count,
     (SELECT COUNT(*) FROM allergies a WHERE a.member_id = t.id) AS allergy_count,
     (SELECT COUNT(*) FROM conditions k WHERE k.member_id = t.id AND k.status = 'active') AS active_condition_count,
     (SELECT MAX(d) FROM (
