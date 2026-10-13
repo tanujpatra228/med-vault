@@ -1,5 +1,6 @@
 import { Link } from "react-router";
-import { Phone } from "lucide-react";
+import { ClipboardList, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Medication, MemberSummary } from "@shared/types";
 import { REPORT_TYPES } from "@shared/types";
 import { useSummary } from "@/api/hooks";
@@ -53,6 +54,11 @@ export function SummaryTab({ memberId }: { memberId: string }) {
     <div>
       <div className="pt-2 pb-8">
         <Statement s={s} current={current} />
+        <Button asChild variant="secondary" className="mt-5 w-full">
+          <Link to={`${base}/brief`}>
+            <ClipboardList /> Visit brief for the doctor
+          </Link>
+        </Button>
       </div>
 
       {/* The one rust block on the screen: allergies must never be missed. */}
