@@ -1,6 +1,6 @@
 # Plan: Dosage Schedules (weekly, specific days, tapers, half tablets)
 
-Status: **planned**. Next module after AI-assisted entry.
+Status: **built**. Code: `shared/schedule.ts` (model, validation, wording, today), `src/components/ScheduleEditor.tsx`, `src/pages/member/TodaySection.tsx`, migration `0002`.
 
 ## 1. Why
 
