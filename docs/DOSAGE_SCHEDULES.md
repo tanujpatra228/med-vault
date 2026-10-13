@@ -87,7 +87,14 @@ The scan prompt asks the model for this schedule structure instead of a single d
 
 The server validates the schedule (known weekdays, doses 0–10 in ½ steps, 1–10 phases, phase lengths 1–365) and falls back to the plain text if it is malformed. As always, the result only fills the editor; the user confirms.
 
-If the model can't get weekly or taper schedules right on real photos, this is where switching to the Claude API pays off.
+**Lesson from the first real scan (13 Oct 2026, Llama 4 Scout):** the model read the text correctly but structured it wrongly: Meditrex became Fri 1-0-0 / Sat 2-0-0 (should be Sat 2-0-0 / Sun 1-0-0), Homin became daily (should be Mon–Fri), and the Omnacortil taper became two separate medicines. So structure no longer depends on the model:
+
+1. The model also returns `dose_text` and `frequency_text`: the cells copied exactly as written. `parseDoseText()` (`shared/schedule.ts`) reads weekdays and ranges from that text in code, in Hindi, Gujarati and English, and overrides the model's schedule.
+2. `mergeContinuations()` (`worker/ai.ts`) joins a follow-on row (same name or no name) into one changing-dose schedule, using each row's duration.
+3. `checkMedicine()` warns when methotrexate is not weekly, a weekly frequency was read as daily, or weekly totals / day counts disagree with the frequency.
+4. The form shows "Written: …" and warnings under each scanned medicine.
+
+These are covered by tests that replay the model's actual output. If accuracy is still not good enough, switching to the Claude API is the next step.
 
 ## 6. Data and compatibility
 
