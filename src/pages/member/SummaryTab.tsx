@@ -9,6 +9,7 @@ import { Row, RowList } from "@/components/Row";
 import { countWord, formatDate, plural, relativeDays } from "@/lib/format";
 import { MedRow } from "./MedicinesTab";
 import { medView } from "@/lib/meds";
+import { TodaySection } from "./TodaySection";
 
 function Statement({ s, current }: { s: MemberSummary; current: Medication[] }) {
   const first = s.member.name.split(" ")[0];
@@ -74,6 +75,8 @@ export function SummaryTab({ memberId }: { memberId: string }) {
           <SectionLink to={`${base}/allergies/new`}>Add allergy</SectionLink>
         </div>
       )}
+
+      <TodaySection meds={current} />
 
       <Section title="Health conditions" action={<SectionLink to={`${base}/health`}>All</SectionLink>}>
         {s.conditions.length ? (
