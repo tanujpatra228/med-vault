@@ -205,3 +205,39 @@
 svg.lucide {
   stroke-width: 1.75px;
 }
+
+/* Printing (Visit brief → Print / PDF): always the light palette, no app chrome. */
+@media print {
+  :root {
+    --paper: #ffffff;
+    --sheet: #ffffff;
+    --rule: #cfc9bd;
+    --rule-soft: #e6e1d7;
+    --ink: #000000;
+    --ink-muted: #2b2533;
+    --ink-faint: #4a4358;
+    --iris: #5b34d6;
+    --iris-surface: #ede7fd;
+    --rust: #8a3508;
+    --rust-surface: #f7eae2;
+    --moss: #1f6b4f;
+    --moss-surface: #e6f1ec;
+    color-scheme: light;
+  }
+  [data-print-hide],
+  [data-slot="drawer-content"],
+  section[aria-label="Notifications"] {
+    display: none !important;
+  }
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  @page {
+    margin: 14mm;
+  }
+}
