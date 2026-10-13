@@ -18,7 +18,8 @@ import { FileGallery } from "@/components/FileGallery";
 import { Eyebrow, Loading } from "@/components/layout";
 import { addDays, today } from "@/lib/format";
 import { toPayload, useFields, useLoadRecord } from "@/lib/useFields";
-import { emptyMed, MedFields, type MedDraft } from "./MedFields";
+import { emptyMed, medDraft, medPayload, MedFields, type MedDraft } from "./MedFields";
+import { totalDays } from "@shared/schedule";
 
 /** New prescription: photos, doctor, date and every medicine on it, saved in one go. */
 export function PrescriptionNew() {
@@ -43,14 +44,14 @@ export function PrescriptionNew() {
     if (d.doctor_name) setDoctorHint({ name: d.doctor_name, specialty: d.doctor_specialty });
     if (d.condition) setConditionHint(d.condition);
     if (d.medications.length) {
-      const read: MedDraft[] = d.medications.map((m) => ({
-        name: m.name,
-        strength: m.strength ?? "",
-        form: m.form ?? "tablet",
-        dosage: m.dosage ?? "",
-        timing: m.timing ?? "",
-        end_date: m.duration_days ? addDays(date, m.duration_days) : "",
-      }));
+      const read: MedDraft[] = d.medications.map((m) =>
+        medDraft({
+          ...m,
+          form: m.form ?? "tablet",
+          // A fixed-length schedule (taper) carries its own end; otherwise use the written duration.
+          end_date: m.duration_days && !(m.schedule && totalDays(m.schedule)) ? addDays(date, m.duration_days - 1) : null,
+        }),
+      );
       setMeds((current) => [...current.filter((m) => m.name.trim()), ...read]);
     }
     setScanned(true);
@@ -65,7 +66,7 @@ export function PrescriptionNew() {
     const p = await create.mutateAsync({
       member_id: memberId,
       ...(toPayload(f.values) as { prescribed_on: string }),
-      medications: filled.map((m) => ({ ...toPayload({ ...m }), name: m.name.trim() })),
+      medications: filled.map(medPayload),
     });
     if (photos.length) {
       try {
@@ -102,7 +103,7 @@ export function PrescriptionNew() {
                   </Button>
                 )}
               </div>
-              <MedFields value={m} onChange={(v) => setMeds(meds.map((x, j) => (j === i ? v : x)))} />
+              <MedFields value={m} start={f.values.prescribed_on || null} onChange={(v) => setMeds(meds.map((x, j) => (j === i ? v : x)))} />
             </div>
           ))}
           <Button type="button" variant="secondary" onClick={() => setMeds([...meds, emptyMed()])}>

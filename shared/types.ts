@@ -168,7 +168,7 @@ export interface MemberSummary {
   doctors: Array<Pick<Doctor, "id" | "name" | "specialty" | "phone"> & { med_count: number }>;
 }
 
-export type MedicationInput = Partial<Omit<Medication, "id" | "created_at" | "updated_at">> & { name: string };
+export type MedicationInput = Partial<Omit<Medication, "id" | "created_at" | "updated_at" | "schedule">> & { name: string; schedule?: Schedule | null };
 
 export interface PrescriptionCreateInput {
   member_id: ID;

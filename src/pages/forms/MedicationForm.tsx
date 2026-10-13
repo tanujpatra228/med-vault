@@ -19,7 +19,8 @@ import { FileGallery } from "@/components/FileGallery";
 import { Loading } from "@/components/layout";
 import { today } from "@/lib/format";
 import { toPayload } from "@/lib/useFields";
-import { emptyMed, MedFields, type MedDraft } from "./MedFields";
+import { emptyMed, medDraft, medPayload, MedFields, type MedDraft } from "./MedFields";
+import { scheduleOf } from "@shared/schedule";
 import { ScheduleDetails } from "@/components/ScheduleDetails";
 import { Badge } from "@/components/ui/badge";
 import { medView, todayLine } from "@/lib/meds";
@@ -59,7 +60,7 @@ export function MedicationForm() {
     const m = existing.data;
     if (!m || loaded) return;
     const s = (v: string | null) => v ?? "";
-    setMed({ name: m.name, strength: s(m.strength), form: s(m.form) || "other", dosage: s(m.dosage), timing: s(m.timing), end_date: s(m.end_date) });
+    setMed(medDraft({ ...m, form: m.form ?? "other", schedule: scheduleOf(m) }));
     setExtra({ doctor_id: s(m.doctor_id), condition_id: s(m.condition_id), prescription_id: s(m.prescription_id), start_date: s(m.start_date), status: m.status, notes: s(m.notes) });
     setLoaded(true);
   }, [existing.data, loaded]);
@@ -76,7 +77,7 @@ export function MedicationForm() {
       heading={medicationId ? med.name || "Medicine" : "Add a medicine"}
       onSubmit={async () => {
         if (!med.name.trim()) throw new Error("Medicine name is required");
-        const data: Record<string, string | null> = { ...toPayload({ ...med, ...extra }), member_id: memberId };
+        const data: Record<string, unknown> = { ...toPayload(extra), ...medPayload(med), member_id: memberId };
         if (data.status === "stopped" && !data.end_date) data.end_date = today();
         const saved = await save.mutateAsync({ id: medicationId, data });
         if (photos.length) await upload.mutateAsync({ ownerType: "medication", ownerId: saved.id, files: photos });
@@ -108,7 +109,7 @@ export function MedicationForm() {
           {scanned && <AiNotice>Dosage and timing are not on the strip: add them from the prescription.</AiNotice>}
         </>
       )}
-      <MedFields value={med} onChange={setMed} />
+      <MedFields value={med} onChange={setMed} start={extra.start_date || null} />
       <FieldRow>
         <Field label="Started on">
           <Input type="date" value={extra.start_date} onChange={(e) => setExtra({ ...extra, start_date: e.target.value })} />
