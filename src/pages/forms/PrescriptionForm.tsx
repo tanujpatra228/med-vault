@@ -2,8 +2,10 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { Plus, X } from "lucide-react";
-import { useCreatePrescription, usePrescription, useSave, useUploadFiles } from "@/api/hooks";
+import { useCreatePrescription, usePrescription, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
 import type { Prescription } from "@shared/types";
+import { AiNotice, ScanButton } from "@/components/Scan";
+import type { DoctorSuggestion } from "@/components/DoctorPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +16,7 @@ import { ConditionPicker } from "@/components/ConditionPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { FileGallery } from "@/components/FileGallery";
 import { Eyebrow, Loading } from "@/components/layout";
-import { today } from "@/lib/format";
+import { addDays, today } from "@/lib/format";
 import { toPayload, useFields, useLoadRecord } from "@/lib/useFields";
 import { emptyMed, MedFields, type MedDraft } from "./MedFields";
 
@@ -27,8 +29,37 @@ export function PrescriptionNew() {
   const f = useFields({ doctor_id: "", condition_id: "", prescribed_on: today(), notes: "" });
   const [meds, setMeds] = useState<MedDraft[]>([emptyMed()]);
   const [photos, setPhotos] = useState<File[]>([]);
+  const [scanned, setScanned] = useState(false);
+  const [doctorHint, setDoctorHint] = useState<DoctorSuggestion | null>(null);
+  const [conditionHint, setConditionHint] = useState<string | null>(null);
+
+  // AI fills what it could read; everything stays editable and nothing is saved until "Save".
+  const applyScan = (r: ScanResponse) => {
+    if (r.kind !== "prescription") return;
+    const d = r.data;
+    const date = d.prescribed_on ?? f.values.prescribed_on;
+    if (d.prescribed_on) f.set("prescribed_on", d.prescribed_on);
+    if (d.notes) f.set("notes", f.values.notes ? `${f.values.notes}\n${d.notes}` : d.notes);
+    if (d.doctor_name) setDoctorHint({ name: d.doctor_name, specialty: d.doctor_specialty });
+    if (d.condition) setConditionHint(d.condition);
+    if (d.medications.length) {
+      const read: MedDraft[] = d.medications.map((m) => ({
+        name: m.name,
+        strength: m.strength ?? "",
+        form: m.form ?? "tablet",
+        dosage: m.dosage ?? "",
+        timing: m.timing ?? "",
+        end_date: m.duration_days ? addDays(date, m.duration_days) : "",
+      }));
+      setMeds((current) => [...current.filter((m) => m.name.trim()), ...read]);
+    }
+    setScanned(true);
+  };
 
   const submit = async () => {
+    // An AI-suggested doctor/condition waiting in its "add new" box would otherwise be silently dropped.
+    if (doctorHint && !f.values.doctor_id) throw new Error(`Tap "Add doctor" to keep ${doctorHint.name}, or "Cancel" to skip`);
+    if (conditionHint && !f.values.condition_id) throw new Error(`Tap "Add condition" to keep ${conditionHint}, or "Cancel" to skip`);
     const filled = meds.filter((m) => m.name.trim());
     if (!filled.length && !photos.length) throw new Error("Add a photo or at least one medicine");
     const p = await create.mutateAsync({
@@ -50,11 +81,13 @@ export function PrescriptionNew() {
   return (
     <FormPage title="New prescription" heading="Add a prescription" onSubmit={submit} submitLabel="Save prescription">
       <PhotoPicker files={photos} onChange={setPhotos} label="Photo of the prescription" />
-      <DoctorPicker value={f.values.doctor_id} onChange={(id) => f.set("doctor_id", id)} />
+      <ScanButton kind="prescription" photos={photos} onPhoto={(file) => setPhotos((p) => [...p, file])} onResult={applyScan} />
+      {scanned && <AiNotice />}
+      <DoctorPicker value={f.values.doctor_id} onChange={(id) => f.set("doctor_id", id)} suggestion={doctorHint} onDismissSuggestion={() => setDoctorHint(null)} />
       <Field label="Date on prescription" required>
         <Input type="date" {...f.bind("prescribed_on")} max={today()} />
       </Field>
-      <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} />
+      <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} suggestion={conditionHint} onDismissSuggestion={() => setConditionHint(null)} />
 
       <div className="mt-4 border-t border-rule pt-5">
         <Eyebrow className="mb-4">Medicines on this prescription · {meds.filter((m) => m.name.trim()).length}</Eyebrow>
