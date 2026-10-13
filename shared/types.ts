@@ -210,3 +210,48 @@ export interface LinkCode {
   code: string;
   expires_at: string;
 }
+
+// ---------- AI capture (Phase 2) ----------
+
+export type ScanKind = "prescription" | "medicine" | "report";
+
+export interface ScannedMedicine {
+  name: string;
+  strength: string | null;
+  form: (typeof MED_FORMS)[number] | null;
+  dosage: string | null;
+  timing: string | null;
+  duration_days: number | null;
+}
+
+export interface PrescriptionScan {
+  doctor_name: string | null;
+  doctor_specialty: string | null;
+  prescribed_on: string | null;
+  condition: string | null;
+  notes: string | null;
+  medications: ScannedMedicine[];
+}
+
+export interface MedicineScan {
+  name: string | null;
+  strength: string | null;
+  form: (typeof MED_FORMS)[number] | null;
+  notes: string | null;
+}
+
+export interface ReportScan {
+  title: string | null;
+  report_type: ReportType | null;
+  report_date: string | null;
+  lab_name: string | null;
+  findings: string | null;
+}
+
+export type ScanResult =
+  | { kind: "prescription"; data: PrescriptionScan }
+  | { kind: "medicine"; data: MedicineScan }
+  | { kind: "report"; data: ReportScan };
+
+/** Max data-URL length accepted by /api/ai/scan (~1.5 MB of base64). */
+export const SCAN_MAX_DATA_URL = 1_500_000;
