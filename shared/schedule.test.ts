@@ -130,6 +130,10 @@ describe("normalizeSchedule (untrusted input)", () => {
   it("accepts a bare pattern and day names in any form", () => {
     expect(normalizeSchedule({ type: "weekly", days: { Saturday: "2-0-0", SUN: [1, 0, 0] } })).toEqual(meditrex);
   });
+  it("accepts Hindi and Gujarati day names", () => {
+    const s = normalizeSchedule({ type: "weekly", days: { "शनिवार": [2, 0, 0], "રવિવાર": [1, 0, 0] } });
+    expect(s).toEqual(meditrex);
+  });
   it("accepts JSON text", () => expect(normalizeSchedule(JSON.stringify(omnacortil))).toEqual(omnacortil));
   it("drops phases after an open-ended one", () => {
     const s = normalizeSchedule({ phases: [{ days: null, pattern: { type: "daily", dose: [1, 0, 0] } }, { days: 3, pattern: { type: "daily", dose: [1, 0, 1] } }] });

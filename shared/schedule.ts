@@ -76,9 +76,22 @@ export function parseDose(raw: unknown): Dose | null {
 
 // ---------- validation ----------
 
+// Day names as written on Indian prescriptions (Hindi / Gujarati), matched by prefix.
+const INDIC_DAYS: Array<[string, Weekday]> = [
+  ["सोम", "mon"], ["સોમ", "mon"],
+  ["मंगल", "tue"], ["મંગળ", "tue"],
+  ["बुध", "wed"], ["બુધ", "wed"],
+  ["गुरु", "thu"], ["बृहस्पति", "thu"], ["ગુરુ", "thu"],
+  ["शुक्र", "fri"], ["શુક્ર", "fri"],
+  ["शनि", "sat"], ["શનિ", "sat"],
+  ["रवि", "sun"], ["ravi", "sun"], ["રવિ", "sun"],
+];
+
 function weekdayKey(raw: string): Weekday | null {
-  const s = raw.trim().toLowerCase().slice(0, 3);
-  return (WEEKDAYS as readonly string[]).includes(s) ? (s as Weekday) : null;
+  const t = raw.trim().toLowerCase();
+  const s = t.slice(0, 3);
+  if ((WEEKDAYS as readonly string[]).includes(s)) return s as Weekday;
+  return INDIC_DAYS.find(([word]) => t.startsWith(word))?.[1] ?? null;
 }
 
 function cleanPattern(raw: unknown): Pattern | null {
