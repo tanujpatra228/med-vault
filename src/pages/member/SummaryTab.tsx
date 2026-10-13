@@ -82,8 +82,9 @@ export function SummaryTab({ memberId }: { memberId: string }) {
         {s.conditions.length ? (
           <div className="flex flex-wrap gap-2">
             {s.conditions.map((c) => (
-              <Link key={c.id} to={`/conditions/${c.id}`}>
-                <Badge variant="neutral" className="h-8 px-3 type-label">
+              <Link key={c.id} to={`/conditions/${c.id}`} className="max-w-full">
+                {/* Condition names can be long ("Ankylosing spondylitis, ..."): let the chip wrap instead of widening the page. */}
+                <Badge variant="neutral" className="h-auto min-h-8 max-w-full shrink py-1 px-3 text-left type-label whitespace-normal [overflow-wrap:anywhere]">
                   {c.name}
                 </Badge>
               </Link>

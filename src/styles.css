@@ -176,6 +176,12 @@
   html {
     -webkit-tap-highlight-color: transparent;
   }
+  /* Guard: a long word or chip must never make the whole page scroll sideways on a phone.
+     `clip` (unlike `hidden`) keeps sticky headers working. */
+  html,
+  body {
+    overflow-x: clip;
+  }
   body {
     @apply bg-paper text-ink font-sans type-body antialiased;
     min-height: 100dvh;
