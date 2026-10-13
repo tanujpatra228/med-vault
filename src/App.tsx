@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Loading } from "@/components/layout";
 import { Welcome } from "@/pages/Welcome";
 import { SettingsPage } from "@/pages/Settings";
+import { VisitBrief } from "@/pages/VisitBrief";
 import { Home } from "@/pages/Home";
 import { MemberPage } from "@/pages/Member";
 import { PrescriptionDetail } from "@/pages/PrescriptionDetail";
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
       { path: "/m/:memberId/reports/new", element: <ReportForm /> },
       { path: "/m/:memberId/allergies/new", element: <AllergyForm /> },
       { path: "/m/:memberId/conditions/new", element: <ConditionForm /> },
+      { path: "/m/:memberId/brief", element: <VisitBrief /> },
       { path: "/m/:memberId/:tab?", element: <MemberPage /> },
       { path: "/prescriptions/:prescriptionId", element: <PrescriptionDetail /> },
       { path: "/prescriptions/:prescriptionId/edit", element: <PrescriptionEdit /> },
