@@ -23,5 +23,6 @@
       "bucket_name": "med-vault-files"
     }
   ],
+  "ai": { "binding": "AI" },
   "observability": { "enabled": true }
 }
