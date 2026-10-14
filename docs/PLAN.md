@@ -114,6 +114,8 @@ Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–
 
 ## 6. Phase 3: Good-to-Haves
 
+Build order and status: [TODO.md](./TODO.md).
+
 - ~~**Visit brief**~~ **(built):** one screen to show any doctor: allergies, conditions, every current medicine from every doctor with its schedule, medicines stopped in the last 90 days, recent reports, treating doctors. Print / save as PDF (always light), or share as WhatsApp-friendly text. Opened from the member summary or the clipboard icon on the profile.
 - **Reminders:** dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers.
 - **"Ask your doctor" hints:** AI looks at all active medicines across doctors and lists possible interactions as questions for the next visit. Advisory only, clearly labelled.
