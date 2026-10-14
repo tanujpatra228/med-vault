@@ -48,6 +48,7 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
           <li>Photos and PDFs you upload, and doctors' names and contact details.</li>
           <li>Security data: phone keys and the recovery key, stored only as one-way fingerprints.</li>
           <li>An email address, only if you add one for security notices.</li>
+          <li>If you turn on reminders: the phone's push address, time zone and reminder settings, and which reminders were sent in the last 3 days.</li>
           <li>Your internet (IP) address for up to 2 days, only to stop abuse such as mass vault creation; and a count of AI use per vault.</li>
         </ul>
         <p>No account, phone number, Aadhaar or payment details are asked for. No advertising, no tracking, no analytics, and your data is never sold.</p>
@@ -69,6 +70,13 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
           until you tap Save.
         </p>
         <p>AI is off until you allow it, and you can switch it off any time in Settings. Everything works without it.</p>
+      </Part>
+
+      <Part title="Reminders (optional)">
+        <p>
+          If you turn on reminders on a phone, Med Vault keeps that phone's push address, time zone and reminder settings, and sends notifications through the phone's push service (Google
+          on Android). Messages are encrypted to the phone, so the push service cannot read them. Choose whether names appear on the lock screen, and turn reminders off any time in Settings.
+        </p>
       </Part>
 
       <Part title="Where it is kept, and who helps">
