@@ -20,6 +20,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { BackupCard } from "@/components/Backup";
+import { AiUsageCard } from "@/components/AiUsageCard";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Field } from "@/components/Field";
 import { RecoveryKeyCard } from "@/components/RecoveryKey";
@@ -225,6 +226,10 @@ export function SettingsPage() {
 
         <Section title="Backup">
           <BackupCard />
+        </Section>
+
+        <Section title="AI today">
+          <AiUsageCard />
         </Section>
 
         <Section title="Recovery key">
