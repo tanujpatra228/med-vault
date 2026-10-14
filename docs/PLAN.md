@@ -121,7 +121,7 @@ Build order and status: [TODO.md](./TODO.md).
 - ~~**"Ask your doctor" hints**~~ **(built):** built-in checks (allergies, duplicates, well-known risky combinations) plus an AI review of all current medicines across doctors, shown as questions for the next visit and printed in the Visit brief. Advisory only. Details: [ASK_YOUR_DOCTOR.md](./ASK_YOUR_DOCTOR.md).
 - **Linked conditions:** e.g. eye infection related to arthritis, shown as one care thread.
 - **Search** across names, notes and (later) AI-extracted text.
-- **Lab value trends:** chart a value (ESR, CRP, HbA1c) across reports.
+- ~~**Lab value trends**~~ **(built):** report scans read every result; a Trends tab charts each test with its normal range and medicine changes; latest values in the Visit brief. Details: [LAB_TRENDS.md](./LAB_TRENDS.md).
 - ~~**Export**~~ **(built):** one ZIP with every record, photo and PDF, plus "Open me.html" that reads in any browser. Restore into a new vault. Details: [BACKUP.md](./BACKUP.md).
 - ~~**Visits log**~~ **(built):** every prescription logs its visit, scans read "review after 2 weeks" into a follow-up date, open follow-ups for the family show on the home screen and close when the next visit is logged. Details: [VISITS.md](./VISITS.md).
 
@@ -149,6 +149,7 @@ Build order and status: [TODO.md](./TODO.md).
 | `devices` | vault_id, name, token_hash, last_seen_at |
 | `link_codes` | code_hash, vault_id, expires_at |
 | `rate_events` | ip, kind, at |
+| `lab_values` | report_id, member_id, test_key, test_name, value, value_text, unit, ref_low, ref_high, ref_text, flag |
 | `record_conditions` | owner_type (prescription/medication/report/visit), owner_id, condition_id: a record can be for several conditions; `condition_id` on each table keeps the first |
 | `visits` | member_id, doctor_id, condition_id, prescription_id, visit_date, reason, notes, follow_up_on, follow_up_note, follow_up_done |
 | `ai_usage` | vault_id, kind, model, input/output tokens, neurons |

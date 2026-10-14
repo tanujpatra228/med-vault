@@ -1,0 +1,44 @@
+# Lab Trends
+
+Status: **built**. Code: `shared/labs.ts` (test names, parsing), `worker/labs.ts`, `src/lib/labs.ts`, `src/components/LabChart.tsx`, `src/pages/member/TrendsTab.tsx`, migration `0007`.
+
+## Why
+
+Is the arthritis treatment working? ESR and CRP across reports answer that, but only if the numbers are side by side.
+
+## How results get in
+
+- **Scan a report:** the AI copies every result row as printed (name, result, unit, normal range) into the report form's **Results** list. Every cell is editable, and rows can be added by hand.
+- The server works out the rest in code, not the model:
+  - **Canonical test:** "ESR", "E.S.R. (Westergren)" and "Erythrocyte Sedimentation Rate" are one test, so they share a chart. Unknown tests keep their own name.
+  - **Number:** "42", "<0.5" and "1,50,000" are read as numbers. Text results like "Positive" are kept as text.
+  - **Range:** "0-20", "< 5", "Up to 6" and "> 40" are all understood.
+  - **High/Low flag:** set by comparing the number with the range.
+- A result's date is its report's date, so editing the report date moves its results too.
+
+## Where it shows
+
+| Place | Shows |
+|---|---|
+| Member → **Trends** | One row per test: latest value, High/Low, "Down from 58 to 42 · back in normal range", sparkline. Out-of-range tests first. Tap one to open its chart, medicine changes and readings table. |
+| Report screen | The report's results table, with High/Low |
+| **Visit brief** | The latest result per test from the last year (up to 8), with direction. Also included in the shared text. |
+
+Text-only results (e.g. HLA B27 Positive) are listed under "Other results".
+
+## The chart
+
+Built on the dataviz method:
+- one 2px line with ringed points
+- the normal range as a 10% band; an axis starts at 0 when the range has only an upper limit
+- out-of-range points in the status color, always paired with "High"/"Low" text, never color alone
+- medicine starts and stops as hairline annotations, labelled where they fit, all listed under the chart
+- a crosshair readout on hover or tap
+- a readings table under every chart, so no value lives only in the chart
+
+Colors are validated for light and dark mode (see DESIGN_SYSTEM.md, "Charts").
+
+## Limits
+
+- Units aren't converted. If a lab switches units, the chart mixes them, and the table shows each unit.
+- Batch scanning of old reports isn't built. Scan them one by one; each adds to the trends.
