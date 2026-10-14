@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { FileGallery } from "@/components/FileGallery";
 import { EmptyState, ErrorState, Loading, Page, Section, TopBar } from "@/components/layout";
-import { RowList } from "@/components/Row";
+import { Row, RowList } from "@/components/Row";
 import { formatDate, relativeDays } from "@/lib/format";
 import { MedRow } from "./member/MedicinesTab";
+import { Badge } from "@/components/ui/badge";
+import { dueLabel } from "@/components/FollowUps";
 
 export function PrescriptionDetail() {
   const { prescriptionId } = useParams();
@@ -84,10 +86,31 @@ export function PrescriptionDetail() {
           </Section>
         )}
 
+        {p.visit && (
+          <Section title="Follow-up">
+            <RowList>
+              <Row
+                to={`/visits/${p.visit.id}`}
+                title={p.visit.follow_up_on ? formatDate(p.visit.follow_up_on) : "No follow-up set"}
+                subtitle={
+                  p.visit.follow_up_on ? (
+                    <span className="flex flex-wrap items-center gap-2">
+                      {p.visit.follow_up_done ? <span>Done</span> : <Badge variant={dueLabel(p.visit.follow_up_on).variant}>{dueLabel(p.visit.follow_up_on).text}</Badge>}
+                      {p.visit.follow_up_note && <span>{p.visit.follow_up_note}</span>}
+                    </span>
+                  ) : (
+                    "Tap to add when the doctor wants to see you again"
+                  )
+                }
+              />
+            </RowList>
+          </Section>
+        )}
+
         <div className="border-t border-rule pt-6">
           <ConfirmDelete
             what="this prescription"
-            detail="Its photos and the medicines that came from it will also be deleted."
+            detail="Its photos, its visit and the medicines that came from it will also be deleted."
             onConfirm={async () => {
               await del.mutateAsync(p.id);
               navigate(`/m/${p.member_id}/prescriptions`, { replace: true });

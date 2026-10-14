@@ -12,6 +12,7 @@ import { MedRow } from "./MedicinesTab";
 import { medView } from "@/lib/meds";
 import { TodaySection } from "./TodaySection";
 import { AskDoctorSection } from "./AskDoctorSection";
+import { FollowUpsSection } from "@/components/FollowUps";
 
 function Statement({ s, current }: { s: MemberSummary; current: Medication[] }) {
   const first = s.member.name.split(" ")[0];
@@ -84,6 +85,8 @@ export function SummaryTab({ memberId }: { memberId: string }) {
       )}
 
       <TodaySection meds={current} />
+
+      <FollowUpsSection memberId={memberId} title="Next follow-up" limit={3} />
 
       <AskDoctorSection
         memberId={memberId}
