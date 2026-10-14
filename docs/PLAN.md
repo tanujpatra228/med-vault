@@ -40,7 +40,7 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 | Account | **Vaults, no signup.** Anyone opening the URL creates a vault for their family in one tap. Many vaults per deployment, fully isolated. |
 | Access | Each phone holds its own device key (cookie). Every linked device can view and edit. |
 | Adding a phone | One-time link code (8 chars, 10 minutes) or link from an already linked phone. |
-| Recovery | A recovery key shown once at vault creation. Lose every phone and the key, and the vault is gone: the accepted cost of no signup. |
+| Recovery | A recovery key shown once at vault creation, plus backup ZIPs the family keeps. Lose every phone, the key and every backup, and the vault is gone: the accepted cost of no signup. |
 | Upgrade path | Passkeys (fingerprint, synced by Google Password Manager) as an optional extra sign-in, later. |
 | App lock | Skipped. Phone PIN is enough. |
 | Medicine database | None. Free-text medication entry. |
@@ -122,7 +122,7 @@ Build order and status: [TODO.md](./TODO.md).
 - **Linked conditions:** e.g. eye infection related to arthritis, shown as one care thread.
 - **Search** across names, notes and (later) AI-extracted text.
 - **Lab value trends:** chart a value (ESR, CRP, HbA1c) across reports.
-- **Export** everything (ZIP of files + JSON).
+- ~~**Export**~~ **(built):** one ZIP with every record, photo and PDF, plus "Open me.html" that reads in any browser. Restore into a new vault. Details: [BACKUP.md](./BACKUP.md).
 - **Visits log:** appointment date, doctor, notes, next follow-up.
 
 ## 7. Phase 4: Later

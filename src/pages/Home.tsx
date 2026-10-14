@@ -53,9 +53,14 @@ export function Home() {
               title="Add your first family member"
               body="Start with the person whose medicines are hardest to keep track of."
               action={
-                <Button asChild>
-                  <Link to="/members/new">Add a family member</Link>
-                </Button>
+                <div className="flex flex-col items-center gap-2">
+                  <Button asChild>
+                    <Link to="/members/new">Add a family member</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/restore">Restore from a backup</Link>
+                  </Button>
+                </div>
               }
             />
           </div>

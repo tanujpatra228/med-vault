@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { BackupCard } from "@/components/Backup";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Field } from "@/components/Field";
 import { RecoveryKeyCard } from "@/components/RecoveryKey";
@@ -220,6 +221,10 @@ export function SettingsPage() {
             ))}
           </RowList>
           <LinkDevice />
+        </Section>
+
+        <Section title="Backup">
+          <BackupCard />
         </Section>
 
         <Section title="Recovery key">
