@@ -120,7 +120,7 @@ Build order and status: [TODO.md](./TODO.md).
 - **Reminders:** dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers.
 - ~~**"Ask your doctor" hints**~~ **(built):** built-in checks (allergies, duplicates, well-known risky combinations) plus an AI review of all current medicines across doctors, shown as questions for the next visit and printed in the Visit brief. Advisory only. Details: [ASK_YOUR_DOCTOR.md](./ASK_YOUR_DOCTOR.md).
 - **Linked conditions:** e.g. eye infection related to arthritis, shown as one care thread.
-- **Search** across names, notes and (later) AI-extracted text.
+- ~~**Search**~~ **(built):** one box across members, medicines, prescriptions, reports, lab results, conditions, allergies, visits, doctors and notes; per-member search from a profile. Details: [SEARCH.md](./SEARCH.md).
 - ~~**Lab value trends**~~ **(built):** report scans read every result; a Trends tab charts each test with its normal range and medicine changes; latest values in the Visit brief. Details: [LAB_TRENDS.md](./LAB_TRENDS.md).
 - ~~**Export**~~ **(built):** one ZIP with every record, photo and PDF, plus "Open me.html" that reads in any browser. Restore into a new vault. Details: [BACKUP.md](./BACKUP.md).
 - ~~**Visits log**~~ **(built):** every prescription logs its visit, scans read "review after 2 weeks" into a follow-up date, open follow-ups for the family show on the home screen and close when the next visit is logged. Details: [VISITS.md](./VISITS.md).
