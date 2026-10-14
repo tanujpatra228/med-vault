@@ -10,7 +10,7 @@ The agreed order for the remaining Phase 3 features (see [PLAN.md](./PLAN.md) se
 | 4 | **Lab value trends** | Built | Report scans read every result; Trends tab charts each test with the normal range and medicine changes; latest values in the Visit brief. See [LAB_TRENDS.md](./LAB_TRENDS.md). |
 | 4a | **Privacy & consent** | Built (audit log open) | Privacy notice, consent and guardian confirmation, AI off until allowed, security contact email, breach runbook. Audit log to be discussed. See [COMPLIANCE.md](./COMPLIANCE.md). |
 | 5 | **Search** | Built | One box across every record type and note; all words must match; per-member search from a profile. See [SEARCH.md](./SEARCH.md). |
-| 6 | **Linked conditions** | Next | Link related conditions (e.g. eye infection related to arthritis) and show them as one care thread. |
-| 7 | **Reminders** | To do | Dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers. Needs a VAPID key saved as a Cloudflare secret (a server key, not a user password). |
+| 6 | **Condition timeline** | Built | Tap a condition: its current medicines, the doctors involved and every linked prescription, report and visit in one timeline. Condition-to-condition links were dropped as low value (multi-condition records already cover them). |
+| 7 | **Reminders** | Next | Dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers. Needs a VAPID key saved as a Cloudflare secret (a server key, not a user password). |
 
 Phase 4 (offline mode, PIN lock, Hindi UI) comes after this list.
