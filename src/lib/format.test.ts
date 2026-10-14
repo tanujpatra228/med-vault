@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, sameName } from "./format";
+import { addDays, relativeDays, sameName } from "./format";
 
 describe("addDays", () => {
   it("adds calendar days across month ends", () => {
@@ -18,5 +18,16 @@ describe("sameName", () => {
     expect(sameName("Dr. Iyer", "Dr. Rao")).toBe(false);
     expect(sameName("Dr. Anil Rao", "Dr. Meena Rao")).toBe(false);
     expect(sameName("", "Rao")).toBe(false);
+  });
+});
+
+describe("relativeDays with timestamps", () => {
+  it("treats any time today as today", () => {
+    const late = new Date();
+    late.setHours(23, 59, 0, 0);
+    const early = new Date();
+    early.setHours(0, 1, 0, 0);
+    expect(relativeDays(late.toISOString())).toBe("today");
+    expect(relativeDays(early.toISOString())).toBe("today");
   });
 });
