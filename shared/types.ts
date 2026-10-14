@@ -222,7 +222,8 @@ export type MedicationInput = Partial<Omit<Medication, "id" | "created_at" | "up
 export interface PrescriptionCreateInput {
   member_id: ID;
   doctor_id?: ID | null;
-  condition_id?: ID | null;
+  /** Every condition this prescription is for; its medicines and visit get the same. */
+  condition_ids?: ID[];
   prescribed_on: string;
   notes?: string | null;
   /** Logged on the visit created with the prescription. */

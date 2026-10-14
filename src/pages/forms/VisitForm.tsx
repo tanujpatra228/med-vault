@@ -10,7 +10,7 @@ import { Field } from "@/components/Field";
 import { FormPage } from "@/components/FormPage";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { DoctorPicker } from "@/components/DoctorPicker";
-import { ConditionPicker } from "@/components/ConditionPicker";
+import { ConditionsPicker, splitIds } from "@/components/ConditionsPicker";
 import { FollowUpField } from "@/components/FollowUpField";
 import { daysUntil } from "@/components/FollowUps";
 import { Loading } from "@/components/layout";
@@ -35,7 +35,7 @@ function VisitFormInner() {
   const f = useFields({
     visit_date: today(),
     doctor_id: params.get("doctor") ?? "",
-    condition_id: "",
+    condition_ids: "",
     reason: "",
     notes: "",
     follow_up_on: "",
@@ -62,7 +62,7 @@ function VisitFormInner() {
         if (!f.values.visit_date) throw new Error("Visit date is required");
         // A new follow-up date reopens a follow-up that was already done.
         const reopened = v && f.values.follow_up_on && f.values.follow_up_on !== (v.follow_up_on ?? "");
-        await save.mutateAsync({ id: visitId, data: { ...toPayload(f.values), member_id: memberId, ...(reopened ? { follow_up_done: "0" } : {}) } });
+        await save.mutateAsync({ id: visitId, data: { ...toPayload(f.values), condition_ids: splitIds(f.values.condition_ids), member_id: memberId, ...(reopened ? { follow_up_done: "0" } : {}) } });
         toast.success("Visit saved");
         back();
       }}
@@ -106,7 +106,7 @@ function VisitFormInner() {
         <Input type="date" {...f.bind("visit_date")} max={today()} />
       </Field>
       <DoctorPicker value={f.values.doctor_id} onChange={(id) => f.set("doctor_id", id)} />
-      <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} />
+      <ConditionsPicker memberId={memberId} value={splitIds(f.values.condition_ids)} onChange={(ids) => f.set("condition_ids", ids.join(","))} />
       <Field label="Reason" hint="e.g. Monthly check-up, eye pain, blood test review">
         <Input {...f.bind("reason")} maxLength={300} />
       </Field>

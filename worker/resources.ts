@@ -107,6 +107,10 @@ const prescriptions: Resource = {
   filters: { member_id: "t.member_id", doctor_id: "t.doctor_id" },
   fileOwner: "prescription",
   conditionOwner: "prescription",
+  conditionChildren: [
+    { owner: "medication", table: "medications", fk: "prescription_id" },
+    { owner: "visit", table: "visits", fk: "prescription_id" },
+  ],
 };
 
 const reports: Resource = {

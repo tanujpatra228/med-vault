@@ -33,7 +33,7 @@ export function PrescriptionDetail() {
       </>
     );
   const p = q.data;
-  const addMed = `/m/${p.member_id}/medications/new?${new URLSearchParams({ prescription_id: p.id, doctor_id: p.doctor_id ?? "", condition_id: p.condition_id ?? "" })}`;
+  const addMed = `/m/${p.member_id}/medications/new?${new URLSearchParams({ prescription_id: p.id, doctor_id: p.doctor_id ?? "", condition_ids: p.condition_ids ?? "" })}`;
 
   return (
     <>
