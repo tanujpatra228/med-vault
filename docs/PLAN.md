@@ -117,7 +117,7 @@ Weekly medicines (e.g. methotrexate Sat 2-0-0, Sun 1-0-0), specific days (Mon–
 Build order and status: [TODO.md](./TODO.md).
 
 - ~~**Visit brief**~~ **(built):** one screen to show any doctor: allergies, conditions, every current medicine from every doctor with its schedule, medicines stopped in the last 90 days, recent reports, treating doctors. Print / save as PDF (always light), or share as WhatsApp-friendly text. Opened from the member summary or the clipboard icon on the profile.
-- **Reminders:** dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers.
+- ~~**Reminders**~~ **(built):** medicine times, follow-up visits and a monthly backup nudge via Web Push, from a Worker Cron Trigger every 5 minutes; set up per phone with a member filter and a hide-names option. Refill reminders not built (no pill count). Details: [REMINDERS.md](./REMINDERS.md).
 - ~~**"Ask your doctor" hints**~~ **(built):** built-in checks (allergies, duplicates, well-known risky combinations) plus an AI review of all current medicines across doctors, shown as questions for the next visit and printed in the Visit brief. Advisory only. Details: [ASK_YOUR_DOCTOR.md](./ASK_YOUR_DOCTOR.md).
 - ~~**Linked conditions**~~ **(built as a condition timeline):** tapping a condition shows its current medicines, the doctors involved and every linked prescription, report and visit, newest first. Records can be linked to several conditions, so e.g. the eye prescription appears under both uveitis and the arthritis.
 - ~~**Search**~~ **(built):** one box across members, medicines, prescriptions, reports, lab results, conditions, allergies, visits, doctors and notes; per-member search from a profile. Details: [SEARCH.md](./SEARCH.md).
