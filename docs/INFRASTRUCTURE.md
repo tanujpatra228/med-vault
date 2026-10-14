@@ -62,6 +62,7 @@ What it means:
 - The free 10,000 Neurons/day covers about **127 prescription scans per day** across all vaults (10,000 / 78.68).
 - At the 30-scans-per-vault daily cap, about 4 vaults can max out before the shared allowance runs out. Typical families scan a few times a week, so real headroom is much larger.
 - Beyond the free tier, Workers AI costs $0.011 per 1,000 Neurons, so one prescription scan costs about **$0.0009** (under ₹0.1).
+- Medicine reviews ("Ask your doctor") are text-only calls, expected to cost far less than an image scan; they share the 30-per-vault daily cap. Add a row once one is measured.
 - Add new rows here as medicine and report scans are measured (Cloudflare dashboard → AI → Workers AI → usage).
 
 Rough capacity on the free tier: R2's 10 GB fits about 5 full vaults or many light ones (a family with 200 compressed photos uses ~100 MB). Beyond that, R2 is $0.015/GB-month.

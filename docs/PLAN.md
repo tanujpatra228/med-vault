@@ -118,7 +118,7 @@ Build order and status: [TODO.md](./TODO.md).
 
 - ~~**Visit brief**~~ **(built):** one screen to show any doctor: allergies, conditions, every current medicine from every doctor with its schedule, medicines stopped in the last 90 days, recent reports, treating doctors. Print / save as PDF (always light), or share as WhatsApp-friendly text. Opened from the member summary or the clipboard icon on the profile.
 - **Reminders:** dose, refill and follow-up reminders via Web Push, scheduled by Worker Cron Triggers.
-- **"Ask your doctor" hints:** AI looks at all active medicines across doctors and lists possible interactions as questions for the next visit. Advisory only, clearly labelled.
+- ~~**"Ask your doctor" hints**~~ **(built):** built-in checks (allergies, duplicates, well-known risky combinations) plus an AI review of all current medicines across doctors, shown as questions for the next visit and printed in the Visit brief. Advisory only. Details: [ASK_YOUR_DOCTOR.md](./ASK_YOUR_DOCTOR.md).
 - **Linked conditions:** e.g. eye infection related to arthritis, shown as one care thread.
 - **Search** across names, notes and (later) AI-extracted text.
 - **Lab value trends:** chart a value (ESR, CRP, HbA1c) across reports.
@@ -149,6 +149,7 @@ Build order and status: [TODO.md](./TODO.md).
 | `devices` | vault_id, name, token_hash, last_seen_at |
 | `link_codes` | code_hash, vault_id, expires_at |
 | `rate_events` | ip, kind, at |
+| `med_reviews` | member_id, result (latest medicine review JSON) |
 
 Every data table also has `vault_id`; every query is scoped by it.
 

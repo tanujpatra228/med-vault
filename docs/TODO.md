@@ -5,8 +5,8 @@ The agreed order for the remaining Phase 3 features (see [PLAN.md](./PLAN.md) se
 | Order | Feature | Status | Notes |
 |---|---|---|---|
 | 1 | **Export / backup** | Built | ZIP of all records, photos and PDFs plus a readable "Open me.html"; restore into a new vault. See [BACKUP.md](./BACKUP.md). |
-| 2 | **"Ask your doctor" hints** | Next | AI reviews all active medicines across doctors and lists possible interactions as questions for the next visit. Advisory only, clearly labelled. Counts against the daily AI limit. |
-| 3 | **Visits log + follow-ups** | To do | Appointment date, doctor, notes, next follow-up date. Follow-up dates feed reminders later. |
+| 2 | **"Ask your doctor" hints** | Built | Built-in checks plus AI review of all current medicines across doctors, as questions for the next visit. See [ASK_YOUR_DOCTOR.md](./ASK_YOUR_DOCTOR.md). |
+| 3 | **Visits log + follow-ups** | Next | Appointment date, doctor, notes, next follow-up date. Follow-up dates feed reminders later. |
 | 4 | **Lab value trends** | To do | Record values (ESR, CRP, HbA1c) on reports, chart them over time. |
 | 5 | **Search** | To do | Across members, medicines, prescriptions, reports, doctors and notes. |
 | 6 | **Linked conditions** | To do | Link related conditions (e.g. eye infection related to arthritis) and show them as one care thread. |
