@@ -50,20 +50,30 @@ Anyone with the URL can create a vault, so one deployment is shared by every fam
 | Wrong link codes / recovery keys per IP | 10 per 15 minutes | `worker/auth.ts` |
 | Storage per vault | 2 GB | `worker/files.ts` |
 | Link code lifetime | 10 minutes, single use | `worker/auth.ts` |
-| AI scans per vault | 30 per day | `worker/ai.ts` |
+| AI per vault | 1,500 neurons per UTC day (~15 scans) | `worker/aiBudget.ts` |
+| AI for all vaults together | 9,000 neurons per UTC day (of the free 10,000) | `worker/aiBudget.ts` |
 
 ### Workers AI usage (measured)
 
-| Date | Scan | Model used | Neurons |
+| Date | Call | Model | Neurons |
 |---|---|---|---|
-| 2026-10-13 | Prescription (real photo, production) | `@cf/meta/llama-4-scout-17b-16e-instruct` (Llama 4 Scout 17B 16E Instruct, the primary model) | 78.68 |
+| 2026-10-13 | Prescription scan (real photo, production) | Llama 4 Scout 17B 16E Instruct | 78.68 |
+| 2026-10-13 | Same prescription, scanned again | Llama 4 Scout | 96 |
+| 2026-10-14 | Medicine review ("Ask your doctor"), 3 medicines | Llama 4 Scout | 46 |
+
+Account total so far: 221 neurons.
 
 What it means:
-- The free 10,000 Neurons/day covers about **127 prescription scans per day** across all vaults (10,000 / 78.68).
-- At the 30-scans-per-vault daily cap, about 4 vaults can max out before the shared allowance runs out. Typical families scan a few times a week, so real headroom is much larger.
-- Beyond the free tier, Workers AI costs $0.011 per 1,000 Neurons, so one prescription scan costs about **$0.0009** (under ₹0.1).
-- Medicine reviews ("Ask your doctor") are text-only calls, expected to cost far less than an image scan; they share the 30-per-vault daily cap. Add a row once one is measured.
-- Add new rows here as medicine and report scans are measured (Cloudflare dashboard → AI → Workers AI → usage).
+- **Cost varies per call.** The same photo cost 78 and then 96 neurons: billing is per token, and the model's answer length varies. A review grows with the number of medicines (roughly 45 for 3, an estimated 60 to 90 for 10).
+- So limits are a **neuron budget**, not a call count (`worker/aiBudget.ts`, table `ai_usage`):
+  - Each call records its real cost, computed from the token counts Workers AI returns (`usage.prompt_tokens` / `completion_tokens`) at the model's per-token rate. If a model returns no counts, the measured estimate is charged (scan 100, review 60).
+  - Before a call, the app checks that a typical call of that kind still fits.
+  - **Per vault:** 1,500 neurons per day (about 15 scans, or a mix of scans and reviews).
+  - **All vaults together:** AI stops at 9,000 of the free 10,000 per day, so the account never goes over the free allowance however many families sign up.
+  - Days are UTC, matching Cloudflare's reset (5:30 AM in India). Settings → "AI today" shows the vault's usage.
+- If the dashboard total drifts from the sum in `ai_usage`, adjust the per-token rates in `worker/aiBudget.ts`:
+  `npx wrangler d1 execute med-vault --remote --command "SELECT date(at), SUM(neurons) FROM ai_usage GROUP BY 1"`
+- The free 10,000 neurons/day covers about 100 to 125 prescription scans per day across all vaults. Beyond the free tier, Workers AI costs $0.011 per 1,000 neurons: one scan is about $0.001 (under ₹0.1).
 
 Rough capacity on the free tier: R2's 10 GB fits about 5 full vaults or many light ones (a family with 200 compressed photos uses ~100 MB). Beyond that, R2 is $0.015/GB-month.
 

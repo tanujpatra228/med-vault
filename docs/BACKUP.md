@@ -8,7 +8,7 @@ No signup means no account to fall back on. Lose every linked phone **and** the 
 
 ## Making a backup
 
-Settings → Backup → **Download backup** (or **Save to Drive…**, which opens the Android share sheet). One ZIP:
+Settings → Backup → **Create backup**, then **Save to Drive…** (the Android share sheet: pick Drive, a folder, Save) or **Download**. Two steps on purpose: Android only opens the share sheet within a few seconds of a tap, and building the ZIP takes longer. One ZIP:
 
 ```
 Med Vault backup <vault> <date>.zip
