@@ -12,6 +12,7 @@ A private vault for your whole family's medical records: current medicines, pres
 - Camera capture with in-browser image compression.
 - **No signup:** anyone with the URL creates their own vault in one tap. Link more phones with a one-time code; a recovery key restores access.
 - **AI-assisted entry:** photograph a prescription, medicine strip or report and the form fills itself in (Cloudflare Workers AI). You check and save.
+- **Backup and restore:** one ZIP with every record and photo, readable on any computer; restore into a new vault.
 - Installable on the Android home screen.
 
 What comes next is in [docs/PLAN.md](docs/PLAN.md).
@@ -54,6 +55,8 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md) | Colors, type, spacing, components |
 | [ENGINEERING_STANDARDS.md](docs/ENGINEERING_STANDARDS.md) | How we write code and use git |
 | [INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md) | Cloudflare services, limits, CI/CD |
+| [BACKUP.md](docs/BACKUP.md) | Backup ZIP format and restore |
+| [TODO.md](docs/TODO.md) | Build order for what is next |
 
 ## Project layout
 

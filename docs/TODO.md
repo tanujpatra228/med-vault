@@ -4,8 +4,8 @@ The agreed order for the remaining Phase 3 features (see [PLAN.md](./PLAN.md) se
 
 | Order | Feature | Status | Notes |
 |---|---|---|---|
-| 1 | **Export / backup** | Next | ZIP of all records (JSON) and files from R2. One tap in Settings. Protects against losing every phone and the recovery key. |
-| 2 | **"Ask your doctor" hints** | To do | AI reviews all active medicines across doctors and lists possible interactions as questions for the next visit. Advisory only, clearly labelled. Counts against the daily AI limit. |
+| 1 | **Export / backup** | Built | ZIP of all records, photos and PDFs plus a readable "Open me.html"; restore into a new vault. See [BACKUP.md](./BACKUP.md). |
+| 2 | **"Ask your doctor" hints** | Next | AI reviews all active medicines across doctors and lists possible interactions as questions for the next visit. Advisory only, clearly labelled. Counts against the daily AI limit. |
 | 3 | **Visits log + follow-ups** | To do | Appointment date, doctor, notes, next follow-up date. Follow-up dates feed reminders later. |
 | 4 | **Lab value trends** | To do | Record values (ESR, CRP, HbA1c) on reports, chart them over time. |
 | 5 | **Search** | To do | Across members, medicines, prescriptions, reports, doctors and notes. |

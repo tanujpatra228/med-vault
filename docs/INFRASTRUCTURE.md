@@ -120,4 +120,6 @@ Workers AI only runs on Cloudflare, so local dev starts with remote bindings off
 
 ## Backups
 
+Families back up their own vault from Settings (a ZIP built on the phone, see [BACKUP.md](./BACKUP.md)). For the whole deployment:
+
 D1 has Time Travel (point-in-time restore for the last 30 days on paid, 7 days on free). For an extra copy: `npx wrangler d1 export med-vault --remote --output backup.sql`. R2 objects can be copied with `rclone` or `wrangler r2 object get`.
