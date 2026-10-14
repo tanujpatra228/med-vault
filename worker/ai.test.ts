@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { dosage, normalize, parseJsonObject, splitDiagnoses } from "./ai";
+import { normalizeReview } from "./review";
 
 describe("parseJsonObject", () => {
   it("reads plain JSON", () => expect(parseJsonObject('{"a":1}')).toEqual({ a: 1 }));
@@ -222,4 +223,30 @@ describe("splitDiagnoses", () => {
     const r = normalize("prescription", { conditions: ["Uveitis, Arthritis"] });
     expect(r.kind === "prescription" && [r.data.condition, r.data.conditions]).toEqual(["Uveitis", ["Uveitis", "Arthritis"]]);
   });
+});
+
+describe("normalizeReview (medicine review reply)", () => {
+  const names = ["Meditrex", "Nexito 10", "Zerodol-P"];
+  it("keeps valid items, maps names case-insensitively and drops unknown medicines", () => {
+    const out = normalizeReview(
+      {
+        generics: { meditrex: "Methotrexate", "Nexito 10": "escitalopram", Unknown: "x" },
+        items: [
+          { level: "note", medicines: ["nexito 10"], title: "Sleep", question: "Take it at night?", why: "Can cause drowsiness." },
+          { level: "talk_soon", medicines: ["Meditrex", "Ibuprofen"], title: "MTX + NSAID", question: "Is this safe?" },
+          { level: "weird", medicines: ["Zerodol-P"], title: "Level falls back", question: "Q?" },
+          { level: "ask", medicines: ["Nope"], title: "Unknown medicine only", question: "Q?" },
+          { level: "ask", medicines: ["Meditrex"], title: "", question: "No title" },
+        ],
+      },
+      names,
+    );
+    expect(out.generics).toEqual({ Meditrex: "methotrexate", "Nexito 10": "escitalopram" });
+    expect(out.items.map((i) => [i.level, i.title, i.medicines.join()])).toEqual([
+      ["talk_soon", "MTX + NSAID", "Meditrex"],
+      ["ask", "Level falls back", "Zerodol-P"],
+      ["note", "Sleep", "Nexito 10"],
+    ]);
+  });
+  it("survives junk", () => expect(normalizeReview({ items: "no" }, names)).toEqual({ generics: {}, items: [] }));
 });

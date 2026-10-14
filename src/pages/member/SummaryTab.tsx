@@ -11,6 +11,7 @@ import { countWord, formatDate, plural, relativeDays } from "@/lib/format";
 import { MedRow } from "./MedicinesTab";
 import { medView } from "@/lib/meds";
 import { TodaySection } from "./TodaySection";
+import { AskDoctorSection } from "./AskDoctorSection";
 
 function Statement({ s, current }: { s: MemberSummary; current: Medication[] }) {
   const first = s.member.name.split(" ")[0];
@@ -83,6 +84,13 @@ export function SummaryTab({ memberId }: { memberId: string }) {
       )}
 
       <TodaySection meds={current} />
+
+      <AskDoctorSection
+        memberId={memberId}
+        name={s.member.name.split(" ")[0]}
+        medCount={current.length}
+        doctorCount={new Set(current.map((m) => m.doctor_id).filter(Boolean)).size}
+      />
 
       <Section title="Health conditions" action={<SectionLink to={`${base}/health`}>All</SectionLink>}>
         {s.conditions.length ? (

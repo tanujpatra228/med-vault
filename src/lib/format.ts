@@ -9,13 +9,15 @@ export function formatDate(iso: string | null | undefined): string {
 
 /** Local today as YYYY-MM-DD (not UTC, so evenings in India stay on the right day). */
 export function today(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return localDate(new Date());
 }
+
+const localDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export function relativeDays(iso: string | null | undefined): string {
   if (!iso) return "";
-  const then = new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
+  // Compare calendar days: a timestamp from this evening is "today", not "in 1 days".
+  const then = new Date(`${iso.length === 10 ? iso : localDate(new Date(iso))}T00:00:00`);
   const now = new Date(`${today()}T00:00:00`);
   const days = Math.round((now.getTime() - then.getTime()) / 86_400_000);
   if (days === 0) return "today";

@@ -4,6 +4,7 @@ import { auth, requireDevice } from "./auth";
 import type { AppEnv } from "./env";
 import { files } from "./files";
 import { HttpError, onError } from "./http";
+import { reviewApi } from "./review";
 import { vaultApi } from "./vault";
 import {
   allergiesApi,
@@ -31,6 +32,7 @@ app.route("/auth", auth);
 
 app.use("*", requireDevice);
 app.route("/vault", vaultApi);
+app.route("/ai/review", reviewApi);
 app.route("/ai", aiApi);
 app.route("/members", membersApi);
 app.route("/doctors", doctorsApi);

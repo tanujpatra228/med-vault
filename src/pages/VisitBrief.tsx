@@ -4,7 +4,9 @@ import { Printer, Share2 } from "lucide-react";
 import type { Medication, MemberSummary, Report } from "@shared/types";
 import { REPORT_TYPES } from "@shared/types";
 import { describe as describeSchedule } from "@shared/schedule";
-import { useMedications, useReports, useSummary } from "@/api/hooks";
+import { useMedications, useReports, useReview, useSummary } from "@/api/hooks";
+import type { ReviewItem } from "@shared/review";
+import { REVIEW_DISCLAIMER, ReviewItemCard } from "@/pages/member/AskDoctorSection";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ErrorState, Loading, Page, TopBar } from "@/components/layout";
@@ -43,7 +45,7 @@ function doseLines(m: Medication): string[] {
 const reportLabel = (r: Report) => REPORT_TYPES.find((t) => t.value === r.report_type)?.label ?? "Report";
 
 /** WhatsApp-friendly plain text version of the brief. */
-function briefText(s: MemberSummary, current: Medication[], recent: Medication[], reports: Report[]): string {
+function briefText(s: MemberSummary, current: Medication[], recent: Medication[], reports: Report[], questions: ReviewItem[]): string {
   const m = s.member;
   const years = age(m.dob);
   const lines: string[] = [
@@ -73,6 +75,10 @@ function briefText(s: MemberSummary, current: Medication[], recent: Medication[]
     lines.push("", "RECENT REPORTS:");
     for (const r of reports) lines.push(`- ${formatDate(r.report_date)}: ${r.title}${r.notes ? `. ${r.notes}` : ""}`);
   }
+  if (questions.length) {
+    lines.push("", "QUESTIONS FOR THE DOCTOR:");
+    for (const q of questions) lines.push(`- ${q.question} (${q.medicines.join(", ")})`);
+  }
   if (m.notes) lines.push("", `NOTES: ${m.notes}`);
   return lines.join("\n");
 }
@@ -95,6 +101,7 @@ export function VisitBrief() {
   const summary = useSummary(memberId);
   const meds = useMedications(memberId);
   const reports = useReports(memberId);
+  const review = useReview(memberId);
 
   if (summary.isPending || meds.isPending || reports.isPending)
     return (
@@ -121,10 +128,12 @@ export function VisitBrief() {
   const recent = meds.data.filter((x) => !medView(x, date).current && x.end_date && x.end_date >= since);
   const latestReports = reports.data.slice(0, 5);
   const years = age(m.dob);
+  // Only a review that still matches the current medicines; a stale one could ask about stopped ones.
+  const questions = review.data?.review && !review.data.stale ? review.data.review.items : [];
   const facts = [years !== null ? `${years} yrs` : null, m.sex ? capitalize(m.sex) : null, m.blood_group ? `Blood ${m.blood_group}` : null].filter(Boolean);
 
   const share = async () => {
-    const text = briefText(s, current, recent, latestReports);
+    const text = briefText(s, current, recent, latestReports, questions);
     try {
       if (typeof navigator.share === "function") await navigator.share({ title: `Medical summary: ${m.name}`, text });
       else {
@@ -246,6 +255,17 @@ export function VisitBrief() {
               <p>None recorded</p>
             )}
           </Block>
+
+          {questions.length > 0 && (
+            <Block title="Questions for the doctor">
+              <ul className="flex flex-col gap-2">
+                {questions.map((q, i) => (
+                  <ReviewItemCard key={i} item={q} compact />
+                ))}
+              </ul>
+              <p className="mt-2 type-caption text-ink-faint">{REVIEW_DISCLAIMER}</p>
+            </Block>
+          )}
 
           {s.doctors.length > 0 && (
             <Block title="Treating doctors">
