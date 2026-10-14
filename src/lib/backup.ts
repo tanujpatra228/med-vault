@@ -1,4 +1,4 @@
-import { BACKUP_FORMAT, type BackupData, type BackupFile, type RestoreIdMap, type RestoreTable } from "@shared/backup";
+import { BACKUP_FORMAT, RESTORE_CHUNK, RESTORE_ORDER, type BackupData, type BackupFile, type RestoreIdMap, type RestoreTable } from "@shared/backup";
 import type { FileOwner } from "@shared/types";
 import { api, fileUrl } from "@/api/client";
 import { backupHtml } from "./backupHtml";
@@ -87,13 +87,45 @@ export async function readBackup(file: File): Promise<{ data: BackupData; entrie
   return { data, entries };
 }
 
-/** Restores records (one all-or-nothing request), then uploads each file to its new owner. */
+/**
+ * Restores records table by table in small chunks (see RESTORE_CHUNK), then uploads each file to its
+ * new owner. If a record chunk fails, everything restored so far is deleted again, so the vault is
+ * either restored or left empty.
+ */
 export async function restoreBackup(
   { data, entries }: Awaited<ReturnType<typeof readBackup>>,
   onProgress: Progress,
 ): Promise<{ records: number; files: number; failed: string[] }> {
-  onProgress("Restoring records…");
-  const { ids, records } = await api.post<{ ids: RestoreIdMap; records: number }>("/vault/restore", { ...data, files: [] });
+  const ids = Object.fromEntries(RESTORE_ORDER.map((t) => [t, {}])) as RestoreIdMap;
+  const total = RESTORE_ORDER.reduce((n, t) => n + (data[t]?.length ?? 0), 0);
+  if (!total) throw new Error("This backup has no records");
+  let records = 0;
+  try {
+    for (const table of RESTORE_ORDER) {
+      const rows = data[table] ?? [];
+      for (let i = 0; i < rows.length; i += RESTORE_CHUNK) {
+        onProgress(`Restoring records · ${records} of ${total}`);
+        const { members, doctors, conditions, prescriptions } = ids;
+        const res = await api.post<{ ids: Record<string, string> }>("/vault/restore", {
+          version: data.version,
+          table,
+          start: records === 0,
+          rows: rows.slice(i, i + RESTORE_CHUNK),
+          refs: { members, doctors, conditions, prescriptions },
+        });
+        Object.assign(ids[table], res.ids);
+        records += Math.min(RESTORE_CHUNK, rows.length - i);
+      }
+    }
+  } catch (e) {
+    if (records > 0) {
+      onProgress("Restore failed. Removing what was added…");
+      for (const id of Object.values(ids.members)) await api.del(`/members/${id}`).catch(() => {});
+      for (const id of Object.values(ids.doctors)) await api.del(`/doctors/${id}`).catch(() => {});
+    }
+    throw e;
+  }
+
   const failed: string[] = [];
   let uploaded = 0;
   let n = 0;

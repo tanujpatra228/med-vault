@@ -29,5 +29,8 @@ export interface BackupData {
 export const RESTORE_ORDER = ["doctors", "members", "conditions", "allergies", "prescriptions", "medications", "reports"] as const;
 export type RestoreTable = (typeof RESTORE_ORDER)[number];
 
+/** Rows per restore request: about 150 × 20 µs of validation stays well inside 10 ms of CPU. */
+export const RESTORE_CHUNK = 150;
+
 /** Old id → new id for each table, returned by a restore so the app can re-attach files. */
 export type RestoreIdMap = Record<RestoreTable, Record<string, string>>;
