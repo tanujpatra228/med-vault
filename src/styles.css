@@ -47,6 +47,19 @@
   }
 }
 
+/* Chart marks (validated with the dataviz palette checks; dark uses its own steps, see DESIGN_SYSTEM.md). */
+:root {
+  --chart-line: var(--iris);
+  --chart-out: var(--rust);
+  --chart-band: var(--moss);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --chart-line: #9575f5;
+    --chart-out: #e06f35;
+  }
+}
+
 /* shadcn variable aliases */
 :root {
   --background: var(--paper);

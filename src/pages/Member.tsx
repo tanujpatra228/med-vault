@@ -13,12 +13,14 @@ import { PrescriptionsTab } from "./member/PrescriptionsTab";
 import { ReportsTab } from "./member/ReportsTab";
 import { HealthTab } from "./member/HealthTab";
 import { VisitsTab } from "./member/VisitsTab";
+import { TrendsTab } from "./member/TrendsTab";
 
 const TABS = [
   { key: "summary", label: "Summary" },
   { key: "medicines", label: "Medicines" },
   { key: "prescriptions", label: "Prescriptions" },
   { key: "reports", label: "Reports" },
+  { key: "trends", label: "Trends" },
   { key: "visits", label: "Visits" },
   { key: "health", label: "Allergies & conditions" },
 ] as const;
@@ -96,6 +98,9 @@ export function MemberPage() {
           </TabsContent>
           <TabsContent value="reports" className="pt-6">
             <ReportsTab memberId={m.id} />
+          </TabsContent>
+          <TabsContent value="trends" className="pt-6">
+            <TrendsTab memberId={m.id} />
           </TabsContent>
           <TabsContent value="visits" className="pt-6">
             <VisitsTab memberId={m.id} />

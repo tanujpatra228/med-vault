@@ -154,6 +154,7 @@ export interface Report {
 
 export interface ReportDetail extends Report {
   files: FileMeta[];
+  values: LabValue[];
 }
 
 export interface Visit {
@@ -192,6 +193,36 @@ export interface FollowUp {
   follow_up_on: string;
   follow_up_note: string | null;
   visit_date: string;
+}
+
+/** One test result on a report. */
+export interface LabValue {
+  id: ID;
+  member_id: ID;
+  report_id: ID;
+  test_key: string;
+  test_name: string;
+  value: number | null;
+  value_text: string | null;
+  unit: string | null;
+  ref_low: number | null;
+  ref_high: number | null;
+  ref_text: string | null;
+  flag: "high" | "low" | null;
+  position: number;
+  created_at: string;
+  updated_at: string;
+  // joined
+  report_date?: string;
+  report_title?: string;
+}
+
+/** A result as entered or read by AI, before the server works out the numbers. */
+export interface LabDraft {
+  test_name: string;
+  value_text: string | null;
+  unit: string | null;
+  ref_text: string | null;
 }
 
 export type FileOwner = "member" | "prescription" | "report" | "medication";
@@ -315,6 +346,8 @@ export interface ReportScan {
   report_date: string | null;
   lab_name: string | null;
   findings: string | null;
+  /** Every result on the report, as printed. */
+  values: LabDraft[];
 }
 
 export type ScanResult =

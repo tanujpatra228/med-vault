@@ -1,6 +1,6 @@
 // The backup format: data.json inside the backup ZIP. See docs/BACKUP.md.
 
-import type { Allergy, Condition, Doctor, FileMeta, Medication, Member, Prescription, Report, Visit } from "./types";
+import type { Allergy, Condition, Doctor, FileMeta, LabValue, Medication, Member, Prescription, Report, Visit } from "./types";
 
 export const BACKUP_FORMAT = "med-vault-backup";
 export const BACKUP_VERSION = 1;
@@ -24,6 +24,8 @@ export interface BackupData {
   reports: Report[];
   /** Added in app version with visits; older backups have none. */
   visits?: Visit[];
+  /** Added with lab trends; older backups have none. */
+  lab_values?: LabValue[];
   /** Records linked to several conditions; older backups only have each record's condition_id. */
   record_conditions?: ConditionLink[];
   files: BackupFile[];
@@ -36,7 +38,7 @@ export interface ConditionLink {
 }
 
 /** Record tables in the order a restore must insert them (parents before children). */
-export const RESTORE_ORDER = ["doctors", "members", "conditions", "allergies", "prescriptions", "medications", "reports", "visits"] as const;
+export const RESTORE_ORDER = ["doctors", "members", "conditions", "allergies", "prescriptions", "medications", "reports", "visits", "lab_values"] as const;
 export type RestoreTable = (typeof RESTORE_ORDER)[number];
 
 /** Rows per restore request: about 150 × 20 µs of validation stays well inside 10 ms of CPU. */

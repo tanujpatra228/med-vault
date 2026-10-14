@@ -4,7 +4,8 @@ import { Printer, Share2 } from "lucide-react";
 import type { Medication, MemberSummary, Report } from "@shared/types";
 import { REPORT_TYPES } from "@shared/types";
 import { describe as describeSchedule } from "@shared/schedule";
-import { useMedications, useReports, useReview, useSummary } from "@/api/hooks";
+import { useLabs, useMedications, useReports, useReview, useSummary } from "@/api/hooks";
+import { changeText, groupTrends, type Trend } from "@/lib/labs";
 import type { ReviewItem } from "@shared/review";
 import { REVIEW_DISCLAIMER, ReviewItemCard } from "@/pages/member/AskDoctorSection";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ function doseLines(m: Medication): string[] {
 const reportLabel = (r: Report) => REPORT_TYPES.find((t) => t.value === r.report_type)?.label ?? "Report";
 
 /** WhatsApp-friendly plain text version of the brief. */
-function briefText(s: MemberSummary, current: Medication[], recent: Medication[], reports: Report[], questions: ReviewItem[]): string {
+function briefText(s: MemberSummary, current: Medication[], recent: Medication[], reports: Report[], questions: ReviewItem[], trends: Trend[]): string {
   const m = s.member;
   const years = age(m.dob);
   const lines: string[] = [
@@ -75,6 +76,10 @@ function briefText(s: MemberSummary, current: Medication[], recent: Medication[]
     lines.push("", "RECENT REPORTS:");
     for (const r of reports) lines.push(`- ${formatDate(r.report_date)}: ${r.title}${r.notes ? `. ${r.notes}` : ""}`);
   }
+  if (trends.length) {
+    lines.push("", "LAB RESULTS (latest):");
+    for (const tr of trends) lines.push(`- ${tr.label}: ${tr.latest.value_text}${tr.unit ? ` ${tr.unit}` : ""}${tr.latest.flag ? ` (${tr.latest.flag.toUpperCase()})` : ""}, ${formatDate(tr.latest.report_date)}${changeText(tr) ? `. ${changeText(tr)}` : ""}`);
+  }
   if (questions.length) {
     lines.push("", "QUESTIONS FOR THE DOCTOR:");
     for (const q of questions) lines.push(`- ${q.question} (${q.medicines.join(", ")})`);
@@ -102,6 +107,7 @@ export function VisitBrief() {
   const meds = useMedications(memberId);
   const reports = useReports(memberId);
   const review = useReview(memberId);
+  const labs = useLabs(memberId);
 
   if (summary.isPending || meds.isPending || reports.isPending)
     return (
@@ -130,10 +136,13 @@ export function VisitBrief() {
   const years = age(m.dob);
   // Only a review that still matches the current medicines; a stale one could ask about stopped ones.
   const questions = review.data?.review && !review.data.stale ? review.data.review.items : [];
+  // Tests from the last year, out of range first; at most 8 so the brief stays one page.
+  const yearAgo = addDays(date, -365);
+  const trends = groupTrends(labs.data ?? []).filter((tr) => (tr.latest.report_date ?? "") >= yearAgo).slice(0, 8);
   const facts = [years !== null ? `${years} yrs` : null, m.sex ? capitalize(m.sex) : null, m.blood_group ? `Blood ${m.blood_group}` : null].filter(Boolean);
 
   const share = async () => {
-    const text = briefText(s, current, recent, latestReports, questions);
+    const text = briefText(s, current, recent, latestReports, questions, trends);
     try {
       if (typeof navigator.share === "function") await navigator.share({ title: `Medical summary: ${m.name}`, text });
       else {
@@ -255,6 +264,28 @@ export function VisitBrief() {
               <p>None recorded</p>
             )}
           </Block>
+
+          {trends.length > 0 && (
+            <Block title="Lab results · latest">
+              <table className="w-full type-label">
+                <tbody>
+                  {trends.map((tr) => (
+                    <tr key={tr.key} className="border-t border-rule-soft align-top first:border-t-0">
+                      <td className="py-1.5 pr-2">{tr.label}</td>
+                      <td className="py-1.5 pr-2 whitespace-nowrap">
+                        <span className="font-semibold">{tr.latest.value_text}</span> {tr.unit}
+                        {tr.latest.flag && <span className="font-semibold text-rust"> · {tr.latest.flag === "high" ? "High" : "Low"}</span>}
+                      </td>
+                      <td className="py-1.5 text-ink-muted">
+                        <span className="num text-[12px]">{formatDate(tr.latest.report_date)}</span>
+                        {changeText(tr) && <span className="block">{changeText(tr)}</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </Block>
+          )}
 
           {questions.length > 0 && (
             <Block title="Questions for the doctor">

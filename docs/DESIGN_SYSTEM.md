@@ -129,6 +129,24 @@ Med Vault components built on top of these live in `src/components/` (`Row`, `Fi
 | **Tabs** | Horizontal scrollable text tabs, `label` style; active tab in ink with a 2px ink underline; inactive in ink-faint. |
 | **Mark** | Med Vault's mark: a plus/cross built from five 3px-radius tiles in the Lekha tile style, four in `ink` and the center in `iris`. Used as logo, loader (center tile pulses) and empty state (outlined tiles). |
 
+## Charts
+
+Lab trends follow the dataviz method:
+- **Line:** a single 2px line with 4.5px points. Each point has a 2px ring in the surface color.
+- **Normal range:** a moss band at 10% opacity.
+- **Out-of-range points:** the status color, always with "High"/"Low" text.
+- **Gridlines and annotations:** hairline gridlines, and medicine changes as hairline annotations.
+- **Readout:** a crosshair readout on hover or tap.
+- **Values:** always repeated in a table under the chart.
+
+| Token | Light | Dark |
+|---|---|---|
+| `--chart-line` | `--iris` (#5b34d6) | #9575f5 |
+| `--chart-out` | `--rust` (#a8450f) | #e06f35 |
+| `--chart-band` | `--moss` | `--moss` |
+
+The dark steps are separate because the UI's dark iris and rust are too light for chart marks. Both pairs pass the palette validator, covering the lightness band, CVD separation and 3:1 contrast against the sheet.
+
 ## Iconography
 
 - Stroke only, 1.75px, 24px box, round caps, `currentColor`. No filled icons, no emoji.

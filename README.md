@@ -14,6 +14,7 @@ A private vault for your whole family's medical records: current medicines, pres
 - **AI-assisted entry:** photograph a prescription, medicine strip or report and the form fills itself in (Cloudflare Workers AI). You check and save.
 - **Questions for the doctor:** checks every current medicine from every doctor for allergy conflicts, duplicates and risky combinations (built-in rules plus AI), as questions for the next visit.
 - **Visits and follow-ups:** every prescription logs its visit; scans read "review after 2 weeks"; upcoming and overdue follow-ups for the whole family on the home screen.
+- **Lab trends:** report scans read every result; each test is charted over time with its normal range and medicine changes.
 - **Backup and restore:** one ZIP with every record and photo, readable on any computer; restore into a new vault.
 - Installable on the Android home screen.
 
@@ -60,6 +61,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [BACKUP.md](docs/BACKUP.md) | Backup ZIP format and restore |
 | [ASK_YOUR_DOCTOR.md](docs/ASK_YOUR_DOCTOR.md) | Medicine review: built-in checks and AI |
 | [VISITS.md](docs/VISITS.md) | Visits log and follow-ups |
+| [LAB_TRENDS.md](docs/LAB_TRENDS.md) | Lab results and trend charts |
 | [TODO.md](docs/TODO.md) | Build order for what is next |
 
 ## Project layout

@@ -28,6 +28,7 @@ import {
 } from "./schemas";
 import { validate } from "./validate";
 import { closeFollowUpsStmt, visits } from "./visits";
+import { valuesForReport } from "./labs";
 import { assertConditions, conditionCols, conditionIdsFrom, setLinksStmts } from "./conditionLinks";
 import { visitSchema } from "./schemas";
 
@@ -310,7 +311,7 @@ export const reportsApi = new Hono<AppEnv>();
 reportsApi.get("/:id", async (c) => {
   const id = c.req.param("id");
   const r = await getOne<Report>(c.env.DB, reports, c.get("vaultId"), id);
-  const detail: ReportDetail = { ...r, files: await filesFor(c.env.DB, "report", id) };
+  const detail: ReportDetail = { ...r, files: await filesFor(c.env.DB, "report", id), values: await valuesForReport(c.env.DB, c.get("vaultId"), id) };
   return c.json(detail);
 });
 

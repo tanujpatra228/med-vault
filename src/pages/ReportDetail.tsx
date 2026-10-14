@@ -5,7 +5,8 @@ import { useDelete, useReport } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { FileGallery } from "@/components/FileGallery";
-import { ErrorState, Loading, Page, Section, TopBar } from "@/components/layout";
+import { ErrorState, Loading, Page, Section, SectionLink, TopBar } from "@/components/layout";
+import { Badge } from "@/components/ui/badge";
 import { formatDate, relativeDays } from "@/lib/format";
 
 export function ReportDetail() {
@@ -61,6 +62,35 @@ export function ReportDetail() {
         {r.notes && (
           <Section title="What it says">
             <p className="whitespace-pre-wrap statement-md">{r.notes}</p>
+          </Section>
+        )}
+        {r.values.length > 0 && (
+          <Section title={`Results · ${r.values.length}`} action={<SectionLink to={`/m/${r.member_id}/trends`}>Trends</SectionLink>}>
+            <table className="w-full type-label">
+              <thead>
+                <tr className="text-left text-ink-faint">
+                  <th className="py-1 font-normal">Test</th>
+                  <th className="py-1 font-normal">Result</th>
+                  <th className="py-1 font-normal">Normal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {r.values.map((v) => (
+                  <tr key={v.id} className="border-t border-rule-soft align-top">
+                    <td className="py-2 pr-2">{v.test_name}</td>
+                    <td className="py-2 pr-2">
+                      <span className="font-semibold">{v.value_text}</span> {v.unit}
+                      {v.flag && (
+                        <span className="ml-1.5 inline-block">
+                          <Badge variant="warn">{v.flag === "high" ? "High" : "Low"}</Badge>
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2 text-ink-faint">{v.ref_text}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </Section>
         )}
         <Section title={`Pages · ${r.files.length}`}>

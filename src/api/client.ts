@@ -27,6 +27,7 @@ export const api = {
   get: <T>(path: string) => request<T>("GET", path),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, body),
   patch: <T>(path: string, body: unknown) => request<T>("PATCH", path, body),
+  put: <T>(path: string, body: unknown) => request<T>("PUT", path, body),
   del: <T = { ok: true }>(path: string) => request<T>("DELETE", path),
   /** DELETE with a JSON body (e.g. a typed confirmation). */
   del2: <T = { ok: true }>(path: string, body: unknown) => request<T>("DELETE", path, body),
