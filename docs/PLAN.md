@@ -153,6 +153,7 @@ Build order and status: [TODO.md](./TODO.md).
 | `record_conditions` | owner_type (prescription/medication/report/visit), owner_id, condition_id: a record can be for several conditions; `condition_id` on each table keeps the first |
 | `visits` | member_id, doctor_id, condition_id, prescription_id, visit_date, reason, notes, follow_up_on, follow_up_note, follow_up_done |
 | `ai_usage` | vault_id, kind, model, input/output tokens, neurons |
+| `vaults` (privacy) | consent_version, consent_at, ai_consent_at, contact_email |
 | `med_reviews` | member_id, result (latest medicine review JSON) |
 
 Every data table also has `vault_id`; every query is scoped by it.
