@@ -39,6 +39,8 @@ export async function exportVault(c: Context<AppEnv>) {
     db.prepare("SELECT owner_type, owner_id, condition_id FROM record_conditions WHERE vault_id = ? ORDER BY owner_type, owner_id").bind(vaultId),
     ...tables.map((t) => db.prepare(`SELECT * FROM ${t} WHERE vault_id = ? ORDER BY created_at ASC`).bind(vaultId)),
   ]);
+  // For the monthly "time for a backup" reminder.
+  await db.prepare("UPDATE vaults SET last_export_at = ? WHERE id = ?").bind(new Date().toISOString(), vaultId).run();
   const data: Record<string, unknown> = {
     format: BACKUP_FORMAT,
     version: BACKUP_VERSION,

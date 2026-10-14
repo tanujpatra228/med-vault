@@ -32,10 +32,10 @@ There is no HIPAA equivalent. DPDP treats health data like any other personal da
 | Erasure | Delete a record, a member or the whole vault. R2 files are removed immediately. D1 point-in-time recovery keeps data for up to 30 days, as the notice says. |
 | Nomination | The notice tells people to share the recovery key with someone they trust |
 | Grievance redressal | The operator's contact is shown in the notice and Settings. Set it in `wrangler.jsonc` → `vars.GRIEVANCE_EMAIL` (and `OPERATOR_NAME`). |
-| Data minimisation | No account, phone, Aadhaar or payment data. IP addresses only in `rate_events`, purged after 2 days. |
+| Data minimisation | No account, phone, Aadhaar or payment data. IP addresses only in `rate_events`, purged after 2 days. Reminders keep only a push address, time zone and settings per phone; the sent log is purged after 3 days. |
 | Security safeguards (Rule 6) | TLS. Cloudflare encryption at rest. Device keys, link codes and the recovery key are stored as SHA-256 only. Every query is scoped by `vault_id`, with cross-vault reference checks. |
 | Breach notice to the Board and to individuals | Runbook below. Optional per-vault security contact email (Settings → Privacy) plus an in-app notice. |
-| Processor contract | Cloudflare's self-serve terms and data processing addendum. Workers AI documentation says Cloudflare does not use inputs or outputs to train models or share them with other customers. |
+| Processor contract | Cloudflare's self-serve terms and data processing addendum. Reminders pass through the phone's push service (Google FCM on Android) end-to-end encrypted (RFC 8291), so it cannot read them; "Show medicine and doctor names" off keeps medical words off the lock screen. Workers AI documentation says Cloudflare does not use inputs or outputs to train models or share them with other customers. |
 | Cross-border transfer | Allowed unless the government restricts a country. Cloudflare may store data outside India, as the notice says. |
 | Logs for 1 year (Rule 6) | **Open: audit log not built yet.** |
 

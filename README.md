@@ -16,6 +16,7 @@ A private vault for your whole family's medical records: current medicines, pres
 - **Visits and follow-ups:** every prescription logs its visit; scans read "review after 2 weeks"; upcoming and overdue follow-ups for the whole family on the home screen.
 - **Lab trends:** report scans read every result; each test is charted over time with its normal range and medicine changes.
 - **Search** across every record and note, for the family or one person.
+- **Reminders** on each phone: medicine times (weekly doses and tapers included), follow-up visits and a monthly backup nudge.
 - **Backup and restore:** one ZIP with every record and photo, readable on any computer; restore into a new vault.
 - Installable on the Android home screen.
 
@@ -64,6 +65,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [VISITS.md](docs/VISITS.md) | Visits log and follow-ups |
 | [LAB_TRENDS.md](docs/LAB_TRENDS.md) | Lab results and trend charts |
 | [SEARCH.md](docs/SEARCH.md) | What search covers and how |
+| [REMINDERS.md](docs/REMINDERS.md) | Push reminders: what, when, how, limits |
 | [COMPLIANCE.md](docs/COMPLIANCE.md) | India privacy law (DPDP), consent, breach runbook |
 | [TODO.md](docs/TODO.md) | Build order for what is next |
 

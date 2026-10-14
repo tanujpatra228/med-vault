@@ -22,6 +22,7 @@ import {
 import { BackupCard } from "@/components/Backup";
 import { AiUsageCard } from "@/components/AiUsageCard";
 import { PrivacySettings } from "@/components/PrivacySettings";
+import { RemindersSettings } from "@/components/RemindersSettings";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Field } from "@/components/Field";
 import { RecoveryKeyCard } from "@/components/RecoveryKey";
@@ -223,6 +224,10 @@ export function SettingsPage() {
             ))}
           </RowList>
           <LinkDevice />
+        </Section>
+
+        <Section title="Reminders">
+          <RemindersSettings />
         </Section>
 
         <Section title="Backup">

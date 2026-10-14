@@ -1,5 +1,5 @@
 // Med Vault service worker: caches the app shell only. Never caches /api/* (medical data must be fresh).
-const CACHE = "mv-shell-v1";
+const CACHE = "mv-shell-v2";
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -48,4 +48,36 @@ self.addEventListener("fetch", (event) => {
       ),
     );
   }
+});
+
+// Reminders (Web Push). The payload is decrypted by the browser: { title, body, url, tag }.
+self.addEventListener("push", (event) => {
+  let msg = { title: "Med Vault", body: "", url: "/", tag: "med-vault" };
+  try {
+    msg = { ...msg, ...event.data.json() };
+  } catch {
+    // keep the generic message
+  }
+  event.waitUntil(
+    self.registration.showNotification(msg.title, {
+      body: msg.body,
+      tag: msg.tag,
+      renotify: true,
+      icon: "/icons/icon-192.png",
+      data: { url: msg.url },
+    }),
+  );
+});
+
+// Tapping a reminder opens (or focuses) the app on the right screen.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || "/", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((wins) => {
+      const win = wins.find((w) => w.url.startsWith(self.location.origin));
+      if (win) return win.navigate(url).then((w) => (w || win).focus());
+      return self.clients.openWindow(url);
+    }),
+  );
 });

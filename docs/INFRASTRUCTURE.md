@@ -26,7 +26,7 @@ One Worker serves both the app and the API, so there is one deploy, one domain a
 | **D1** | Database | `DB` | 5 GB storage, 5M rows read/day, 100k rows written/day | No |
 | **R2** | Photos and PDFs | `FILES` | 10 GB storage, 1M writes/month, 10M reads/month, no egress fees | No, but **R2 must be enabled with a payment method on the account**. You are not charged while under the free limits. |
 | **workers.dev subdomain** | URL `med-vault.<account>.workers.dev` | n/a | Free | No. A custom domain is optional (domain cost only). |
-| **Cron Triggers** (Phase 3) | Reminder scheduling | n/a | Free (limited number per account) | No |
+| **Cron Triggers** | Reminders, every 5 minutes (288 runs/day, counted as requests) | `triggers.crons` | Free (limited number per account), 10 ms CPU per run | No. Capped at 4 pushes per run to fit 10 ms; see [REMINDERS.md](./REMINDERS.md) |
 | **Workers AI** | Reading prescription, medicine and report photos (`@cf/meta/llama-4-scout-17b-16e-instruct`, fallback `@cf/mistralai/mistral-small-3.1-24b-instruct`) | `AI` | 10,000 Neurons/day; a prescription scan measured **78.68 Neurons** (see below) | No, unless usage grows |
 | **Claude API** (future upgrade) | Better handwriting recognition if Workers AI is not accurate enough | secret | None | **Yes**, pay per use, not Cloudflare. Only if needed. |
 
@@ -86,7 +86,8 @@ Next step if bots ever create vaults: **Cloudflare Turnstile** (free) on the "Cr
 3. **D1 write budget (100k rows/day).** Far above family use. Don't write on every read (e.g. no "last seen" updates per request).
 4. **R2 is not cleaned up by D1 cascades.** Any route that deletes a member, prescription, report or medication must also delete its R2 objects.
 5. **Request body limit 100 MB.** Uploads are capped at 15 MB per file in the API anyway.
-6. **PWA needs HTTPS.** Provided by workers.dev. Local dev runs on `localhost`, which browsers treat as secure.
+6. **Web Push crypto is ~1-2 ms per message.** The reminder cron sends at most 4 per run and leaves the rest for the next run.
+7. **PWA needs HTTPS.** Provided by workers.dev. Local dev runs on `localhost`, which browsers treat as secure.
 
 ## Environments
 

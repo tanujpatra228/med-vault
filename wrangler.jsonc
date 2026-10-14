@@ -27,5 +27,7 @@
   // Shown in the privacy notice (docs/COMPLIANCE.md): who runs this deployment and where to send
   // privacy requests and complaints. Public values, not secrets.
   "vars": { "OPERATOR_NAME": "", "GRIEVANCE_EMAIL": "" },
+  // Reminders: every 5 minutes, send what is due (worker/reminders.ts). Free plan allows 5 crons.
+  "triggers": { "crons": ["*/5 * * * *"] },
   "observability": { "enabled": true }
 }
