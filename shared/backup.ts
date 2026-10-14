@@ -24,7 +24,15 @@ export interface BackupData {
   reports: Report[];
   /** Added in app version with visits; older backups have none. */
   visits?: Visit[];
+  /** Records linked to several conditions; older backups only have each record's condition_id. */
+  record_conditions?: ConditionLink[];
   files: BackupFile[];
+}
+
+export interface ConditionLink {
+  owner_type: "prescription" | "medication" | "report" | "visit";
+  owner_id: string;
+  condition_id: string;
 }
 
 /** Record tables in the order a restore must insert them (parents before children). */

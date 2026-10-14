@@ -94,7 +94,10 @@ export interface Medication {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
 }
 
 export interface Prescription {
@@ -109,7 +112,10 @@ export interface Prescription {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
   med_count?: number;
   file_count?: number;
   cover_file_id?: string | null;
@@ -138,7 +144,10 @@ export interface Report {
   updated_at: string;
   // joined
   doctor_name?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
   file_count?: number;
   cover_file_id?: string | null;
 }
@@ -165,7 +174,10 @@ export interface Visit {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
 }
 
 /** An open follow-up, for the home screen and the member summary. */

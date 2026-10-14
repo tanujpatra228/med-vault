@@ -5,16 +5,17 @@ import type { AppEnv } from "./env";
 import { readJson } from "./http";
 import { visitSchema } from "./schemas";
 import { validate } from "./validate";
+import { assertConditions, conditionCols, conditionIdsFrom, setLinksStmts } from "./conditionLinks";
 
 export const visits: Resource = {
   table: "visits",
   schema: visitSchema,
-  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, k.name AS condition_name
+  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, ${conditionCols("visit")}
     FROM visits t
-    LEFT JOIN doctors d ON d.id = t.doctor_id
-    LEFT JOIN conditions k ON k.id = t.condition_id`,
+    LEFT JOIN doctors d ON d.id = t.doctor_id`,
   orderBy: "t.visit_date DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", doctor_id: "t.doctor_id", prescription_id: "t.prescription_id" },
+  conditionOwner: "visit",
 };
 
 /**
@@ -54,11 +55,15 @@ visitsApi.get("/follow-ups", async (c) => {
 visitsApi.post("/", async (c) => {
   const vaultId = c.get("vaultId");
   const db = c.env.DB;
-  const data = validate(visitSchema, await readJson(c));
+  const body = await readJson(c);
+  const conditionIds = conditionIdsFrom(body) ?? [];
+  body.condition_id = conditionIds[0] ?? null;
+  const data = validate(visitSchema, body);
   await assertRefs(db, visitSchema, vaultId, data);
+  await assertConditions(db, vaultId, conditionIds);
   const id = crypto.randomUUID();
   const close = closeFollowUpsStmt(db, vaultId, data.member_id!, data.doctor_id ?? null, data.visit_date!);
-  await db.batch([...(close ? [close] : []), insertStmt(db, "visits", id, vaultId, data)]);
+  await db.batch([...(close ? [close] : []), insertStmt(db, "visits", id, vaultId, data), ...setLinksStmts(db, vaultId, "visit", [id], conditionIds)]);
   return c.json(await getOne(db, visits, vaultId, id), 201);
 });
 

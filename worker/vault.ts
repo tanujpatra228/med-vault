@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { deleteCookie } from "hono/cookie";
 import type { AppEnv } from "./env";
-import { exportVault, restoreVault } from "./backup";
+import { exportVault, restoreLinks, restoreVault } from "./backup";
 import { createLinkCode, rotateRecoveryKey } from "./auth";
 import { badRequest, HttpError, notFound, readJson } from "./http";
 
@@ -30,6 +30,7 @@ vaultApi.patch("/", async (c) => {
 // Backup: every record as JSON (the app adds the files and builds the ZIP), and restore into an empty vault.
 vaultApi.get("/export", exportVault);
 vaultApi.post("/restore", restoreVault);
+vaultApi.post("/restore/links", restoreLinks);
 
 // One-time code (valid 10 minutes) that another phone types or opens as a link to join this vault.
 vaultApi.post("/link-code", async (c) => c.json(await createLinkCode(c.env.DB, c.get("vaultId")), 201));
