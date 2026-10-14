@@ -8,6 +8,8 @@ import { reviewApi } from "./review";
 import { visitsApi } from "./visits";
 import { labsApi } from "./labs";
 import { searchApi } from "./search";
+import { pushApi, runReminders } from "./reminders";
+import type { Env } from "./env";
 import { vaultApi } from "./vault";
 import {
   allergiesApi,
@@ -47,8 +49,15 @@ app.route("/reports", reportsApi);
 app.route("/visits", visitsApi);
 app.route("/labs", labsApi);
 app.route("/search", searchApi);
+app.route("/push", pushApi);
 app.route("/files", files);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));
 
-export default app;
+export default {
+  fetch: app.fetch,
+  /** Cron trigger (wrangler.jsonc "triggers"): sends due reminders. */
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(runReminders(env).then((r) => r.sent + r.failed > 0 && console.log("reminders", r)));
+  },
+} satisfies ExportedHandler<Env>;
