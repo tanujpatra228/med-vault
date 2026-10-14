@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { BackupCard } from "@/components/Backup";
 import { AiUsageCard } from "@/components/AiUsageCard";
+import { PrivacySettings } from "@/components/PrivacySettings";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Field } from "@/components/Field";
 import { RecoveryKeyCard } from "@/components/RecoveryKey";
@@ -254,6 +255,10 @@ export function SettingsPage() {
               </Button>
             }
           />
+        </Section>
+
+        <Section title="Privacy">
+          <PrivacySettings vault={v} />
         </Section>
 
         <Section title="Danger zone">
