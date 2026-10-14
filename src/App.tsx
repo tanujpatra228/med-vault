@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from "react-router";
 import { PRIVACY_VERSION } from "@shared/privacy";
 import { PrivacyPage } from "@/pages/Privacy";
+import { SearchPage } from "@/pages/Search";
 import { ReConsent } from "@/components/ReConsent";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/api/client";
@@ -82,6 +83,7 @@ const router = createBrowserRouter([
       { path: "/reports/:reportId/edit", element: <ReportForm /> },
       { path: "/allergies/:allergyId", element: <AllergyForm /> },
       { path: "/conditions/:conditionId", element: <ConditionForm /> },
+      { path: "/search", element: <SearchPage /> },
       { path: "/settings", element: <SettingsPage /> },
       { path: "/restore", element: <RestorePage /> },
       { path: "/link", element: <Navigate to="/" replace /> },

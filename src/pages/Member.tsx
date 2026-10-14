@@ -1,5 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router";
-import { ClipboardList, Pencil } from "lucide-react";
+import { ClipboardList, Pencil, Search } from "lucide-react";
 import { useMember } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -58,6 +58,11 @@ export function MemberPage() {
         title="Family"
         action={
           <>
+            <Button asChild variant="ghost" size="icon" aria-label={`Search ${m.name}'s records`}>
+              <Link to={`/search?member=${m.id}`}>
+                <Search />
+              </Link>
+            </Button>
             <Button asChild variant="ghost" size="icon" aria-label="Visit brief for the doctor">
               <Link to={`/m/${m.id}/brief`}>
                 <ClipboardList />

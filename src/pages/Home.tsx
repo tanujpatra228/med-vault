@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Settings, Stethoscope, UserPlus } from "lucide-react";
+import { Search, Settings, Stethoscope, UserPlus } from "lucide-react";
 import { useAuth } from "@/api/auth";
 import { useMembers } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,11 @@ export function Home() {
       <header className="mx-auto flex h-16 max-w-[640px] items-center justify-between px-5">
         <Wordmark />
         <div className="flex items-center">
+          <Button asChild variant="ghost" size="icon" aria-label="Search">
+            <Link to="/search">
+              <Search />
+            </Link>
+          </Button>
           <Button asChild variant="ghost" size="icon" aria-label="Doctors">
             <Link to="/doctors">
               <Stethoscope />
