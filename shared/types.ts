@@ -266,4 +266,15 @@ export type ScanResult =
   | { kind: "report"; data: ReportScan };
 
 /** Max data-URL length accepted by /api/ai/scan (~1.5 MB of base64). */
+/** Today's Workers AI allowance for a vault, in neurons (Cloudflare's billing unit). */
+export interface AiUsage {
+  used: number;
+  limit: number;
+  left: number;
+  /** About how many prescription scans the remaining allowance covers. */
+  scans_left: number;
+  /** Next reset (00:00 UTC, 5:30 AM in India). */
+  resets_at: string;
+}
+
 export const SCAN_MAX_DATA_URL = 1_500_000;

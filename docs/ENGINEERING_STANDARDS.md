@@ -52,7 +52,7 @@ public/        PWA manifest, service worker, icons
 2. **Normalize on the server.** Never trust the model's JSON: validate dates, enums and lengths in `worker/ai.ts` and drop what fails. Covered by `worker/ai.test.ts`.
 3. **Never lose a suggestion silently.** If AI proposes a new doctor or condition, the user must add or cancel it before saving.
 4. **Images go to the model as data URLs prepared in the browser.** The Worker does no image work (10 ms CPU limit).
-5. **Respect the shared allowance.** Every scan and medicine review counts against the per-vault daily limit.
+5. **Respect the shared allowance.** Every AI call checks `assertAiBudget()` first and records its real neuron cost with `recordAiUsage()` (`worker/aiBudget.ts`).
 6. **Advice is a question.** Anything health-related the app generates is phrased as a question for the doctor, never an instruction (see ASK_YOUR_DOCTOR.md).
 
 ## 4. Database rules

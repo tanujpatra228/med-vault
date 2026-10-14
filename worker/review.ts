@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { scheduleOf, summary } from "../shared/schedule";
 import { LEVEL_ORDER, mergeItems, ruleChecks, type MedReview, type ReviewItem, type ReviewLevel, type ReviewMed, type ReviewResponse } from "../shared/review";
-import { aiUsedToday, DAILY_SCANS_PER_VAULT, MODELS, parseJsonObject, recordAiUse, type AiRunner } from "./ai";
+import { MODELS, parseJsonObject, type AiRunner } from "./ai";
+import { assertAiBudget, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
 import { sha256Hex } from "./crypto";
 import type { AppEnv } from "./env";
 import { badRequest, notFound, readJson } from "./http";
@@ -104,9 +105,9 @@ async function askModels(ai: AiRunner, input: string) {
         ],
         max_tokens: 1200,
         temperature: 0,
-      })) as { response?: unknown };
+      })) as { response?: unknown; usage?: TokenUsage };
       const obj = parseJsonObject(out?.response ?? out);
-      if (obj) return { obj, model };
+      if (obj) return { obj, model, usage: out?.usage };
     } catch (err) {
       console.error("review model failed", model, err);
     }
@@ -147,12 +148,14 @@ reviewApi.post("/", async (c) => {
   const names = ctx.meds.map((m) => m.name);
   let ai: { generics: Record<string, string>; items: ReviewItem[] } = { generics: {}, items: [] };
   let model: string | null = null;
-  if ((await aiUsedToday(db, vaultId)) < DAILY_SCANS_PER_VAULT) {
-    const reply = c.env.AI_MOCK === "1" ? { obj: mockReply(names), model: "mock" } : await askModels(c.env.AI as unknown as AiRunner, promptInput(ctx));
+  // Out of AI allowance: the built-in checks still run.
+  const affordable = await assertAiBudget(db, vaultId, "review").then(() => true, () => false);
+  if (affordable) {
+    const reply = c.env.AI_MOCK === "1" ? { obj: mockReply(names), model: "mock", usage: undefined } : await askModels(c.env.AI as unknown as AiRunner, promptInput(ctx));
     if (reply) {
       ai = normalizeReview(reply.obj, names);
       model = reply.model;
-      await recordAiUse(db, vaultId);
+      await recordAiUsage(db, vaultId, "review", reply.model, neuronsFor(reply.model, "review", reply.usage), reply.usage);
     }
   }
 

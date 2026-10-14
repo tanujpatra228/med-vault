@@ -16,6 +16,7 @@ import type {
   ReportDetail,
   ScanKind,
   ScanResult,
+  AiUsage,
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
@@ -116,13 +117,15 @@ export function useUploadFiles() {
 
 export type { Doctor };
 
-export type ScanResponse = ScanResult & { model: string; scans_left: number };
+export type ScanResponse = ScanResult & { model: string; ai: AiUsage };
 
 /** Reads a photo with Workers AI. Results are suggestions for the form, never saved directly. */
 export function useScan() {
+  const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ kind, file }: { kind: ScanKind; file: File }) =>
       api.post<ScanResponse>("/ai/scan", { kind, image: await imageToDataUrl(file, SCAN_MAX_DATA_URL) }),
+    onSuccess: (data) => qc.setQueryData(["ai-usage"], data.ai),
   });
 }
 
@@ -136,6 +139,12 @@ export function useRunReview(memberId: string) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => api.post<ReviewResponse>("/ai/review", { member_id: memberId }),
-    onSuccess: (data) => qc.setQueryData(["review", memberId], data),
+    onSuccess: (data) => {
+      qc.setQueryData(["review", memberId], data);
+      qc.invalidateQueries({ queryKey: ["ai-usage"] });
+    },
   });
 }
+
+/** Today's AI allowance (neurons) for this vault. */
+export const useAiUsage = () => useQuery({ queryKey: ["ai-usage"], queryFn: () => api.get<AiUsage>("/ai/usage") });

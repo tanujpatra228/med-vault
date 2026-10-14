@@ -28,35 +28,51 @@ const canShareFiles = () => {
   }
 };
 
-/** Settings → Backup: download (or share to Drive) one ZIP with everything. */
+/**
+ * Settings → Backup. Two steps on purpose: Android only opens the share sheet within a few seconds
+ * of a tap, and building the ZIP takes longer. So "Create backup" builds it, then "Save to Drive"
+ * shares the ready file on a fresh tap.
+ */
 export function BackupCard() {
   const [busy, setBusy] = useState<string | null>(null);
+  const [ready, setReady] = useState<File | null>(null);
   const [last, setLast] = useState(lastBackup);
   const members = useMembers();
   const doctors = useDoctors();
   const empty = members.data?.length === 0 && doctors.data?.length === 0;
 
-  const run = async (share: boolean) => {
+  const done = () => {
+    markBackedUp();
+    setLast(lastBackup());
+  };
+
+  const create = async () => {
     setBusy("Starting…");
     try {
       const { blob, filename } = await buildBackup(setBusy);
-      const file = new File([blob], filename, { type: "application/zip" });
-      if (share) {
-        try {
-          await navigator.share({ files: [file], title: filename });
-        } catch (e) {
-          if (e instanceof DOMException && e.name === "AbortError") return;
-          saveBlob(blob, filename);
-        }
-      } else saveBlob(blob, filename);
-      markBackedUp();
-      setLast(lastBackup());
-      toast.success("Backup ready");
+      setReady(new File([blob], filename, { type: "application/zip" }));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Backup failed");
     } finally {
       setBusy(null);
     }
+  };
+
+  const share = async (file: File) => {
+    try {
+      await navigator.share({ files: [file], title: file.name });
+      done();
+      toast.success("Backup shared");
+    } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return;
+      toast.error("Sharing did not open. Use Download, then upload the file to Drive.");
+    }
+  };
+
+  const download = (file: File) => {
+    saveBlob(file, file.name);
+    done();
+    toast.success("Backup downloaded");
   };
 
   return (
@@ -69,17 +85,27 @@ export function BackupCard() {
         <div className="rounded-sm border border-iris bg-iris-surface px-4 py-3 type-label text-ink" role="status">
           {busy}
         </div>
-      ) : (
-        <div className={canShareFiles() ? "grid grid-cols-2 gap-2" : "grid"}>
-          <Button variant="secondary" onClick={() => run(false)}>
-            <Download /> Download backup
-          </Button>
-          {canShareFiles() && (
-            <Button variant="secondary" onClick={() => run(true)}>
-              <Share2 /> Save to Drive…
+      ) : ready ? (
+        <div className="flex flex-col gap-2 rounded-sm border border-moss bg-moss-surface p-3">
+          <p className="type-label text-moss">
+            Backup ready: <span className="[overflow-wrap:anywhere]">{ready.name}</span> ({Math.max(1, Math.round(ready.size / 1024 / 1024))} MB)
+          </p>
+          <div className={canShareFiles() ? "grid grid-cols-2 gap-2" : "grid"}>
+            {canShareFiles() && (
+              <Button onClick={() => share(ready)}>
+                <Share2 /> Save to Drive…
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => download(ready)}>
+              <Download /> Download
             </Button>
-          )}
+          </div>
+          {canShareFiles() && <p className="type-caption text-ink-muted">"Save to Drive" opens the share menu: pick Drive, choose a folder, tap Save.</p>}
         </div>
+      ) : (
+        <Button variant="secondary" onClick={create}>
+          <Download /> Create backup
+        </Button>
       )}
       <p className="type-caption text-ink-faint">{last ? `Last backup from this phone: ${relativeDays(last)}` : "No backup made from this phone yet."}</p>
       {empty && (

@@ -30,7 +30,7 @@ Fixed wording under every review: "Questions to ask, not medical advice. Never s
 3. **Merge:** built-in findings come first; AI findings about the same combination are dropped. Server-side validation keeps only known levels and medicine names that were actually sent.
 4. If the AI is unavailable or the daily limit is reached, the built-in checks still run and the card says "built-in checks only".
 
-Each review uses one of the vault's 30 daily AI calls (shared with scans). Results are cached per member (`med_reviews`), so opening the summary never spends AI.
+A review costs about 46 neurons for 3 medicines (measured), more for longer lists, from the vault's daily AI budget shared with scans (see INFRASTRUCTURE.md). Results are cached per member (`med_reviews`), so opening the summary never spends AI.
 
 ## Limits
 

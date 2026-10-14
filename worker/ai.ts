@@ -12,21 +12,11 @@ import {
 } from "../shared/types";
 import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDays, type Pattern, type Schedule } from "../shared/schedule";
 import type { AppEnv } from "./env";
+import { assertAiBudget, aiUsage, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
 import { badRequest, HttpError, readJson } from "./http";
 
 // Tried in order: if a model is unavailable or returns nothing usable, the next one is used.
 export const MODELS = ["@cf/meta/llama-4-scout-17b-16e-instruct", "@cf/mistralai/mistral-small-3.1-24b-instruct"];
-
-/** Per-vault daily cap so one family cannot use up the shared Workers AI free allowance. */
-export const DAILY_SCANS_PER_VAULT = 30;
-
-/** AI calls this vault made in the last 24 hours (scans and medicine reviews share the cap). */
-export async function aiUsedToday(db: D1Database, vaultId: string): Promise<number> {
-  const since = new Date(Date.now() - 86_400_000).toISOString();
-  return (await db.prepare("SELECT COUNT(*) AS n FROM rate_events WHERE ip = ? AND kind = 'ai_scan' AND at > ?").bind(`vault:${vaultId}`, since).first<number>("n")) ?? 0;
-}
-
-export const recordAiUse = (db: D1Database, vaultId: string) => db.prepare("INSERT INTO rate_events (ip, kind) VALUES (?, 'ai_scan')").bind(`vault:${vaultId}`).run();
 
 const REPORT_TYPES: ReportType[] = ["blood", "urine", "imaging", "scan", "ecg", "other"];
 
@@ -312,9 +302,9 @@ async function runModels(ai: AiRunner, kind: ScanKind, image: string) {
         ],
         max_tokens: 1500,
         temperature: 0,
-      })) as { response?: unknown };
+      })) as { response?: unknown; usage?: TokenUsage };
       const obj = parseJsonObject(out?.response ?? out);
-      if (obj) return { obj, model };
+      if (obj) return { obj, model, usage: out?.usage };
       lastError = new Error(`${model} returned no JSON`);
     } catch (err) {
       lastError = err;
@@ -335,11 +325,16 @@ aiApi.post("/scan", async (c) => {
   if (image.length > SCAN_MAX_DATA_URL) throw new HttpError(413, "Photo is too large to scan");
 
   const db = c.env.DB;
-  const used = await aiUsedToday(db, c.get("vaultId"));
-  if (used >= DAILY_SCANS_PER_VAULT)
-    throw new HttpError(429, `Daily limit of ${DAILY_SCANS_PER_VAULT} AI scans reached. Fill the form by hand or try again tomorrow.`);
+  const vaultId = c.get("vaultId");
+  await assertAiBudget(db, vaultId, kind);
+  const { obj, model, usage } =
+    c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock", usage: undefined } : await runModels(c.env.AI as unknown as AiRunner, kind, image);
+  await recordAiUsage(db, vaultId, kind, model, neuronsFor(model, kind, usage), usage);
+  return c.json({ ...normalize(kind, obj), model, ai: await aiUsage(db, vaultId) });
+});
 
-  const { obj, model } = c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock" } : await runModels(c.env.AI as unknown as AiRunner, kind, image);
-  await recordAiUse(db, c.get("vaultId"));
-  return c.json({ ...normalize(kind, obj), model, scans_left: DAILY_SCANS_PER_VAULT - used - 1 });
+/** Today's AI allowance for this vault (Settings shows it). */
+aiApi.get("/usage", async (c) => {
+  const { global_used: _, ...usage } = await aiUsage(c.env.DB, c.get("vaultId"));
+  return c.json(usage);
 });
