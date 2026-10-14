@@ -10,7 +10,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Field, FieldRow } from "@/components/Field";
 import { FormPage } from "@/components/FormPage";
 import { DoctorPicker } from "@/components/DoctorPicker";
-import { ConditionPicker } from "@/components/ConditionPicker";
+import { ConditionsPicker, splitIds } from "@/components/ConditionsPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { FileGallery } from "@/components/FileGallery";
 import { Loading } from "@/components/layout";
@@ -24,7 +24,7 @@ export function ReportForm() {
   const save = useSave<Report>("reports");
   const upload = useUploadFiles();
   const [photos, setPhotos] = useState<File[]>([]);
-  const f = useFields({ title: "", report_type: "blood", report_date: today(), lab_name: "", doctor_id: "", condition_id: "", notes: "" });
+  const f = useFields({ title: "", report_type: "blood", report_date: today(), lab_name: "", doctor_id: "", condition_ids: "", notes: "" });
   const [scanned, setScanned] = useState(false);
   useLoadRecord(existing.data, f);
   if (reportId && existing.isPending) return <Loading />;
@@ -49,7 +49,7 @@ export function ReportForm() {
       onSubmit={async () => {
         const values = { ...f.values };
         if (!values.title.trim()) values.title = REPORT_TYPES.find((t) => t.value === values.report_type)?.label ?? "Report";
-        const r = await save.mutateAsync({ id: reportId, data: { ...toPayload(values), member_id: memberId } });
+        const r = await save.mutateAsync({ id: reportId, data: { ...toPayload(values), condition_ids: splitIds(values.condition_ids), member_id: memberId } });
         if (photos.length) await upload.mutateAsync({ ownerType: "report", ownerId: r.id, files: photos });
         toast.success("Report saved");
         navigate(`/reports/${r.id}`, { replace: true });
@@ -80,7 +80,7 @@ export function ReportForm() {
         <Input {...f.bind("lab_name")} placeholder="e.g. Thyrocare" />
       </Field>
       <DoctorPicker value={f.values.doctor_id} onChange={(id) => f.set("doctor_id", id)} />
-      <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} />
+      <ConditionsPicker memberId={memberId} value={splitIds(f.values.condition_ids)} onChange={(ids) => f.set("condition_ids", ids.join(","))} />
       <Field label="What it says" hint="Key findings in your words, e.g. ESR high (42), sugar normal">
         <Textarea {...f.bind("notes")} />
       </Field>

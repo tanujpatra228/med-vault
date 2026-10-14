@@ -94,7 +94,10 @@ export interface Medication {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
 }
 
 export interface Prescription {
@@ -109,7 +112,10 @@ export interface Prescription {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
   med_count?: number;
   file_count?: number;
   cover_file_id?: string | null;
@@ -138,7 +144,10 @@ export interface Report {
   updated_at: string;
   // joined
   doctor_name?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
   file_count?: number;
   cover_file_id?: string | null;
 }
@@ -165,7 +174,10 @@ export interface Visit {
   // joined
   doctor_name?: string | null;
   doctor_specialty?: string | null;
+  /** All linked conditions' names, "Arthritis, Uveitis". */
   condition_name?: string | null;
+  /** All linked condition ids, comma-separated. */
+  condition_ids?: string | null;
 }
 
 /** An open follow-up, for the home screen and the member summary. */
@@ -210,7 +222,8 @@ export type MedicationInput = Partial<Omit<Medication, "id" | "created_at" | "up
 export interface PrescriptionCreateInput {
   member_id: ID;
   doctor_id?: ID | null;
-  condition_id?: ID | null;
+  /** Every condition this prescription is for; its medicines and visit get the same. */
+  condition_ids?: ID[];
   prescribed_on: string;
   notes?: string | null;
   /** Logged on the visit created with the prescription. */

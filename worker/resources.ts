@@ -28,6 +28,7 @@ import {
 } from "./schemas";
 import { validate } from "./validate";
 import { closeFollowUpsStmt, visits } from "./visits";
+import { assertConditions, conditionCols, conditionIdsFrom, setLinksStmts } from "./conditionLinks";
 import { visitSchema } from "./schemas";
 
 const filesOf = (owner: string) =>
@@ -84,40 +85,44 @@ const conditions: Resource = {
 const medications: Resource = {
   table: "medications",
   schema: medicationSchema,
-  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, k.name AS condition_name
+  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, ${conditionCols("medication")}
     FROM medications t
-    LEFT JOIN doctors d ON d.id = t.doctor_id
-    LEFT JOIN conditions k ON k.id = t.condition_id`,
+    LEFT JOIN doctors d ON d.id = t.doctor_id`,
   orderBy: "t.status = 'stopped', COALESCE(t.start_date, substr(t.created_at, 1, 10)) DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", status: "t.status", prescription_id: "t.prescription_id" },
   fileOwner: "medication",
+  conditionOwner: "medication",
   prepare: prepareMedication,
 };
 
 const prescriptions: Resource = {
   table: "prescriptions",
   schema: prescriptionSchema,
-  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, k.name AS condition_name,
+  select: `SELECT t.*, d.name AS doctor_name, d.specialty AS doctor_specialty, ${conditionCols("prescription")},
     (SELECT COUNT(*) FROM medications m WHERE m.prescription_id = t.id) AS med_count,
     ${filesOf("prescription")}
     FROM prescriptions t
-    LEFT JOIN doctors d ON d.id = t.doctor_id
-    LEFT JOIN conditions k ON k.id = t.condition_id`,
+    LEFT JOIN doctors d ON d.id = t.doctor_id`,
   orderBy: "t.prescribed_on DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", doctor_id: "t.doctor_id" },
   fileOwner: "prescription",
+  conditionOwner: "prescription",
+  conditionChildren: [
+    { owner: "medication", table: "medications", fk: "prescription_id" },
+    { owner: "visit", table: "visits", fk: "prescription_id" },
+  ],
 };
 
 const reports: Resource = {
   table: "reports",
   schema: reportSchema,
-  select: `SELECT t.*, d.name AS doctor_name, k.name AS condition_name, ${filesOf("report")}
+  select: `SELECT t.*, d.name AS doctor_name, ${conditionCols("report")}, ${filesOf("report")}
     FROM reports t
-    LEFT JOIN doctors d ON d.id = t.doctor_id
-    LEFT JOIN conditions k ON k.id = t.condition_id`,
+    LEFT JOIN doctors d ON d.id = t.doctor_id`,
   orderBy: "t.report_date DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", report_type: "t.report_type" },
   fileOwner: "report",
+  conditionOwner: "report",
 };
 
 async function filesFor(db: D1Database, owner: string, id: string) {
@@ -216,8 +221,11 @@ prescriptionsApi.get("/:id", async (c) => {
 prescriptionsApi.post("/", async (c) => {
   const body = await readJson(c);
   const vaultId = c.get("vaultId");
+  const conditionIds = conditionIdsFrom(body) ?? [];
+  body.condition_id = conditionIds[0] ?? null;
   const data = validate(prescriptionSchema, body);
   await assertRefs(c.env.DB, prescriptionSchema, vaultId, data);
+  await assertConditions(c.env.DB, vaultId, conditionIds);
   const rawMeds = body.medications ?? [];
   if (!Array.isArray(rawMeds)) throw badRequest("medications must be a list");
   if (rawMeds.length > 30) throw badRequest("Too many medicines on one prescription");
@@ -225,6 +233,7 @@ prescriptionsApi.post("/", async (c) => {
   const id = crypto.randomUUID();
   const db = c.env.DB;
   const stmts = [insertStmt(db, "prescriptions", id, vaultId, data)];
+  const medIds: string[] = [];
   for (const raw of rawMeds) {
     if (!raw || typeof raw !== "object") throw badRequest("Each medicine must be an object");
     const med = validate(medicationSchema, prepareMedication({
@@ -235,7 +244,9 @@ prescriptionsApi.post("/", async (c) => {
       doctor_id: data.doctor_id,
       condition_id: data.condition_id,
     }));
-    stmts.push(insertStmt(db, "medications", crypto.randomUUID(), vaultId, med));
+    const medId = crypto.randomUUID();
+    medIds.push(medId);
+    stmts.push(insertStmt(db, "medications", medId, vaultId, med));
   }
   // The prescription was written at a visit: log it, with the follow-up if one was given.
   const visit = validate(visitSchema, {
@@ -248,7 +259,16 @@ prescriptionsApi.post("/", async (c) => {
     follow_up_note: body.follow_up_note ?? null,
   });
   const close = closeFollowUpsStmt(db, vaultId, data.member_id!, data.doctor_id ?? null, data.prescribed_on!);
-  await db.batch([...(close ? [close] : []), ...stmts, insertStmt(db, "visits", crypto.randomUUID(), vaultId, visit)]);
+  const visitId = crypto.randomUUID();
+  // The medicines and the visit are for the same conditions as the prescription.
+  await db.batch([
+    ...(close ? [close] : []),
+    ...stmts,
+    insertStmt(db, "visits", visitId, vaultId, visit),
+    ...setLinksStmts(db, vaultId, "prescription", [id], conditionIds),
+    ...(medIds.length ? setLinksStmts(db, vaultId, "medication", medIds, conditionIds) : []),
+    ...setLinksStmts(db, vaultId, "visit", [visitId], conditionIds),
+  ]);
   return c.json(await getOne(db, prescriptions, vaultId, id), 201);
 });
 
@@ -270,6 +290,11 @@ prescriptionsApi.delete("/:id", async (c) => {
       `DELETE FROM files WHERE (owner_type = 'prescription' AND owner_id = ?)
          OR (owner_type = 'medication' AND owner_id IN (SELECT id FROM medications WHERE prescription_id = ?))`,
     ).bind(id, id),
+    db.prepare(
+      `DELETE FROM record_conditions WHERE (owner_type = 'prescription' AND owner_id = ?1)
+         OR (owner_type = 'medication' AND owner_id IN (SELECT id FROM medications WHERE prescription_id = ?1))
+         OR (owner_type = 'visit' AND owner_id IN (SELECT id FROM visits WHERE prescription_id = ?1))`,
+    ).bind(id),
     db.prepare("DELETE FROM medications WHERE prescription_id = ?").bind(id),
     db.prepare("DELETE FROM visits WHERE prescription_id = ?").bind(id),
     db.prepare("DELETE FROM prescriptions WHERE id = ?").bind(id),

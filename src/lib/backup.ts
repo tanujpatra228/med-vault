@@ -117,6 +117,12 @@ export async function restoreBackup(
         records += Math.min(RESTORE_CHUNK, rows.length - i);
       }
     }
+    // Links between records and their conditions (both ends need the new ids).
+    const links = data.record_conditions ?? [];
+    for (let i = 0; i < links.length; i += RESTORE_CHUNK * 4) {
+      onProgress("Restoring condition links…");
+      await api.post("/vault/restore/links", { rows: links.slice(i, i + RESTORE_CHUNK * 4), refs: ids });
+    }
   } catch (e) {
     if (records > 0) {
       onProgress("Restore failed. Removing what was added…");

@@ -5,7 +5,6 @@ import { Plus, X } from "lucide-react";
 import { useCreatePrescription, usePrescription, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
 import type { Prescription } from "@shared/types";
 import { AiNotice, ScanButton } from "@/components/Scan";
-import { OtherDiagnoses } from "@/components/OtherDiagnoses";
 import type { DoctorSuggestion } from "@/components/DoctorPicker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Field } from "@/components/Field";
 import { FormPage } from "@/components/FormPage";
 import { DoctorPicker } from "@/components/DoctorPicker";
-import { ConditionPicker } from "@/components/ConditionPicker";
+import { ConditionsPicker, splitIds } from "@/components/ConditionsPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { FollowUpField } from "@/components/FollowUpField";
 import { FileGallery } from "@/components/FileGallery";
@@ -29,14 +28,14 @@ export function PrescriptionNew() {
   const navigate = useNavigate();
   const create = useCreatePrescription();
   const upload = useUploadFiles();
-  const f = useFields({ doctor_id: "", condition_id: "", prescribed_on: today(), notes: "", follow_up_on: "", follow_up_note: "" });
+  const f = useFields({ doctor_id: "", condition_ids: "", prescribed_on: today(), notes: "", follow_up_on: "", follow_up_note: "" });
   const [followUpText, setFollowUpText] = useState<string | null>(null);
   const [meds, setMeds] = useState<MedDraft[]>([emptyMed()]);
   const [photos, setPhotos] = useState<File[]>([]);
   const [scanned, setScanned] = useState(false);
   const [doctorHint, setDoctorHint] = useState<DoctorSuggestion | null>(null);
-  const [conditionHint, setConditionHint] = useState<string | null>(null);
-  const [otherDiagnoses, setOtherDiagnoses] = useState<string[]>([]);
+  // Diagnoses read by AI that do not match an existing condition yet: each must be added or skipped.
+  const [diagnoses, setDiagnoses] = useState<string[]>([]);
 
   // AI fills what it could read; everything stays editable and nothing is saved until "Save".
   const applyScan = (r: ScanResponse) => {
@@ -48,8 +47,7 @@ export function PrescriptionNew() {
     if (d.follow_up_on) f.set("follow_up_on", d.follow_up_on);
     setFollowUpText(d.follow_up_text);
     if (d.doctor_name) setDoctorHint({ name: d.doctor_name, specialty: d.doctor_specialty });
-    if (d.condition) setConditionHint(d.condition);
-    setOtherDiagnoses(d.conditions.slice(1));
+    setDiagnoses(d.conditions);
     if (d.medications.length) {
       const read: MedDraft[] = d.medications.map((m) =>
         medDraft({
@@ -67,12 +65,13 @@ export function PrescriptionNew() {
   const submit = async () => {
     // An AI-suggested doctor/condition waiting in its "add new" box would otherwise be silently dropped.
     if (doctorHint && !f.values.doctor_id) throw new Error(`Tap "Add doctor" to keep ${doctorHint.name}, or "Cancel" to skip`);
-    if (conditionHint && !f.values.condition_id) throw new Error(`Tap "Add condition" to keep ${conditionHint}, or "Cancel" to skip`);
+    if (diagnoses.length) throw new Error(`Add or skip "${diagnoses[0]}" under conditions`);
     const filled = meds.filter((m) => m.name.trim());
     if (!filled.length && !photos.length) throw new Error("Add a photo or at least one medicine");
     const p = await create.mutateAsync({
       member_id: memberId,
       ...(toPayload(f.values) as { prescribed_on: string }),
+      condition_ids: splitIds(f.values.condition_ids),
       medications: filled.map(medPayload),
     });
     if (photos.length) {
@@ -95,8 +94,13 @@ export function PrescriptionNew() {
       <Field label="Date on prescription" required>
         <Input type="date" {...f.bind("prescribed_on")} max={today()} />
       </Field>
-      <ConditionPicker memberId={memberId} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} suggestion={conditionHint} onDismissSuggestion={() => setConditionHint(null)} />
-      <OtherDiagnoses memberId={memberId} names={otherDiagnoses} />
+      <ConditionsPicker
+        memberId={memberId}
+        value={splitIds(f.values.condition_ids)}
+        onChange={(ids) => f.set("condition_ids", ids.join(","))}
+        suggestions={diagnoses}
+        onSuggestionsChange={setDiagnoses}
+      />
 
       <div className="mt-4 border-t border-rule pt-5">
         <Eyebrow className="mb-4">Medicines on this prescription · {meds.filter((m) => m.name.trim()).length}</Eyebrow>
@@ -143,7 +147,7 @@ export function PrescriptionEdit() {
   const existing = usePrescription(prescriptionId);
   const save = useSave<Prescription>("prescriptions");
   const upload = useUploadFiles();
-  const f = useFields({ doctor_id: "", condition_id: "", prescribed_on: "", notes: "" });
+  const f = useFields({ doctor_id: "", condition_ids: "", prescribed_on: "", notes: "" });
   const [photos, setPhotos] = useState<File[]>([]);
   useLoadRecord(existing.data, f);
   if (existing.isPending) return <Loading />;
@@ -155,7 +159,7 @@ export function PrescriptionEdit() {
       title="Edit prescription"
       heading="Edit prescription"
       onSubmit={async () => {
-        await save.mutateAsync({ id: p.id, data: toPayload(f.values) });
+        await save.mutateAsync({ id: p.id, data: { ...toPayload(f.values), condition_ids: splitIds(f.values.condition_ids) } });
         if (photos.length) await upload.mutateAsync({ ownerType: "prescription", ownerId: p.id, files: photos });
         toast.success("Saved");
         navigate(`/prescriptions/${p.id}`, { replace: true });
@@ -167,7 +171,8 @@ export function PrescriptionEdit() {
       <Field label="Date on prescription" required>
         <Input type="date" {...f.bind("prescribed_on")} />
       </Field>
-      <ConditionPicker memberId={p.member_id} value={f.values.condition_id} onChange={(id) => f.set("condition_id", id)} />
+      <ConditionsPicker memberId={p.member_id} value={splitIds(f.values.condition_ids)} onChange={(ids) => f.set("condition_ids", ids.join(","))} />
+      <p className="-mt-2 type-caption text-ink-faint">The medicines on this prescription and its visit get the same conditions.</p>
       <Field label="Doctor's advice / notes">
         <Textarea {...f.bind("notes")} />
       </Field>

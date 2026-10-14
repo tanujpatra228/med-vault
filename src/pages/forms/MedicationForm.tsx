@@ -13,7 +13,7 @@ import { Field, FieldRow } from "@/components/Field";
 import { FormPage } from "@/components/FormPage";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { DoctorPicker } from "@/components/DoctorPicker";
-import { ConditionPicker } from "@/components/ConditionPicker";
+import { ConditionsPicker, splitIds } from "@/components/ConditionsPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
 import { FileGallery } from "@/components/FileGallery";
 import { Loading } from "@/components/layout";
@@ -38,7 +38,7 @@ export function MedicationForm() {
   const [med, setMed] = useState<MedDraft>(emptyMed());
   const [extra, setExtra] = useState({
     doctor_id: search.get("doctor_id") ?? "",
-    condition_id: search.get("condition_id") ?? "",
+    condition_ids: search.get("condition_ids") ?? "",
     prescription_id: search.get("prescription_id") ?? "",
     start_date: today(),
     status: "active",
@@ -61,7 +61,7 @@ export function MedicationForm() {
     if (!m || loaded) return;
     const s = (v: string | null) => v ?? "";
     setMed(medDraft({ ...m, form: m.form ?? "other", schedule: scheduleOf(m) }));
-    setExtra({ doctor_id: s(m.doctor_id), condition_id: s(m.condition_id), prescription_id: s(m.prescription_id), start_date: s(m.start_date), status: m.status, notes: s(m.notes) });
+    setExtra({ doctor_id: s(m.doctor_id), condition_ids: s(m.condition_ids ?? null), prescription_id: s(m.prescription_id), start_date: s(m.start_date), status: m.status, notes: s(m.notes) });
     setLoaded(true);
   }, [existing.data, loaded]);
 
@@ -77,7 +77,7 @@ export function MedicationForm() {
       heading={medicationId ? med.name || "Medicine" : "Add a medicine"}
       onSubmit={async () => {
         if (!med.name.trim()) throw new Error("Medicine name is required");
-        const data: Record<string, unknown> = { ...toPayload(extra), ...medPayload(med), member_id: memberId };
+        const data: Record<string, unknown> = { ...toPayload(extra), condition_ids: splitIds(extra.condition_ids), ...medPayload(med), member_id: memberId };
         if (data.status === "stopped" && !data.end_date) data.end_date = today();
         const saved = await save.mutateAsync({ id: medicationId, data });
         if (photos.length) await upload.mutateAsync({ ownerType: "medication", ownerId: saved.id, files: photos });
@@ -122,7 +122,7 @@ export function MedicationForm() {
         </Field>
       </FieldRow>
       {!extra.prescription_id && <DoctorPicker value={extra.doctor_id} onChange={(id) => setExtra({ ...extra, doctor_id: id })} />}
-      <ConditionPicker memberId={memberId} value={extra.condition_id} onChange={(id) => setExtra({ ...extra, condition_id: id })} />
+      <ConditionsPicker memberId={memberId} value={splitIds(extra.condition_ids)} onChange={(ids) => setExtra({ ...extra, condition_ids: ids.join(",") })} />
       <Field label="Notes" hint="e.g. side effects, reason for stopping">
         <Textarea value={extra.notes} onChange={(e) => setExtra({ ...extra, notes: e.target.value })} />
       </Field>
