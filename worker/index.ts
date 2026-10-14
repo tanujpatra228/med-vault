@@ -5,6 +5,7 @@ import type { AppEnv } from "./env";
 import { files } from "./files";
 import { HttpError, onError } from "./http";
 import { reviewApi } from "./review";
+import { visitsApi } from "./visits";
 import { vaultApi } from "./vault";
 import {
   allergiesApi,
@@ -41,6 +42,7 @@ app.route("/conditions", conditionsApi);
 app.route("/medications", medicationsApi);
 app.route("/prescriptions", prescriptionsApi);
 app.route("/reports", reportsApi);
+app.route("/visits", visitsApi);
 app.route("/files", files);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));

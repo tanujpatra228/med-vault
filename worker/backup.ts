@@ -3,7 +3,7 @@ import { BACKUP_FORMAT, BACKUP_VERSION, RESTORE_CHUNK, RESTORE_ORDER, type Resto
 import type { AppEnv } from "./env";
 import { badRequest, HttpError, nowIso, readJson } from "./http";
 import { prepareMedication } from "./medication";
-import { allergySchema, conditionSchema, doctorSchema, medicationSchema, memberSchema, prescriptionSchema, reportSchema } from "./schemas";
+import { allergySchema, conditionSchema, doctorSchema, medicationSchema, memberSchema, prescriptionSchema, reportSchema, visitSchema } from "./schemas";
 import { validate, type Schema } from "./validate";
 
 const TABLES: Record<RestoreTable, { schema: Schema; prepare?: (row: Record<string, unknown>) => Record<string, unknown> }> = {
@@ -14,6 +14,7 @@ const TABLES: Record<RestoreTable, { schema: Schema; prepare?: (row: Record<stri
   prescriptions: { schema: prescriptionSchema },
   medications: { schema: medicationSchema, prepare: prepareMedication },
   reports: { schema: reportSchema },
+  visits: { schema: visitSchema },
 };
 
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/;

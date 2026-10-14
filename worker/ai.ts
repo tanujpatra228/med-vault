@@ -10,6 +10,7 @@ import {
   type ScanResult,
   type ScannedMedicine,
 } from "../shared/types";
+import { addDaysIso, parseFollowUpDays } from "../shared/visits";
 import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDays, type Pattern, type Schedule } from "../shared/schedule";
 import type { AppEnv } from "./env";
 import { assertAiBudget, aiUsage, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
@@ -30,6 +31,7 @@ const PROMPTS: Record<ScanKind, string> = {
 This is a doctor's prescription. Return:
 {"doctor_name": string|null, "doctor_specialty": string|null, "prescribed_on": "YYYY-MM-DD"|null,
  "conditions": string[] (each diagnosis separately, as written; [] if none), "notes": string|null (advice, follow-up, tests advised),
+ "follow_up": string|null (the next-visit advice EXACTLY as written, e.g. "Review after 2 weeks", "15 दिन बाद"), "follow_up_days": number|null (days until that visit),
  "medications": [{"name": string (brand or generic as written, without the Tab/Cap prefix),
    "strength": string|null (e.g. "500 mg"), "form": one of ${JSON.stringify(MED_FORMS)} or null,
    "dosage": string|null (morning-afternoon-night like "1-0-1"; convert OD="1-0-0", BD="1-0-1", TDS="1-1-1", HS="0-0-1", SOS="As needed"),
@@ -206,6 +208,18 @@ export function splitDiagnoses(raw: unknown[]): string[] {
   return out.slice(0, 8);
 }
 
+/**
+ * The next visit: the interval is read in code from the advice text (or the notes), like doses,
+ * and only falls back to the model's own day count.
+ */
+export function followUp(raw: Record<string, unknown>, prescribedOn: string | null): { follow_up_text: string | null; follow_up_on: string | null } {
+  const text = str(raw.follow_up, 200);
+  const modelDays = typeof raw.follow_up_days === "number" && raw.follow_up_days >= 1 && raw.follow_up_days <= 365 ? Math.round(raw.follow_up_days) : null;
+  const days = parseFollowUpDays(text) ?? (text ? modelDays : null) ?? parseFollowUpDays(str(raw.notes, 2000));
+  const from = prescribedOn ?? new Date().toISOString().slice(0, 10);
+  return { follow_up_text: text, follow_up_on: days ? addDaysIso(from, days) : null };
+}
+
 export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanResult {
   switch (kind) {
     case "prescription": {
@@ -220,6 +234,7 @@ export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanRes
         condition: null,
         conditions: [],
         notes: str(raw.notes, 2000),
+        ...followUp(raw, date(raw.prescribed_on)),
         medications: meds,
       };
       data.conditions = splitDiagnoses([...(Array.isArray(raw.conditions) ? raw.conditions : []), raw.condition]);
@@ -265,6 +280,8 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
     prescribed_on: "05/10/2026",
     conditions: ["ANKYLOSING SPONDYLITIS - M45.9 | PERIPHERAL SPONDYLOARTHRITIS - M46.90 | PRIMARY HYPERTENSION - I10"],
     notes: "To start MTX 15 mg/week.",
+    follow_up: "Review after 4 weeks with CBC, LFT",
+    follow_up_days: 30,
     // Replays what the real model returned for this prescription, so the corrections can be checked locally.
     medications: [
       { name: "Meditrex 5mg Tablet (Methotrexate)", strength: "5mg", form: "tablet", timing: "After breakfast", duration_days: null,

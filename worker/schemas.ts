@@ -75,3 +75,16 @@ export const reportSchema: Schema = {
   lab_name: short,
   notes: long,
 };
+
+export const visitSchema: Schema = {
+  member_id: { type: "id", ref: "members", required: true },
+  doctor_id: { type: "id", ref: "doctors" },
+  condition_id: { type: "id", ref: "conditions" },
+  prescription_id: { type: "id", ref: "prescriptions" },
+  visit_date: { type: "date", required: true },
+  reason: { type: "text", max: 300 },
+  notes: long,
+  follow_up_on: { type: "date" },
+  follow_up_note: { type: "text", max: 300 },
+  follow_up_done: { type: "enum", values: ["0", "1"] },
+};
