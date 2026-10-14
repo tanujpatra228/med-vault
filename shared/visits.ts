@@ -12,7 +12,7 @@ export function parseFollowUpDays(text: string | null | undefined): number | nul
     [/(week|weeks|wk|wks|हफ्त|हफ़्त|सप्ताह|અઠવાડિય)/, 7],
     [/(month|months|mon\b|महीन|मास|માસ|મહિન)/, 30],
   ];
-  const m = t.match(/(\d{1,3}(?:\.\d)?|one|two|three|four|six|ek|do)\s*(?:-|to\s+\d+\s*)?\s*([^\d\s,.;)]+)/g);
+  const m = t.match(/(\d{1,3}(?:\.\d)?|\b(?:one|two|three|four|six|ek|do)\b)\s*(?:-|to\s+\d+\s*)?\s*([^\d\s,.;)]+)/g);
   const words: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, six: 6, ek: 1, do: 2 };
   for (const part of m ?? []) {
     const [, n, unit] = part.match(/^(\d{1,3}(?:\.\d)?|one|two|three|four|six|ek|do)\s*(?:-|to\s+\d+\s*)?\s*(.+)$/) ?? [];
