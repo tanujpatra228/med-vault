@@ -225,6 +225,27 @@ export interface LabDraft {
   ref_text: string | null;
 }
 
+/** One event in a condition's care thread. */
+export interface TimelineItem {
+  type: "prescription" | "medication" | "report" | "visit";
+  id: string;
+  date: string | null;
+  title: string;
+  subtitle: string | null;
+  href: string;
+  /** Report: results out of range. */
+  flags?: number;
+  /** Open follow-up from this visit. */
+  follow_up_on?: string | null;
+}
+
+export interface ConditionTimeline {
+  condition: Condition;
+  medications: Medication[];
+  items: TimelineItem[];
+  doctors: Array<{ id: string; name: string; specialty: string | null }>;
+}
+
 export type FileOwner = "member" | "prescription" | "report" | "medication";
 
 export interface FileMeta {

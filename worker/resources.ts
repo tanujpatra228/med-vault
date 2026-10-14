@@ -11,6 +11,8 @@ import type {
   Report,
   ReportDetail,
   Visit,
+  ConditionTimeline,
+  TimelineItem,
 } from "../shared/types";
 import { assertRefs, crud, getOne, insertStmt, type Resource } from "./crud";
 import type { AppEnv } from "./env";
@@ -198,6 +200,70 @@ export const allergiesApi = new Hono<AppEnv>();
 crud(allergiesApi, allergies);
 
 export const conditionsApi = new Hono<AppEnv>();
+
+/**
+ * A condition's care thread: everything linked to it (via record_conditions), from every doctor,
+ * newest first, plus its medicines.
+ */
+conditionsApi.get("/:id/timeline", async (c) => {
+  const id = c.req.param("id");
+  const vaultId = c.get("vaultId");
+  const db = c.env.DB;
+  const condition = await getOne<Condition>(db, conditions, vaultId, id);
+  const linked = (owner: string) => `t.id IN (SELECT owner_id FROM record_conditions WHERE owner_type = '${owner}' AND condition_id = ?)`;
+  const [rx, meds, reps, vis] = await db.batch([
+    db
+      .prepare(
+        `SELECT t.id, t.prescribed_on AS date, 'Prescription' || COALESCE(' · ' || d.name, '') AS title, d.specialty AS subtitle,
+           (SELECT COUNT(*) FROM medications m WHERE m.prescription_id = t.id) AS med_count, t.doctor_id, d.name AS doctor_name, d.specialty AS doctor_specialty
+         FROM prescriptions t LEFT JOIN doctors d ON d.id = t.doctor_id WHERE t.vault_id = ? AND ${linked("prescription")}`,
+      )
+      .bind(vaultId, id),
+    db.prepare(`${medications.select} WHERE t.vault_id = ? AND ${linked("medication")} ORDER BY ${medications.orderBy}`).bind(vaultId, id),
+    db
+      .prepare(
+        `SELECT t.id, t.report_date AS date, t.title, t.lab_name AS subtitle,
+           (SELECT COUNT(*) FROM lab_values v WHERE v.report_id = t.id AND v.flag IS NOT NULL) AS flags
+         FROM reports t WHERE t.vault_id = ? AND ${linked("report")}`,
+      )
+      .bind(vaultId, id),
+    db
+      .prepare(
+        `SELECT t.id, t.visit_date AS date, 'Visit' || COALESCE(' · ' || d.name, '') AS title, COALESCE(t.reason, t.notes) AS subtitle,
+           CASE WHEN t.follow_up_done = 0 THEN t.follow_up_on END AS follow_up_on, t.prescription_id, t.doctor_id, d.name AS doctor_name, d.specialty AS doctor_specialty
+         FROM visits t LEFT JOIN doctors d ON d.id = t.doctor_id WHERE t.vault_id = ? AND ${linked("visit")}`,
+      )
+      .bind(vaultId, id),
+  ]);
+  type Row = Record<string, unknown> & { id: string; date: string | null; title: string; subtitle: string | null };
+  const medRows = meds.results as unknown as Medication[];
+  const visits = vis.results as Row[];
+  // A visit logged with a prescription is the same event: show the prescription, carry its follow-up.
+  const visitByRx = new Map(visits.filter((v) => v.prescription_id).map((v) => [v.prescription_id as string, v]));
+  const items: TimelineItem[] = [
+    ...(rx.results as Row[]).map((r) => ({
+      type: "prescription" as const,
+      id: r.id,
+      date: r.date,
+      title: r.title,
+      subtitle: [r.subtitle, `${r.med_count} ${r.med_count === 1 ? "medicine" : "medicines"}`].filter(Boolean).join(" · "),
+      href: `/prescriptions/${r.id}`,
+      follow_up_on: (visitByRx.get(r.id)?.follow_up_on as string | null | undefined) ?? null,
+    })),
+    ...medRows
+      .filter((m) => !m.prescription_id)
+      .map((m) => ({ type: "medication" as const, id: m.id, date: m.start_date, title: `${m.name}${m.strength ? ` ${m.strength}` : ""} started`, subtitle: m.dosage, href: `/medications/${m.id}` })),
+    ...(reps.results as Row[]).map((r) => ({ type: "report" as const, id: r.id, date: r.date, title: r.title, subtitle: r.subtitle, href: `/reports/${r.id}`, flags: Number(r.flags) || 0 })),
+    ...visits
+      .filter((v) => !v.prescription_id)
+      .map((v) => ({ type: "visit" as const, id: v.id, date: v.date, title: v.title, subtitle: v.subtitle, href: `/visits/${v.id}`, follow_up_on: (v.follow_up_on as string | null) ?? null })),
+  ].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+  const doctors = new Map<string, ConditionTimeline["doctors"][number]>();
+  for (const r of [...(rx.results as Row[]), ...visits, ...(medRows as unknown as Row[])])
+    if (r.doctor_id && r.doctor_name) doctors.set(r.doctor_id as string, { id: r.doctor_id as string, name: r.doctor_name as string, specialty: (r.doctor_specialty as string | null) ?? null });
+  return c.json({ condition, medications: medRows, items, doctors: [...doctors.values()] } satisfies ConditionTimeline);
+});
+
 crud(conditionsApi, conditions);
 
 export const medicationsApi = new Hono<AppEnv>();
