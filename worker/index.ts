@@ -7,6 +7,7 @@ import { HttpError, onError } from "./http";
 import { reviewApi } from "./review";
 import { visitsApi } from "./visits";
 import { labsApi } from "./labs";
+import { searchApi } from "./search";
 import { vaultApi } from "./vault";
 import {
   allergiesApi,
@@ -45,6 +46,7 @@ app.route("/prescriptions", prescriptionsApi);
 app.route("/reports", reportsApi);
 app.route("/visits", visitsApi);
 app.route("/labs", labsApi);
+app.route("/search", searchApi);
 app.route("/files", files);
 
 app.notFound((c) => c.json({ error: "Not found" }, 404));
