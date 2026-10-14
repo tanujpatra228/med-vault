@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { scheduleOf, summary } from "../shared/schedule";
 import { LEVEL_ORDER, mergeItems, ruleChecks, type MedReview, type ReviewItem, type ReviewLevel, type ReviewMed, type ReviewResponse } from "../shared/review";
 import { MODELS, parseJsonObject, type AiRunner } from "./ai";
-import { assertAiBudget, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
+import { assertAiBudget, hasAiConsent, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
 import { sha256Hex } from "./crypto";
 import type { AppEnv } from "./env";
 import { badRequest, notFound, readJson } from "./http";
@@ -148,8 +148,8 @@ reviewApi.post("/", async (c) => {
   const names = ctx.meds.map((m) => m.name);
   let ai: { generics: Record<string, string>; items: ReviewItem[] } = { generics: {}, items: [] };
   let model: string | null = null;
-  // Out of AI allowance: the built-in checks still run.
-  const affordable = await assertAiBudget(db, vaultId, "review").then(() => true, () => false);
+  // AI switched off, or out of allowance: the built-in checks still run.
+  const affordable = (await hasAiConsent(db, vaultId)) && (await assertAiBudget(db, vaultId, "review").then(() => true, () => false));
   if (affordable) {
     const reply = c.env.AI_MOCK === "1" ? { obj: mockReply(names), model: "mock", usage: undefined } : await askModels(c.env.AI as unknown as AiRunner, promptInput(ctx));
     if (reply) {

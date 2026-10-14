@@ -276,7 +276,11 @@ export const MED_FORMS = ["tablet", "capsule", "syrup", "drops", "ointment", "in
 
 export type AuthState =
   | { authenticated: false }
-  | { authenticated: true; vault: { id: ID; name: string }; device: { id: ID; name: string } };
+  | {
+      authenticated: true;
+      vault: { id: ID; name: string; consent_version: number | null; ai_consent: boolean };
+      device: { id: ID; name: string };
+    };
 
 export interface DeviceInfo {
   id: ID;
@@ -289,6 +293,10 @@ export interface DeviceInfo {
 export interface VaultInfo {
   id: ID;
   name: string;
+  consent_version: number | null;
+  consent_at: string | null;
+  ai_consent_at: string | null;
+  contact_email: string | null;
   created_at: string;
   devices: DeviceInfo[];
   storage: { bytes: number; files: number };

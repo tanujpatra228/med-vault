@@ -14,7 +14,7 @@ import {
 import { addDaysIso, parseFollowUpDays } from "../shared/visits";
 import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDays, type Pattern, type Schedule } from "../shared/schedule";
 import type { AppEnv } from "./env";
-import { assertAiBudget, aiUsage, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
+import { assertAiBudget, aiUsage, hasAiConsent, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
 import { badRequest, HttpError, readJson } from "./http";
 
 // Tried in order: if a model is unavailable or returns nothing usable, the next one is used.
@@ -361,6 +361,7 @@ aiApi.post("/scan", async (c) => {
 
   const db = c.env.DB;
   const vaultId = c.get("vaultId");
+  if (!(await hasAiConsent(db, vaultId))) throw new HttpError(403, "AI reading is switched off for this vault. Turn it on in Settings, or fill the form by hand.");
   await assertAiBudget(db, vaultId, kind);
   const { obj, model, usage } =
     c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock", usage: undefined } : await runModels(c.env.AI as unknown as AiRunner, kind, image);

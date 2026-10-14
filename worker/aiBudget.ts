@@ -63,6 +63,11 @@ export async function aiUsage(db: D1Database, vaultId: string): Promise<AiUsage 
   };
 }
 
+/** The vault allowed AI processing of its photos and medicines (Settings → AI, or the first-scan prompt). */
+export async function hasAiConsent(db: D1Database, vaultId: string): Promise<boolean> {
+  return !!(await db.prepare("SELECT ai_consent_at FROM vaults WHERE id = ?").bind(vaultId).first<string | null>("ai_consent_at"));
+}
+
 /** Throws 429 when this vault, or the whole account, cannot afford a typical call of this kind today. */
 export async function assertAiBudget(db: D1Database, vaultId: string, kind: AiKind): Promise<AiUsage> {
   const u = await aiUsage(db, vaultId);

@@ -3,6 +3,9 @@ export interface Env {
   FILES: R2Bucket;
   ASSETS: Fetcher;
   AI: Ai;
+  /** Shown in the privacy notice: who runs this deployment and how to reach them (wrangler.jsonc "vars"). */
+  OPERATOR_NAME?: string;
+  GRIEVANCE_EMAIL?: string;
   /** Local development only: "1" returns canned AI results instead of calling Workers AI. */
   AI_MOCK?: string;
 }
