@@ -36,7 +36,7 @@ const SOURCES: Source[] = [
   },
   {
     type: "medication",
-    select: `t.id, t.name || COALESCE(' ' || t.strength, '') AS title, ${pair("t.dosage", "d.name")} AS subtitle,
+    select: `t.id, t.name || COALESCE(' ' || t.strength, '') AS title, ${pair("d.name", "t.dosage")} AS subtitle,
       t.member_id, m.name AS member_name, t.start_date AS date, '/medications/' || t.id AS href`,
     from: "medications t JOIN members m ON m.id = t.member_id LEFT JOIN doctors d ON d.id = t.doctor_id",
     hay: hay("t.name", "t.strength", "t.dosage", "t.timing", "t.notes", "d.name", conditionNames("medication")),
