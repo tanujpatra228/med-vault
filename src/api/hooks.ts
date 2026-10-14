@@ -18,6 +18,7 @@ import type {
   ScanResult,
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
+import type { ReviewResponse } from "@shared/review";
 import { api } from "./client";
 import { compressImage, imageToDataUrl } from "@/lib/image";
 
@@ -122,5 +123,19 @@ export function useScan() {
   return useMutation({
     mutationFn: async ({ kind, file }: { kind: ScanKind; file: File }) =>
       api.post<ScanResponse>("/ai/scan", { kind, image: await imageToDataUrl(file, SCAN_MAX_DATA_URL) }),
+  });
+}
+
+// ---------- "Ask your doctor" ----------
+
+export const useReview = (memberId: string) =>
+  useQuery({ queryKey: ["review", memberId], queryFn: () => api.get<ReviewResponse>(`/ai/review${qs({ member_id: memberId })}`) });
+
+/** Runs the medicine review (built-in checks + AI). Uses one of the vault's daily AI calls. */
+export function useRunReview(memberId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.post<ReviewResponse>("/ai/review", { member_id: memberId }),
+    onSuccess: (data) => qc.setQueryData(["review", memberId], data),
   });
 }
