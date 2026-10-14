@@ -21,7 +21,7 @@ export function ConditionForm() {
   useLoadRecord(existing.data, f);
   if (conditionId && existing.isPending) return <Loading />;
   const memberId = newFor ?? existing.data?.member_id ?? "";
-  const back = () => navigate(`/m/${memberId}/health`, { replace: true });
+  const back = () => navigate(conditionId ? `/conditions/${conditionId}` : `/m/${memberId}/health`, { replace: true });
 
   return (
     <FormPage
@@ -38,7 +38,7 @@ export function ConditionForm() {
           <ConfirmDelete
             what="this condition"
             detail="Prescriptions, medicines and reports linked to it are kept, just unlinked."
-            onConfirm={async () => (await del.mutateAsync(conditionId), back())}
+            onConfirm={async () => (await del.mutateAsync(conditionId), navigate(`/m/${memberId}/health`, { replace: true }))}
           />
         )
       }
