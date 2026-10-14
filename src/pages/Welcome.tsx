@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Field } from "@/components/Field";
 import { Wordmark } from "@/components/Mark";
 import { RecoveryKeyCard } from "@/components/RecoveryKey";
+import { ConsentChecks, consentGiven, type ConsentState } from "@/components/ConsentChecks";
+import { Link } from "react-router";
 
 type Mode = "start" | "join" | "recover" | "saved-key";
 
@@ -23,6 +25,7 @@ export function Welcome() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [consent, setConsent] = useState<ConsentState>({ notice: false, guardian: false });
 
   const enter = async () => {
     window.history.replaceState(null, "", "/");
@@ -71,8 +74,9 @@ export function Welcome() {
               <Input value={vaultName} onChange={(e) => setVaultName(e.target.value)} autoFocus />
             </Field>
             {deviceField}
+            <ConsentChecks value={consent} onChange={setConsent} />
             {errorLine}
-            <Button type="submit" className="w-full" disabled={busy || !vaultName.trim()}>
+            <Button type="submit" className="w-full" disabled={busy || !vaultName.trim() || !consentGiven(consent)}>
               {busy ? "Creating" : "Create my vault"}
             </Button>
           </form>
@@ -87,6 +91,9 @@ export function Welcome() {
               </Button>
             </div>
           </div>
+          <Link to="/privacy" className="mt-8 self-center type-label text-ink-faint underline">
+            Privacy: what is stored and why
+          </Link>
         </>
       )}
 

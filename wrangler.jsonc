@@ -24,5 +24,8 @@
     }
   ],
   "ai": { "binding": "AI" },
+  // Shown in the privacy notice (docs/COMPLIANCE.md): who runs this deployment and where to send
+  // privacy requests and complaints. Public values, not secrets.
+  "vars": { "OPERATOR_NAME": "", "GRIEVANCE_EMAIL": "" },
   "observability": { "enabled": true }
 }

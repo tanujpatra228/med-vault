@@ -1,5 +1,8 @@
 import { useEffect } from "react";
-import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration } from "react-router";
+import { createBrowserRouter, Navigate, Outlet, RouterProvider, ScrollRestoration, useLocation } from "react-router";
+import { PRIVACY_VERSION } from "@shared/privacy";
+import { PrivacyPage } from "@/pages/Privacy";
+import { ReConsent } from "@/components/ReConsent";
 import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/api/auth";
@@ -41,8 +44,12 @@ function AuthGate() {
     return () => window.removeEventListener("mv:unauthorized", onUnauthorized);
   }, [qc]);
 
+  const { pathname } = useLocation();
   if (me.isPending) return <Loading label="Opening Med Vault" />;
   if (!me.data?.authenticated) return <Welcome />;
+  // Agree to the current privacy notice first; Settings stays open to back up or delete instead.
+  const consent = me.data.vault.consent_version;
+  if (consent !== PRIVACY_VERSION && !pathname.startsWith("/settings") && pathname !== "/restore") return <ReConsent first={consent === null} />;
   return (
     <>
       <ScrollRestoration />
@@ -52,6 +59,7 @@ function AuthGate() {
 }
 
 const router = createBrowserRouter([
+  { path: "/privacy", element: <PrivacyPage /> },
   {
     element: <AuthGate />,
     children: [

@@ -2,7 +2,8 @@ import { Hono } from "hono";
 import { deleteCookie } from "hono/cookie";
 import type { AppEnv } from "./env";
 import { exportVault, restoreLinks, restoreVault } from "./backup";
-import { createLinkCode, rotateRecoveryKey } from "./auth";
+import { assertConsent, createLinkCode, rotateRecoveryKey } from "./auth";
+import { EMAIL_RE, PRIVACY_VERSION } from "../shared/privacy";
 import { badRequest, HttpError, notFound, readJson } from "./http";
 
 export const vaultApi = new Hono<AppEnv>();
@@ -11,7 +12,7 @@ vaultApi.get("/", async (c) => {
   const vaultId = c.get("vaultId");
   const db = c.env.DB;
   const [v, d, s] = await db.batch([
-    db.prepare("SELECT id, name, created_at FROM vaults WHERE id = ?").bind(vaultId),
+    db.prepare("SELECT id, name, created_at, consent_version, consent_at, ai_consent_at, contact_email FROM vaults WHERE id = ?").bind(vaultId),
     db.prepare("SELECT id, name, created_at, last_seen_at FROM devices WHERE vault_id = ? ORDER BY last_seen_at DESC").bind(vaultId),
     db.prepare("SELECT COALESCE(SUM(size), 0) AS bytes, COUNT(*) AS files FROM files WHERE vault_id = ?").bind(vaultId),
   ]);
@@ -21,10 +22,39 @@ vaultApi.get("/", async (c) => {
 
 vaultApi.patch("/", async (c) => {
   const body = await readJson(c);
-  const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
-  if (!name) throw badRequest("Vault name is required");
-  await c.env.DB.prepare("UPDATE vaults SET name = ?, updated_at = ? WHERE id = ?").bind(name, new Date().toISOString(), c.get("vaultId")).run();
-  return c.json({ ok: true, name });
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  if ("name" in body) {
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
+    if (!name) throw badRequest("Vault name is required");
+    sets.push("name = ?");
+    binds.push(name);
+  }
+  // Optional email used only to tell the family about a security problem (DPDP breach notice).
+  if ("contact_email" in body) {
+    const email = typeof body.contact_email === "string" ? body.contact_email.trim().slice(0, 200) : "";
+    if (email && !EMAIL_RE.test(email)) throw badRequest("That email address does not look right");
+    sets.push("contact_email = ?");
+    binds.push(email || null);
+  }
+  if (!sets.length) throw badRequest("Nothing to change");
+  await c.env.DB.prepare(`UPDATE vaults SET ${sets.join(", ")}, updated_at = ? WHERE id = ?`).bind(...binds, new Date().toISOString(), c.get("vaultId")).run();
+  return c.json({ ok: true });
+});
+
+// Agree to the current privacy notice (vaults created before it, or after it changes).
+vaultApi.post("/consent", async (c) => {
+  assertConsent(await readJson(c));
+  await c.env.DB.prepare("UPDATE vaults SET consent_version = ?, consent_at = ? WHERE id = ?").bind(PRIVACY_VERSION, new Date().toISOString(), c.get("vaultId")).run();
+  return c.json({ ok: true, consent_version: PRIVACY_VERSION });
+});
+
+// Allow or stop AI reading of photos and medicine checks. Stopping is as easy as allowing.
+vaultApi.put("/ai-consent", async (c) => {
+  const body = await readJson(c);
+  if (typeof body.allow !== "boolean") throw badRequest("allow must be true or false");
+  await c.env.DB.prepare("UPDATE vaults SET ai_consent_at = ? WHERE id = ?").bind(body.allow ? new Date().toISOString() : null, c.get("vaultId")).run();
+  return c.json({ ok: true, ai_consent: body.allow });
 });
 
 // Backup: every record as JSON (the app adds the files and builds the ZIP), and restore into an empty vault.

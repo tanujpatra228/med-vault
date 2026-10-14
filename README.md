@@ -62,6 +62,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [ASK_YOUR_DOCTOR.md](docs/ASK_YOUR_DOCTOR.md) | Medicine review: built-in checks and AI |
 | [VISITS.md](docs/VISITS.md) | Visits log and follow-ups |
 | [LAB_TRENDS.md](docs/LAB_TRENDS.md) | Lab results and trend charts |
+| [COMPLIANCE.md](docs/COMPLIANCE.md) | India privacy law (DPDP), consent, breach runbook |
 | [TODO.md](docs/TODO.md) | Build order for what is next |
 
 ## Project layout

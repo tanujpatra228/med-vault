@@ -54,6 +54,7 @@ public/        PWA manifest, service worker, icons
 4. **Images go to the model as data URLs prepared in the browser.** The Worker does no image work (10 ms CPU limit).
 5. **Respect the shared allowance.** Every AI call checks `assertAiBudget()` first and records its real neuron cost with `recordAiUsage()` (`worker/aiBudget.ts`).
 6. **Advice is a question.** Anything health-related the app generates is phrased as a question for the doctor, never an instruction (see ASK_YOUR_DOCTOR.md).
+7. **AI needs the vault's permission.** Every AI call checks `hasAiConsent()`; without it, scans are refused and reviews use built-in rules only (see COMPLIANCE.md).
 
 ## 4. Database rules
 

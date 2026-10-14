@@ -3,6 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import type { AppEnv } from "./env";
 import { normalizeCode, randomCode, randomToken, recoveryKey, sha256Hex } from "./crypto";
 import { badRequest, HttpError, readJson } from "./http";
+import { PRIVACY_UPDATED, PRIVACY_VERSION, type PrivacyMeta } from "../shared/privacy";
 
 const COOKIE = "mv_device";
 const DEVICE_DAYS = 400; // browsers cap cookie lifetime at ~400 days; refreshed on use
@@ -63,30 +64,56 @@ auth.get("/me", async (c) => {
   const token = getCookie(c, COOKIE);
   const row = token
     ? await c.env.DB.prepare(
-        `SELECT d.id AS device_id, d.name AS device_name, v.id AS vault_id, v.name AS vault_name
+        `SELECT d.id AS device_id, d.name AS device_name, v.id AS vault_id, v.name AS vault_name, v.consent_version, v.ai_consent_at
          FROM devices d JOIN vaults v ON v.id = d.vault_id WHERE d.token_hash = ?`,
       )
         .bind(await sha256Hex(token))
-        .first<{ device_id: string; device_name: string; vault_id: string; vault_name: string }>()
+        .first<{ device_id: string; device_name: string; vault_id: string; vault_name: string; consent_version: number | null; ai_consent_at: string | null }>()
     : null;
   if (!row) return c.json({ authenticated: false });
   return c.json({
     authenticated: true,
-    vault: { id: row.vault_id, name: row.vault_name },
+    vault: { id: row.vault_id, name: row.vault_name, consent_version: row.consent_version, ai_consent: !!row.ai_consent_at },
     device: { id: row.device_id, name: row.device_name },
   });
 });
 
 // Create a new vault. No signup: this browser becomes its first device.
+// Public: what the privacy notice needs to show before anyone has a vault.
+auth.get("/privacy", (c) =>
+  c.json({
+    version: PRIVACY_VERSION,
+    updated: PRIVACY_UPDATED,
+    operator: c.env.OPERATOR_NAME?.trim() || null,
+    contact: c.env.GRIEVANCE_EMAIL?.trim() || null,
+  } satisfies PrivacyMeta),
+);
+
+/** Consent must name the current notice version and include the guardian confirmation. */
+export function assertConsent(body: Record<string, unknown>) {
+  const consent = body.consent as { version?: unknown; guardian?: unknown } | undefined;
+  if (!consent || consent.version !== PRIVACY_VERSION || consent.guardian !== true)
+    throw badRequest("Please read the privacy notice and tick both boxes to continue");
+}
+
 auth.post("/vault", async (c) => {
   await checkRate(c, "create");
   const body = await readJson(c);
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 80) : "";
   if (!name) throw badRequest("Give your vault a name");
+  assertConsent(body);
   const vaultId = crypto.randomUUID();
   const key = recoveryKey();
   await c.env.DB.batch([
-    c.env.DB.prepare("INSERT INTO vaults (id, name, recovery_hash) VALUES (?, ?, ?)").bind(vaultId, name, await sha256Hex(normalizeCode(key))),
+    c.env.DB.prepare("INSERT INTO vaults (id, name, recovery_hash, consent_version, consent_at) VALUES (?, ?, ?, ?, ?)").bind(
+      vaultId,
+      name,
+      await sha256Hex(normalizeCode(key)),
+      PRIVACY_VERSION,
+      new Date().toISOString(),
+    ),
+    // Rate-limit records hold IP addresses: keep them only as long as the longest limit (1 day).
+    c.env.DB.prepare("DELETE FROM rate_events WHERE at < ? AND ip NOT LIKE 'vault:%'").bind(new Date(Date.now() - 2 * 86_400_000).toISOString()),
     await newDevice(c, vaultId, deviceName(c, body.device_name)),
     recordRate(c, "create"),
   ]);
