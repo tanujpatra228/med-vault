@@ -123,7 +123,7 @@ Build order and status: [TODO.md](./TODO.md).
 - **Search** across names, notes and (later) AI-extracted text.
 - **Lab value trends:** chart a value (ESR, CRP, HbA1c) across reports.
 - ~~**Export**~~ **(built):** one ZIP with every record, photo and PDF, plus "Open me.html" that reads in any browser. Restore into a new vault. Details: [BACKUP.md](./BACKUP.md).
-- **Visits log:** appointment date, doctor, notes, next follow-up.
+- ~~**Visits log**~~ **(built):** every prescription logs its visit, scans read "review after 2 weeks" into a follow-up date, open follow-ups for the family show on the home screen and close when the next visit is logged. Details: [VISITS.md](./VISITS.md).
 
 ## 7. Phase 4: Later
 
@@ -149,6 +149,8 @@ Build order and status: [TODO.md](./TODO.md).
 | `devices` | vault_id, name, token_hash, last_seen_at |
 | `link_codes` | code_hash, vault_id, expires_at |
 | `rate_events` | ip, kind, at |
+| `visits` | member_id, doctor_id, condition_id, prescription_id, visit_date, reason, notes, follow_up_on, follow_up_note, follow_up_done |
+| `ai_usage` | vault_id, kind, model, input/output tokens, neurons |
 | `med_reviews` | member_id, result (latest medicine review JSON) |
 
 Every data table also has `vault_id`; every query is scoped by it.
