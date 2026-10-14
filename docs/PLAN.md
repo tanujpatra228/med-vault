@@ -85,7 +85,7 @@ Settings  vault name, linked devices, link code, recovery key, log out, delete v
 ### Add Prescription flow (the most-used flow)
 1. Tap + → Prescription. Member is pre-selected when inside a profile.
 2. Take or pick photo(s).
-3. Pick doctor (or add new inline), date (defaults to today), condition (optional).
+3. Pick doctor (or add new inline), date (defaults to today), conditions (any number, optional).
 4. Add medicines: name, strength, form, dosage, timing, duration.
 5. Save. Medicines appear in "Current medicines".
 
@@ -149,6 +149,7 @@ Build order and status: [TODO.md](./TODO.md).
 | `devices` | vault_id, name, token_hash, last_seen_at |
 | `link_codes` | code_hash, vault_id, expires_at |
 | `rate_events` | ip, kind, at |
+| `record_conditions` | owner_type (prescription/medication/report/visit), owner_id, condition_id: a record can be for several conditions; `condition_id` on each table keeps the first |
 | `visits` | member_id, doctor_id, condition_id, prescription_id, visit_date, reason, notes, follow_up_on, follow_up_note, follow_up_done |
 | `ai_usage` | vault_id, kind, model, input/output tokens, neurons |
 | `med_reviews` | member_id, result (latest medicine review JSON) |
