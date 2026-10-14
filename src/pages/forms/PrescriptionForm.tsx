@@ -15,6 +15,7 @@ import { FormPage } from "@/components/FormPage";
 import { DoctorPicker } from "@/components/DoctorPicker";
 import { ConditionPicker } from "@/components/ConditionPicker";
 import { PhotoPicker } from "@/components/PhotoPicker";
+import { FollowUpField } from "@/components/FollowUpField";
 import { FileGallery } from "@/components/FileGallery";
 import { Eyebrow, Loading } from "@/components/layout";
 import { addDays, today } from "@/lib/format";
@@ -28,7 +29,8 @@ export function PrescriptionNew() {
   const navigate = useNavigate();
   const create = useCreatePrescription();
   const upload = useUploadFiles();
-  const f = useFields({ doctor_id: "", condition_id: "", prescribed_on: today(), notes: "" });
+  const f = useFields({ doctor_id: "", condition_id: "", prescribed_on: today(), notes: "", follow_up_on: "", follow_up_note: "" });
+  const [followUpText, setFollowUpText] = useState<string | null>(null);
   const [meds, setMeds] = useState<MedDraft[]>([emptyMed()]);
   const [photos, setPhotos] = useState<File[]>([]);
   const [scanned, setScanned] = useState(false);
@@ -43,6 +45,8 @@ export function PrescriptionNew() {
     const date = d.prescribed_on ?? f.values.prescribed_on;
     if (d.prescribed_on) f.set("prescribed_on", d.prescribed_on);
     if (d.notes) f.set("notes", f.values.notes ? `${f.values.notes}\n${d.notes}` : d.notes);
+    if (d.follow_up_on) f.set("follow_up_on", d.follow_up_on);
+    setFollowUpText(d.follow_up_text);
     if (d.doctor_name) setDoctorHint({ name: d.doctor_name, specialty: d.doctor_specialty });
     if (d.condition) setConditionHint(d.condition);
     setOtherDiagnoses(d.conditions.slice(1));
@@ -117,9 +121,17 @@ export function PrescriptionNew() {
         </div>
       </div>
 
-      <Field label="Doctor's advice / notes" hint="e.g. Review after 2 weeks, avoid cold drinks">
+      <Field label="Doctor's advice / notes" hint="e.g. Avoid cold drinks, tests advised">
         <Textarea {...f.bind("notes")} />
       </Field>
+      <FollowUpField
+        from={f.values.prescribed_on}
+        date={f.values.follow_up_on}
+        note={f.values.follow_up_note}
+        onDate={(d) => f.set("follow_up_on", d)}
+        onNote={(n) => f.set("follow_up_note", n)}
+        writtenAs={followUpText}
+      />
     </FormPage>
   );
 }

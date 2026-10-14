@@ -10,6 +10,7 @@ import type {
   PrescriptionDetail,
   Report,
   ReportDetail,
+  Visit,
 } from "../shared/types";
 import { assertRefs, crud, getOne, insertStmt, type Resource } from "./crud";
 import type { AppEnv } from "./env";
@@ -26,6 +27,8 @@ import {
   reportSchema,
 } from "./schemas";
 import { validate } from "./validate";
+import { closeFollowUpsStmt, visits } from "./visits";
+import { visitSchema } from "./schemas";
 
 const filesOf = (owner: string) =>
   `(SELECT COUNT(*) FROM files f WHERE f.owner_type = '${owner}' AND f.owner_id = t.id) AS file_count,
@@ -204,7 +207,8 @@ prescriptionsApi.get("/:id", async (c) => {
   )
     .bind(id)
     .all<Medication>();
-  const detail: PrescriptionDetail = { ...p, medications: meds, files: await filesFor(c.env.DB, "prescription", id) };
+  const visit = await c.env.DB.prepare(`${visits.select} WHERE t.prescription_id = ? ORDER BY t.created_at ASC LIMIT 1`).bind(id).first<Visit>();
+  const detail: PrescriptionDetail = { ...p, medications: meds, visit: visit ?? null, files: await filesFor(c.env.DB, "prescription", id) };
   return c.json(detail);
 });
 
@@ -233,7 +237,18 @@ prescriptionsApi.post("/", async (c) => {
     }));
     stmts.push(insertStmt(db, "medications", crypto.randomUUID(), vaultId, med));
   }
-  await db.batch(stmts);
+  // The prescription was written at a visit: log it, with the follow-up if one was given.
+  const visit = validate(visitSchema, {
+    member_id: data.member_id,
+    doctor_id: data.doctor_id,
+    condition_id: data.condition_id,
+    prescription_id: id,
+    visit_date: data.prescribed_on,
+    follow_up_on: body.follow_up_on ?? null,
+    follow_up_note: body.follow_up_note ?? null,
+  });
+  const close = closeFollowUpsStmt(db, vaultId, data.member_id!, data.doctor_id ?? null, data.prescribed_on!);
+  await db.batch([...(close ? [close] : []), ...stmts, insertStmt(db, "visits", crypto.randomUUID(), vaultId, visit)]);
   return c.json(await getOne(db, prescriptions, vaultId, id), 201);
 });
 
@@ -256,6 +271,7 @@ prescriptionsApi.delete("/:id", async (c) => {
          OR (owner_type = 'medication' AND owner_id IN (SELECT id FROM medications WHERE prescription_id = ?))`,
     ).bind(id, id),
     db.prepare("DELETE FROM medications WHERE prescription_id = ?").bind(id),
+    db.prepare("DELETE FROM visits WHERE prescription_id = ?").bind(id),
     db.prepare("DELETE FROM prescriptions WHERE id = ?").bind(id),
   ]);
   await deleteR2(c.env.FILES, fileIds);

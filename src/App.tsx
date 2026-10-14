@@ -8,6 +8,7 @@ import { Loading } from "@/components/layout";
 import { Welcome } from "@/pages/Welcome";
 import { SettingsPage } from "@/pages/Settings";
 import { RestorePage } from "@/components/Backup";
+import { VisitForm } from "@/pages/forms/VisitForm";
 import { VisitBrief } from "@/pages/VisitBrief";
 import { Home } from "@/pages/Home";
 import { MemberPage } from "@/pages/Member";
@@ -62,6 +63,8 @@ const router = createBrowserRouter([
       { path: "/m/:memberId/reports/new", element: <ReportForm /> },
       { path: "/m/:memberId/allergies/new", element: <AllergyForm /> },
       { path: "/m/:memberId/conditions/new", element: <ConditionForm /> },
+      { path: "/m/:memberId/visits/new", element: <VisitForm /> },
+      { path: "/visits/:visitId", element: <VisitForm /> },
       { path: "/m/:memberId/brief", element: <VisitBrief /> },
       { path: "/m/:memberId/:tab?", element: <MemberPage /> },
       { path: "/prescriptions/:prescriptionId", element: <PrescriptionDetail /> },

@@ -1,10 +1,11 @@
 import { useNavigate } from "react-router";
-import { FileText, FlaskConical, HeartPulse, Pill, Plus, ShieldAlert } from "lucide-react";
+import { CalendarCheck, FileText, FlaskConical, HeartPulse, Pill, Plus, ShieldAlert } from "lucide-react";
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 
 const OPTIONS = [
   { key: "prescriptions", label: "Prescription", hint: "Photo + the medicines on it", icon: FileText },
   { key: "reports", label: "Report", hint: "Blood test, X-ray, scan", icon: FlaskConical },
+  { key: "visits", label: "Visit", hint: "Check-up or appointment, with the next follow-up", icon: CalendarCheck },
   { key: "medications", label: "Medicine", hint: "One medicine without a prescription", icon: Pill },
   { key: "allergies", label: "Allergy", hint: "Drug, food or other", icon: ShieldAlert },
   { key: "conditions", label: "Health condition", hint: "e.g. arthritis, diabetes", icon: HeartPulse },

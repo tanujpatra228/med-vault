@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dosage, normalize, parseJsonObject, splitDiagnoses } from "./ai";
+import { dosage, followUp, normalize, parseJsonObject, splitDiagnoses } from "./ai";
 import { normalizeReview } from "./review";
 
 describe("parseJsonObject", () => {
@@ -249,4 +249,17 @@ describe("normalizeReview (medicine review reply)", () => {
     ]);
   });
   it("survives junk", () => expect(normalizeReview({ items: "no" }, names)).toEqual({ generics: {}, items: [] }));
+});
+
+describe("followUp (next visit from a prescription)", () => {
+  it("reads the interval from the advice text, not the model's day count", () => {
+    expect(followUp({ follow_up: "Review after 2 weeks", follow_up_days: 10 }, "2026-10-05")).toEqual({ follow_up_text: "Review after 2 weeks", follow_up_on: "2026-10-19" });
+  });
+  it("falls back to the model's days, then the notes", () => {
+    expect(followUp({ follow_up: "Next visit as advised", follow_up_days: 30 }, "2026-10-05").follow_up_on).toBe("2026-11-04");
+    expect(followUp({ notes: "Avoid NSAIDs. 15 दिन बाद दिखाएं" }, "2026-10-05").follow_up_on).toBe("2026-10-20");
+  });
+  it("ignores a made-up day count without any advice text", () => {
+    expect(followUp({ follow_up_days: 7 }, "2026-10-05")).toEqual({ follow_up_text: null, follow_up_on: null });
+  });
 });

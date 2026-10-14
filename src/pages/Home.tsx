@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState, ErrorState, Loading, Page } from "@/components/layout";
 import { Row, RowList, Tile } from "@/components/Row";
 import { Wordmark } from "@/components/Mark";
+import { FollowUpsSection } from "@/components/FollowUps";
 import { age, countWord, plural } from "@/lib/format";
 
 export function Home() {
@@ -96,6 +97,9 @@ export function Home() {
                 <UserPlus /> Add a family member
               </Link>
             </Button>
+            <div className="mt-8">
+              <FollowUpsSection title="Coming up" />
+            </div>
           </>
         )}
       </Page>

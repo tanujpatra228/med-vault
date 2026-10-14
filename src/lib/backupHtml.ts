@@ -92,6 +92,17 @@ export function backupHtml(d: BackupData): string {
           )
           .join("") || '<p class="muted">None</p>'
       }
+      ${(() => {
+        const vs = newest((d.visits ?? []).filter((v) => v.member_id === mb.id), (v) => v.visit_date);
+        return vs.length
+          ? `<h3>Visits · ${vs.length}</h3>${vs
+              .map(
+                (v) => `<div class="card"><b>${formatDate(v.visit_date)}</b>${doctorLabel(v.doctor_id) ? ` · ${esc(doctorLabel(v.doctor_id))}` : ""}${v.reason ? ` <span class="muted">· ${esc(v.reason)}</span>` : ""}
+              ${v.notes ? `<div>${esc(v.notes)}</div>` : ""}${v.follow_up_on ? `<div class="muted">Follow-up: ${formatDate(v.follow_up_on)}${v.follow_up_note ? ` · ${esc(v.follow_up_note)}` : ""}</div>` : ""}</div>`,
+              )
+              .join("")}`
+          : "";
+      })()}
       ${past.length ? `<h3>Past medicines · ${past.length}</h3>${past.map(medHtml).join("")}` : ""}
     </section>`;
   });

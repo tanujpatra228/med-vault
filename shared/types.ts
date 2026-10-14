@@ -117,6 +117,8 @@ export interface Prescription {
 
 export interface PrescriptionDetail extends Prescription {
   medications: Medication[];
+  /** The visit this prescription was written at (holds the follow-up). */
+  visit: Visit | null;
   files: FileMeta[];
 }
 
@@ -143,6 +145,41 @@ export interface Report {
 
 export interface ReportDetail extends Report {
   files: FileMeta[];
+}
+
+export interface Visit {
+  id: ID;
+  member_id: ID;
+  doctor_id: ID | null;
+  condition_id: ID | null;
+  prescription_id: ID | null;
+  visit_date: string;
+  reason: string | null;
+  notes: string | null;
+  follow_up_on: string | null;
+  follow_up_note: string | null;
+  /** 1 once the next visit was logged or the follow-up dismissed. */
+  follow_up_done: number;
+  created_at: string;
+  updated_at: string;
+  // joined
+  doctor_name?: string | null;
+  doctor_specialty?: string | null;
+  condition_name?: string | null;
+}
+
+/** An open follow-up, for the home screen and the member summary. */
+export interface FollowUp {
+  visit_id: ID;
+  member_id: ID;
+  member_name: string;
+  doctor_id: ID | null;
+  doctor_name: string | null;
+  doctor_specialty: string | null;
+  doctor_phone: string | null;
+  follow_up_on: string;
+  follow_up_note: string | null;
+  visit_date: string;
 }
 
 export type FileOwner = "member" | "prescription" | "report" | "medication";
@@ -176,6 +213,9 @@ export interface PrescriptionCreateInput {
   condition_id?: ID | null;
   prescribed_on: string;
   notes?: string | null;
+  /** Logged on the visit created with the prescription. */
+  follow_up_on?: string | null;
+  follow_up_note?: string | null;
   medications?: MedicationInput[];
 }
 
@@ -242,6 +282,10 @@ export interface PrescriptionScan {
   /** Every diagnosis written, one per condition. */
   conditions: string[];
   notes: string | null;
+  /** Follow-up advice exactly as written, e.g. "Review after 2 weeks". */
+  follow_up_text: string | null;
+  /** Next visit date worked out from the advice and the prescription date. */
+  follow_up_on: string | null;
   medications: ScannedMedicine[];
 }
 
