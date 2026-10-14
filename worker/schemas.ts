@@ -76,6 +76,21 @@ export const reportSchema: Schema = {
   notes: long,
 };
 
+export const labValueSchema: Schema = {
+  member_id: { type: "id", ref: "members", required: true },
+  report_id: { type: "id", ref: "reports", required: true },
+  test_key: { type: "text", required: true, max: 80 },
+  test_name: { type: "text", required: true, max: 120 },
+  value: { type: "text", max: 40 },
+  value_text: { type: "text", max: 80 },
+  unit: { type: "text", max: 40 },
+  ref_low: { type: "text", max: 40 },
+  ref_high: { type: "text", max: 40 },
+  ref_text: { type: "text", max: 120 },
+  flag: { type: "enum", values: ["high", "low"] },
+  position: { type: "text", max: 6 },
+};
+
 export const visitSchema: Schema = {
   member_id: { type: "id", ref: "members", required: true },
   doctor_id: { type: "id", ref: "doctors" },

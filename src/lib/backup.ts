@@ -105,13 +105,12 @@ export async function restoreBackup(
       const rows = data[table] ?? [];
       for (let i = 0; i < rows.length; i += RESTORE_CHUNK) {
         onProgress(`Restoring records · ${records} of ${total}`);
-        const { members, doctors, conditions, prescriptions } = ids;
         const res = await api.post<{ ids: Record<string, string> }>("/vault/restore", {
           version: data.version,
           table,
           start: records === 0,
           rows: rows.slice(i, i + RESTORE_CHUNK),
-          refs: { members, doctors, conditions, prescriptions },
+          refs: ids,
         });
         Object.assign(ids[table], res.ids);
         records += Math.min(RESTORE_CHUNK, rows.length - i);

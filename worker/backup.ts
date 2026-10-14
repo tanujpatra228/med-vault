@@ -4,7 +4,7 @@ import { assertConditions } from "./conditionLinks";
 import type { AppEnv } from "./env";
 import { badRequest, HttpError, nowIso, readJson } from "./http";
 import { prepareMedication } from "./medication";
-import { allergySchema, conditionSchema, doctorSchema, medicationSchema, memberSchema, prescriptionSchema, reportSchema, visitSchema } from "./schemas";
+import { allergySchema, conditionSchema, doctorSchema, medicationSchema, memberSchema, prescriptionSchema, reportSchema, visitSchema, labValueSchema } from "./schemas";
 import { validate, type Schema } from "./validate";
 
 const TABLES: Record<RestoreTable, { schema: Schema; prepare?: (row: Record<string, unknown>) => Record<string, unknown> }> = {
@@ -16,6 +16,7 @@ const TABLES: Record<RestoreTable, { schema: Schema; prepare?: (row: Record<stri
   medications: { schema: medicationSchema, prepare: prepareMedication },
   reports: { schema: reportSchema },
   visits: { schema: visitSchema },
+  lab_values: { schema: labValueSchema },
 };
 
 const TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T[\d:.]+Z$/;

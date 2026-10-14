@@ -9,6 +9,7 @@ import {
   type ScanKind,
   type ScanResult,
   type ScannedMedicine,
+  type LabDraft,
 } from "../shared/types";
 import { addDaysIso, parseFollowUpDays } from "../shared/visits";
 import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDays, type Pattern, type Schedule } from "../shared/schedule";
@@ -61,7 +62,9 @@ This is a photo of a medicine strip, bottle or box. Return:
 This is a medical test report. Return:
 {"title": string|null (test name, e.g. "Complete Blood Count"), "report_type": one of ${JSON.stringify(REPORT_TYPES)} or null,
  "report_date": "YYYY-MM-DD"|null (collection or report date), "lab_name": string|null,
- "findings": string|null (short plain-language summary of values outside the normal range, each with its value; or "All values in normal range")}`,
+ "findings": string|null (short plain-language summary of values outside the normal range, each with its value; or "All values in normal range"),
+ "values": [{"name": string (test name as printed), "value": string (result exactly as printed, e.g. "42", "<0.5", "Negative"), "unit": string|null, "range": string|null (normal/reference range as printed, e.g. "0-20")}]}
+List EVERY test result row in "values", in the order printed. Copy numbers exactly; do not convert units or round.`,
 };
 
 // ---------- normalisation: the model's output is a suggestion, never trusted as-is ----------
@@ -252,6 +255,13 @@ export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanRes
         report_date: date(raw.report_date),
         lab_name: str(raw.lab_name),
         findings: str(raw.findings, 2000),
+        values: (Array.isArray(raw.values) ? raw.values : []).slice(0, 80).flatMap((v): LabDraft[] => {
+          if (!v || typeof v !== "object") return [];
+          const o = v as Record<string, unknown>;
+          const name = str(o.name, 120);
+          const value = str(o.value, 80);
+          return name && value ? [{ test_name: name, value_text: value, unit: str(o.unit, 40), ref_text: str(o.range, 120) }] : [];
+        }),
       };
       return { kind, data };
     }
@@ -297,7 +307,15 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
     ],
   },
   medicine: { name: "Dolo 650", strength: "650 mg", form: "tablet", notes: "Paracetamol, Micro Labs" },
-  report: { title: "ESR and CRP", report_type: "blood", report_date: "2026-10-03", lab_name: "Thyrocare", findings: "ESR high (42 mm/hr), CRP high (12 mg/L)" },
+  report: {
+    title: "ESR and CRP", report_type: "blood", report_date: "2026-10-03", lab_name: "Thyrocare", findings: "ESR high (42 mm/hr), CRP high (12 mg/L)",
+    values: [
+      { name: "E.S.R. (Westergren)", value: "42", unit: "mm/hr", range: "0 - 20" },
+      { name: "C-Reactive Protein (Quantitative)", value: "12.0", unit: "mg/L", range: "< 5" },
+      { name: "Haemoglobin", value: "11.2", unit: "g/dL", range: "12.0 - 15.0" },
+      { name: "HLA B27", value: "Positive", unit: null, range: "Negative" },
+    ],
+  },
 };
 
 export type AiRunner = { run(model: string, input: unknown): Promise<unknown> };

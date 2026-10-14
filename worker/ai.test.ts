@@ -56,7 +56,7 @@ describe("normalize prescription", () => {
 describe("normalize report and medicine", () => {
   it("keeps only known report types", () => {
     const r = normalize("report", { title: "CBC", report_type: "Blood", report_date: "03.10.2026" });
-    expect(r).toEqual({ kind: "report", data: { title: "CBC", report_type: "blood", report_date: "2026-10-03", lab_name: null, findings: null } });
+    expect(r).toEqual({ kind: "report", data: { title: "CBC", report_type: "blood", report_date: "2026-10-03", lab_name: null, findings: null, values: [] } });
     const bad = normalize("report", { report_type: "xray" });
     expect(bad.kind === "report" && bad.data.report_type).toBeNull();
   });
