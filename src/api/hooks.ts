@@ -17,6 +17,8 @@ import type {
   ScanKind,
   ScanResult,
   AiUsage,
+  FollowUp,
+  Visit,
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
@@ -148,3 +150,13 @@ export function useRunReview(memberId: string) {
 
 /** Today's AI allowance (neurons) for this vault. */
 export const useAiUsage = () => useQuery({ queryKey: ["ai-usage"], queryFn: () => api.get<AiUsage>("/ai/usage") });
+
+// ---------- visits ----------
+
+export const useVisits = (memberId: string) =>
+  useQuery({ queryKey: ["visits", memberId], queryFn: () => api.get<Visit[]>(`/visits${qs({ member_id: memberId })}`) });
+export const useVisit = (id: string | undefined) =>
+  useQuery({ queryKey: ["visit", id], queryFn: () => api.get<Visit>(`/visits/${id}`), enabled: !!id });
+/** Open follow-ups, overdue first; for one member or the whole family. */
+export const useFollowUps = (memberId?: string) =>
+  useQuery({ queryKey: ["follow-ups", memberId ?? "all"], queryFn: () => api.get<FollowUp[]>(`/visits/follow-ups${qs({ member_id: memberId })}`) });
