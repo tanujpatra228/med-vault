@@ -1,13 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import type { AuthState, LinkCode, VaultInfo } from "@shared/types";
+import { PRIVACY_VERSION, type PrivacyMeta } from "@shared/privacy";
 import { api } from "./client";
 
 export const useAuth = () => useQuery({ queryKey: ["auth"], queryFn: () => api.get<AuthState>("/auth/me"), staleTime: Infinity });
+export const usePrivacyMeta = () => useQuery({ queryKey: ["privacy"], queryFn: () => api.get<PrivacyMeta>("/auth/privacy"), staleTime: Infinity });
 export const useVault = () => useQuery({ queryKey: ["vault"], queryFn: () => api.get<VaultInfo>("/vault") });
 
 export const authApi = {
   createVault: (name: string, device_name: string) =>
-    api.post<{ vault: { id: string; name: string }; recovery_key: string }>("/auth/vault", { name, device_name }),
+    api.post<{ vault: { id: string; name: string }; recovery_key: string }>("/auth/vault", { name, device_name, consent: { version: PRIVACY_VERSION, guardian: true } }),
+  consent: () => api.post("/vault/consent", { consent: { version: PRIVACY_VERSION, guardian: true } }),
+  setAiConsent: (allow: boolean) => api.put("/vault/ai-consent", { allow }),
+  setContactEmail: (contact_email: string) => api.patch("/vault", { contact_email }),
   link: (code: string, device_name: string) => api.post("/auth/link", { code, device_name }),
   recover: (recovery_key: string, device_name: string) => api.post("/auth/recover", { recovery_key, device_name }),
   logout: () => api.post("/auth/logout"),
