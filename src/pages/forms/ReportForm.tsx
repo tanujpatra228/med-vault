@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
 import { REPORT_TYPES, type Report } from "@shared/types";
-import { useReport, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
+import { saveLabValues, useReport, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
+import type { LabDraft } from "@shared/types";
+import { LabValuesEditor } from "@/components/LabValuesEditor";
+import { useQueryClient } from "@tanstack/react-query";
 import { AiNotice, ScanButton } from "@/components/Scan";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -26,7 +29,11 @@ export function ReportForm() {
   const [photos, setPhotos] = useState<File[]>([]);
   const f = useFields({ title: "", report_type: "blood", report_date: today(), lab_name: "", doctor_id: "", condition_ids: "", notes: "" });
   const [scanned, setScanned] = useState(false);
+  const [labs, setLabs] = useState<LabDraft[] | null>(null);
+  const qc = useQueryClient();
   useLoadRecord(existing.data, f);
+  // Edit: start from the saved results.
+  const rows: LabDraft[] = labs ?? existing.data?.values.map((v) => ({ test_name: v.test_name, value_text: v.value_text, unit: v.unit, ref_text: v.ref_text })) ?? [];
   if (reportId && existing.isPending) return <Loading />;
 
   const applyScan = (r: ScanResponse) => {
@@ -37,6 +44,7 @@ export function ReportForm() {
     if (d.report_date) f.set("report_date", d.report_date);
     if (d.lab_name) f.set("lab_name", d.lab_name);
     if (d.findings) f.set("notes", f.values.notes ? `${f.values.notes}\n${d.findings}` : d.findings);
+    if (d.values.length) setLabs([...rows.filter((r) => r.test_name.trim()), ...d.values]);
     setScanned(true);
   };
   const memberId = newFor ?? existing.data?.member_id ?? "";
@@ -50,6 +58,10 @@ export function ReportForm() {
         const values = { ...f.values };
         if (!values.title.trim()) values.title = REPORT_TYPES.find((t) => t.value === values.report_type)?.label ?? "Report";
         const r = await save.mutateAsync({ id: reportId, data: { ...toPayload(values), condition_ids: splitIds(values.condition_ids), member_id: memberId } });
+        if (labs !== null) {
+          await saveLabValues(r.id, labs);
+          await qc.invalidateQueries();
+        }
         if (photos.length) await upload.mutateAsync({ ownerType: "report", ownerId: r.id, files: photos });
         toast.success("Report saved");
         navigate(`/reports/${r.id}`, { replace: true });
@@ -84,6 +96,7 @@ export function ReportForm() {
       <Field label="What it says" hint="Key findings in your words, e.g. ESR high (42), sugar normal">
         <Textarea {...f.bind("notes")} />
       </Field>
+      <LabValuesEditor value={rows} onChange={setLabs} />
     </FormPage>
   );
 }

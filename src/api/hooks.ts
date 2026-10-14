@@ -19,6 +19,8 @@ import type {
   AiUsage,
   FollowUp,
   Visit,
+  LabValue,
+  LabDraft,
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
@@ -160,3 +162,11 @@ export const useVisit = (id: string | undefined) =>
 /** Open follow-ups, overdue first; for one member or the whole family. */
 export const useFollowUps = (memberId?: string) =>
   useQuery({ queryKey: ["follow-ups", memberId ?? "all"], queryFn: () => api.get<FollowUp[]>(`/visits/follow-ups${qs({ member_id: memberId })}`) });
+
+// ---------- lab results ----------
+
+/** Every result for a member, oldest first. */
+export const useLabs = (memberId: string) => useQuery({ queryKey: ["labs", memberId], queryFn: () => api.get<LabValue[]>(`/labs${qs({ member_id: memberId })}`) });
+
+/** Replaces a report's results. */
+export const saveLabValues = (reportId: string, values: LabDraft[]) => api.put<LabValue[]>(`/labs/report/${reportId}`, { values });
