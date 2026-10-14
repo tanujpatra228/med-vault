@@ -148,11 +148,15 @@ export function ruleChecks(meds: ReviewMed[], allergies: string[]): ReviewItem[]
   return items.sort((a, b) => LEVEL_ORDER[a.level] - LEVEL_ORDER[b.level]);
 }
 
-/** Keeps AI items that do not repeat a built-in finding about the same medicines. */
+/**
+ * Keeps AI items that do not repeat a built-in finding about the same combination. Items about a
+ * single medicine are always kept: one medicine can have several unrelated questions.
+ */
 export function mergeItems(rules: ReviewItem[], ai: ReviewItem[]): ReviewItem[] {
   const key = (i: ReviewItem) => [...i.medicines].map((m) => m.toLowerCase()).sort().join("|");
-  const seen = new Set(rules.map(key));
+  const seen = new Set(rules.filter((i) => i.medicines.length > 1).map(key));
   const extra = ai.filter((i) => {
+    if (i.medicines.length < 2) return true;
     const k = key(i);
     if (seen.has(k)) return false;
     seen.add(k);

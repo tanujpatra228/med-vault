@@ -64,10 +64,12 @@ describe("ruleChecks", () => {
 });
 
 describe("mergeItems", () => {
-  it("drops AI items about the same medicines as a rule item", () => {
+  it("drops AI items about the same combination as a rule item, keeps single-medicine ones", () => {
     const rule: ReviewItem = { level: "ask", title: "r", question: "", why: "", medicines: ["A", "B"], source: "rule" };
     const dup: ReviewItem = { ...rule, title: "ai dup", medicines: ["b", "a"], source: "ai" };
     const other: ReviewItem = { ...rule, level: "talk_soon", title: "ai new", medicines: ["C"], source: "ai" };
-    expect(mergeItems([rule], [dup, other]).map((i) => i.title)).toEqual(["ai new", "r"]);
+    const single: ReviewItem = { ...rule, level: "note", medicines: ["A"] };
+    const aiSingle: ReviewItem = { ...single, title: "ai single", source: "ai" };
+    expect(mergeItems([rule, single], [dup, other, aiSingle]).map((i) => i.title)).toEqual(["ai new", "r", "r", "ai single"]);
   });
 });
