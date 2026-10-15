@@ -64,7 +64,7 @@ export function ScanButton({
         <div className="flex flex-col gap-3 rounded-sm border border-iris bg-iris-surface p-4 type-label" role="dialog" aria-label="Allow AI reading">
           <p className="font-semibold text-ink">Allow AI to read your photos?</p>
           <p className="text-ink-muted">
-            The photo is sent to Cloudflare Workers AI to read the text. Cloudflare says it does not use it to train AI or share it. Nothing is saved until you check the form and tap Save.
+            The photo is sent to our AI provider to read the text. It is not used to train AI or shared. Nothing is saved until you check the form and tap Save.
             You can switch this off any time in Settings.{" "}
             <Link to="/privacy" target="_blank" className="text-iris underline">
               Privacy notice

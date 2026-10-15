@@ -42,7 +42,7 @@ export function PrivacySettings({ vault }: { vault: VaultInfo }) {
         <div>
           <div className="type-body font-semibold">AI reading</div>
           <p className="type-label text-ink-muted">
-            {ai ? `On since ${formatDate(vault.ai_consent_at!.slice(0, 10))}. Photos you scan and medicine checks go to Cloudflare Workers AI.` : "Off. Forms are filled by hand; medicine checks use built-in rules only."}
+            {ai ? `On since ${formatDate(vault.ai_consent_at!.slice(0, 10))}. Photos you scan and medicine checks go to our AI provider.` : "Off. Forms are filled by hand; medicine checks use built-in rules only."}
           </p>
         </div>
         <Button variant="secondary" size="sm" disabled={busy} onClick={toggleAi}>
