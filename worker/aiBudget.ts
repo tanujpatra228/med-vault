@@ -5,7 +5,7 @@ import { HttpError } from "./http";
  * Workers AI is billed in neurons. The free plan gives 10,000 a day for the whole account, shared by
  * every vault, and resets at 00:00 UTC (5:30 AM in India). Both limits below use the same UTC day.
  */
-export const VAULT_DAILY_NEURONS = 1_500;
+export const VAULT_DAILY_NEURONS = 1_000;
 /** Stop all AI before the account's free 10,000 runs out, keeping headroom for the spread in cost. */
 export const GLOBAL_DAILY_NEURONS = 9_000;
 

@@ -106,7 +106,7 @@ Settings  vault name, linked devices, link code, recovery key, log out, delete v
 - **Never saved automatically.** Results land in the normal form with a "Filled by AI" notice; every field stays editable.
 - Doctor and condition names are matched to existing records ("Dr. S. Rao" = "Dr Rao"); unknown ones open "add new" prefilled, and saving is blocked until the suggestion is added or cancelled, so nothing is silently dropped.
 - Prescription shorthand is normalized on the server: OD → 1-0-0, BD → 1-0-1, TDS → 1-1-1, HS → 0-0-1, SOS → As needed. Indian DD/MM/YYYY dates become YYYY-MM-DD; future or impossible dates are dropped.
-- Engine: Cloudflare Workers AI. Llama 4 Scout first, Mistral Small 3.1 as fallback. A daily AI budget per vault, measured in neurons (about 15 scans). Claude API stays the upgrade path if handwriting accuracy is not good enough on real prescriptions.
+- Engine: Cloudflare Workers AI. Llama 4 Scout first, Mistral Small 3.1 as fallback. A daily AI budget per vault, measured in neurons (about 10 scans). Claude API stays the upgrade path if handwriting accuracy is not good enough on real prescriptions.
 
 ## 5a. Dosage Schedules (built)
 

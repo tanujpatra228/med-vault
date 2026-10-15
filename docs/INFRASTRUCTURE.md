@@ -50,7 +50,7 @@ Anyone with the URL can create a vault, so one deployment is shared by every fam
 | Wrong link codes / recovery keys per IP | 10 per 15 minutes | `worker/auth.ts` |
 | Storage per vault | 2 GB | `worker/files.ts` |
 | Link code lifetime | 10 minutes, single use | `worker/auth.ts` |
-| AI per vault | 1,500 neurons per UTC day (~15 scans) | `worker/aiBudget.ts` |
+| AI per vault | 1,000 neurons per UTC day (~10 scans) | `worker/aiBudget.ts` |
 | AI for all vaults together | 9,000 neurons per UTC day (of the free 10,000) | `worker/aiBudget.ts` |
 
 ### Workers AI usage (measured)
@@ -68,7 +68,7 @@ What it means:
 - So limits are a **neuron budget**, not a call count (`worker/aiBudget.ts`, table `ai_usage`):
   - Each call records its real cost, computed from the token counts Workers AI returns (`usage.prompt_tokens` / `completion_tokens`) at the model's per-token rate. If a model returns no counts, the measured estimate is charged (scan 100, review 60).
   - Before a call, the app checks that a typical call of that kind still fits.
-  - **Per vault:** 1,500 neurons per day (about 15 scans, or a mix of scans and reviews).
+  - **Per vault:** 1,000 neurons per day (about 10 scans, or a mix of scans and reviews).
   - **All vaults together:** AI stops at 9,000 of the free 10,000 per day, so the account never goes over the free allowance however many families sign up.
   - Days are UTC, matching Cloudflare's reset (5:30 AM in India). Settings → "AI today" shows the vault's usage.
 - If the dashboard total drifts from the sum in `ai_usage`, adjust the per-token rates in `worker/aiBudget.ts`:
