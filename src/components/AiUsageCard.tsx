@@ -2,7 +2,7 @@ import { useAiUsage } from "@/api/hooks";
 
 const timeFmt = new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit" });
 
-/** Settings → AI today: the vault's daily Workers AI allowance, in neurons. */
+/** Settings → AI today: the vault's daily AI allowance, in units. */
 export function AiUsageCard() {
   const q = useAiUsage();
   if (!q.data) return null;
@@ -20,8 +20,8 @@ export function AiUsageCard() {
         <div className={pct >= 90 ? "h-full bg-rust" : "h-full bg-iris"} style={{ width: `${pct}%` }} />
       </div>
       <p className="type-caption text-ink-faint">
-        {left > 0 ? `Enough for about ${scans_left} more prescription ${scans_left === 1 ? "scan" : "scans"} today.` : "Used up for today. Forms still work by hand."} A scan uses about 80 to 100 units
-        (Cloudflare "neurons"), a medicine check about 50. Shared fairly between all families using this app.
+        {left > 0 ? `Enough for about ${scans_left} more prescription ${scans_left === 1 ? "scan" : "scans"} today.` : "Used up for today. Forms still work by hand."} A scan uses about 80 to 100 units,
+        a medicine check about 50. Shared fairly between all families using this app.
       </p>
     </div>
   );

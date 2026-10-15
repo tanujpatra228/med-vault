@@ -65,8 +65,8 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
 
       <Part title="AI reading (optional)">
         <p>
-          When you scan a photo, it is sent to <strong>Cloudflare Workers AI</strong> (Llama 4 Scout, or Mistral Small as a backup) to read the text. Medicine checks send the list of current
-          medicines, allergies, conditions, age and sex. Cloudflare states it does not use this to train AI models or share it with other customers. The AI result only fills a form; nothing is saved
+          When you scan a photo, it is sent to our cloud AI provider (open AI models such as Llama 4 Scout or Mistral Small) to read the text. Medicine checks send the list of current
+          medicines, allergies, conditions, age and sex. The provider does not use it to train AI models or share it with other customers. The AI result only fills a form; nothing is saved
           until you tap Save.
         </p>
         <p>AI is off until you allow it, and you can switch it off any time in Settings. Everything works without it.</p>
@@ -81,14 +81,14 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
 
       <Part title="Where it is kept, and who helps">
         <p>
-          Records and files are stored with <strong>Cloudflare</strong> (database, file storage and AI), which processes them only to run Med Vault. Cloudflare's data centres can be in or outside
+          Records and files are stored with a cloud hosting provider (database, file storage and AI), which processes them only to run Med Vault. Its data centres can be in or outside
           India. Data is encrypted in transit and at rest, and each vault can only be opened by its own linked phones.
         </p>
       </Part>
 
       <Part title="How long it is kept">
         <p>
-          Until you delete it. Deleting a record, a family member or the whole vault removes it straight away. Cloudflare's database recovery copies can hold deleted data for up to 30 days, after
+          Until you delete it. Deleting a record, a family member or the whole vault removes it straight away. Database recovery copies can hold deleted data for up to 30 days, after
           which it is gone for good.
         </p>
       </Part>
