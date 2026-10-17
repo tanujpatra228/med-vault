@@ -397,3 +397,5 @@ export interface AiUsage {
 }
 
 export const SCAN_MAX_DATA_URL = 1_500_000;
+/** Text read from a PDF for AI scanning: about 4,000 tokens, roughly 3 to 5 pages of a lab report. */
+export const SCAN_MAX_TEXT = 15_000;

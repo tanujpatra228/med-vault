@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import {
   MED_FORMS,
   SCAN_MAX_DATA_URL,
+  SCAN_MAX_TEXT,
   type MedicineScan,
   type PrescriptionScan,
   type ReportScan,
@@ -22,7 +23,7 @@ export const MODELS = ["@cf/meta/llama-4-scout-17b-16e-instruct", "@cf/mistralai
 
 const REPORT_TYPES: ReportType[] = ["blood", "urine", "imaging", "scan", "ecg", "other"];
 
-const COMMON = `You read photos of Indian medical documents. Handwriting may be hard to read.
+const COMMON = `You read photos and PDFs of Indian medical documents. Handwriting may be hard to read.
 Reply with ONLY one JSON object, no markdown, no explanation.
 Use null for anything you cannot read with reasonable confidence. Never invent values.
 Dates must be YYYY-MM-DD (Indian documents usually write DD/MM/YYYY).`;
@@ -320,7 +321,8 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
 
 export type AiRunner = { run(model: string, input: unknown): Promise<unknown> };
 
-async function runModels(ai: AiRunner, kind: ScanKind, image: string) {
+/** `image` is a photo (or a scanned PDF page); `text` is the text of a PDF. */
+async function runModels(ai: AiRunner, kind: ScanKind, input: { image: string } | { text: string }) {
   let lastError: unknown;
   for (const model of MODELS) {
     try {
@@ -329,10 +331,13 @@ async function runModels(ai: AiRunner, kind: ScanKind, image: string) {
           { role: "system", content: PROMPTS[kind] },
           {
             role: "user",
-            content: [
-              { type: "text", text: "Read this image and return the JSON object." },
-              { type: "image_url", image_url: { url: image } },
-            ],
+            content:
+              "text" in input
+                ? `This is the text of a PDF document (layout may be lost; table columns are in reading order). Read it and return the JSON object.\n\n${input.text}`
+                : [
+                    { type: "text", text: "Read this image and return the JSON object." },
+                    { type: "image_url", image_url: { url: input.image } },
+                  ],
           },
         ],
         max_tokens: 1500,
@@ -346,7 +351,10 @@ async function runModels(ai: AiRunner, kind: ScanKind, image: string) {
     }
   }
   console.error("AI scan failed on all models", lastError);
-  throw new HttpError(502, "Could not read this photo. Try a sharper, well-lit photo, or fill the form by hand.");
+  throw new HttpError(
+    502,
+    "text" in input ? "Could not read this PDF. Fill the form by hand." : "Could not read this photo. Try a sharper, well-lit photo, or fill the form by hand.",
+  );
 }
 
 export const aiApi = new Hono<AppEnv>();
@@ -354,17 +362,27 @@ export const aiApi = new Hono<AppEnv>();
 aiApi.post("/scan", async (c) => {
   const body = await readJson(c);
   const kind = body.kind as ScanKind;
-  const image = typeof body.image === "string" ? body.image : "";
   if (!(kind in PROMPTS)) throw badRequest("kind must be prescription, medicine or report");
-  if (!/^data:image\/(jpeg|png|webp);base64,/.test(image)) throw badRequest("image must be a JPEG, PNG or WebP data URL");
-  if (image.length > SCAN_MAX_DATA_URL) throw new HttpError(413, "Photo is too large to scan");
+  let input: { image: string } | { text: string };
+  if (typeof body.text === "string") {
+    // Text of a PDF, extracted in the browser.
+    const text = body.text.trim();
+    if (!text) throw badRequest("text is empty");
+    if (text.length > SCAN_MAX_TEXT) throw new HttpError(413, "This PDF has too much text to read at once");
+    input = { text };
+  } else {
+    const image = typeof body.image === "string" ? body.image : "";
+    if (!/^data:image\/(jpeg|png|webp);base64,/.test(image)) throw badRequest("image must be a JPEG, PNG or WebP data URL");
+    if (image.length > SCAN_MAX_DATA_URL) throw new HttpError(413, "Photo is too large to scan");
+    input = { image };
+  }
 
   const db = c.env.DB;
   const vaultId = c.get("vaultId");
   if (!(await hasAiConsent(db, vaultId))) throw new HttpError(403, "AI reading is switched off for this vault. Turn it on in Settings, or fill the form by hand.");
   await assertAiBudget(db, vaultId, kind);
   const { obj, model, usage } =
-    c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock", usage: undefined } : await runModels(c.env.AI as unknown as AiRunner, kind, image);
+    c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock", usage: undefined } : await runModels(c.env.AI as unknown as AiRunner, kind, input);
   await recordAiUsage(db, vaultId, kind, model, neuronsFor(model, kind, usage), usage);
   return c.json({ ...normalize(kind, obj), model, ai: await aiUsage(db, vaultId) });
 });
