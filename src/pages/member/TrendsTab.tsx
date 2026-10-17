@@ -21,7 +21,7 @@ function TrendDetail({ tr, markers }: { tr: Trend; markers: ReturnType<typeof me
         <p className="-mt-2 flex items-center gap-2 type-caption text-ink-faint">
           <span aria-hidden className="inline-block h-3 w-5 rounded-[2px] bg-(--chart-band) opacity-20" />
           Normal range {tr.latest.ref_text ?? [tr.low, tr.high].map((v) => (v === null ? "" : formatValue(v))).join("–")}
-          {tr.unit ? ` ${tr.unit}` : ""}
+          {tr.unit && !/[a-zµ%/]/i.test(tr.latest.ref_text ?? "") ? ` ${tr.unit}` : ""}
         </p>
       )}
       {changes.length > 0 && (

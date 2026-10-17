@@ -13,7 +13,10 @@ export interface ChartMarker {
   label: string;
 }
 
-const PAD = { top: 22, right: 16, bottom: 24, left: 40 };
+const PAD = { top: 22, right: 16, bottom: 24, left: 44 };
+/** Axis labels that fit: 406000 → "4.1L", 7500 → "7.5K" (Indian compact notation), small numbers as they are. */
+const compact = new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 });
+const axisLabel = (v: number) => (Math.abs(v) >= 10_000 ? compact.format(v) : formatValue(v));
 const shortDate = new Intl.DateTimeFormat("en-IN", { month: "short", year: "2-digit" });
 const t = (d: string) => Date.parse(`${d}T00:00:00Z`);
 
@@ -41,7 +44,8 @@ function useWidth() {
 }
 
 /**
- * One test over time: a 2px line with ringed points, the normal range as a soft band,
+ * One test over time: a 2px line with ringed points, the normal range as a soft band edged with
+ * dotted lines at its limits (labelled at the right),
  * out-of-range points in the status color (with "High"/"Low" in the readout, never color alone),
  * medicine start/stop as hairline annotations, and a crosshair readout on hover or tap.
  */
@@ -136,10 +140,29 @@ export function LabChart({
           <g key={v}>
             <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--rule-soft)" strokeWidth={1} />
             <text x={PAD.left - 8} y={y(v)} dy="0.32em" textAnchor="end" className="fill-ink-faint num text-[11px]">
-              {formatValue(v)}
+              {axisLabel(v)}
             </text>
           </g>
         ))}
+        {[high, low].map((v, i) => {
+          if (v === null || v < geo.lo || v > geo.hi) return null;
+          // Label at whichever end the data line is farther from, so it never sits on a point.
+          const right = Math.abs(y(last.value) - y(v)) >= Math.abs(y(points[0].value) - y(v));
+          return (
+            <g key={i}>
+              <line x1={PAD.left} x2={width - PAD.right} y1={y(v)} y2={y(v)} stroke="var(--chart-band)" strokeWidth={1.5} strokeDasharray="4 4" opacity={0.9} />
+              <text
+                x={right ? width - PAD.right - 2 : PAD.left + 4}
+                y={y(v)}
+                dy={i === 0 ? "-0.45em" : "1.15em"}
+                textAnchor={right ? "end" : "start"}
+                className="fill-ink-muted num text-[10px]"
+              >
+                {i === 0 ? "max" : "min"} {axisLabel(v)}
+              </text>
+            </g>
+          );
+        })}
         {visibleMarkers.map((m, i) => (
           <g key={`${m.date}-${i}`}>
             <line x1={x(m.date)} x2={x(m.date)} y1={PAD.top - 4} y2={height - PAD.bottom} stroke="var(--ink-faint)" strokeWidth={1} opacity={0.5} />

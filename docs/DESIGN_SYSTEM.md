@@ -133,7 +133,7 @@ Med Vault components built on top of these live in `src/components/` (`Row`, `Fi
 
 Lab trends follow the dataviz method:
 - **Line:** a single 2px line with 4.5px points. Each point has a 2px ring in the surface color.
-- **Normal range:** a moss band at 10% opacity.
+- **Normal range:** a moss band at 10% opacity, edged by dotted moss lines at its limits, labelled "max 4L" / "min 1.5L" at the end of the line farther from the data. Axis labels use Indian compact notation (4L, 7.5K) from 10,000 up.
 - **Out-of-range points:** the status color, always with "High"/"Low" text.
 - **Gridlines and annotations:** hairline gridlines, and medicine changes as hairline annotations.
 - **Readout:** a crosshair readout on hover or tap.
