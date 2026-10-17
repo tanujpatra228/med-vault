@@ -33,7 +33,8 @@ Text-only results (e.g. HLA B27 Positive) are listed under "Other results".
 
 Built on the dataviz method:
 - one 2px line with ringed points
-- the normal range as a 10% band; an axis starts at 0 when the range has only an upper limit
+- the normal range as a 10% band with dotted lines at its limits; an axis starts at 0 when the range has only an upper limit
+- **Scales:** labs often print the result and the range in different scales (406,000 /cmm against "1.5 - 4.0 lac/cmm"). `rangeFor` in `shared/labs.ts` puts the range on the result's scale (lakh, thousand / 10^3, million / 10^6) before flagging; migration 0010 fixed results saved earlier.
 - out-of-range points in the status color, always paired with "High"/"Low" text, never color alone
 - medicine starts and stops as hairline annotations, labelled where they fit, all listed under the chart
 - a crosshair readout on hover or tap

@@ -77,6 +77,30 @@ export function parseRange(raw: string | null | undefined): { low: number | null
   return none;
 }
 
+/**
+ * Multiplier a printed text implies: "1.5 - 4.0 lac/cmm" is ×100,000, "10^3/µL" ×1,000, "mill/cmm"
+ * ×1,000,000. Null when it names none. migrations/0010 mirrors this in SQL for saved results.
+ */
+export function scaleOf(text: string | null | undefined): number | null {
+  if (!text) return null;
+  if (/\b(?:lacs?|lakhs?)\b/i.test(text)) return 100_000;
+  if (/thousand|10\s*[\^*]\s*3\b|10³|\bk\s*\/\s*(?:µl|ul|cmm|mm3)/i.test(text)) return 1_000;
+  if (/\bmill(?:ions?)?\b|10\s*[\^*]\s*6\b|10⁶/i.test(text)) return 1_000_000;
+  return null;
+}
+
+/**
+ * The normal range on the same scale as the result. Labs often print the result in one scale and the
+ * range in another ("406000 /cmm" against "1.5 - 4.0 lac/cmm"). A range without its own multiplier
+ * is taken to share the unit column's; the result's multiplier comes from its text, else the unit.
+ */
+export function rangeFor(refText: string | null | undefined, valueText: string | null | undefined, unit: string | null | undefined) {
+  const { low, high } = parseRange(refText);
+  const factor = (scaleOf(refText) ?? scaleOf(unit) ?? 1) / (scaleOf(valueText) ?? scaleOf(unit) ?? 1);
+  const fix = (v: number | null) => (v === null || factor === 1 ? v : Math.round(v * factor * 1e6) / 1e6);
+  return { low: fix(low), high: fix(high) };
+}
+
 export type LabFlag = "high" | "low" | null;
 
 export function flagOf(value: number | null, low: number | null, high: number | null): LabFlag {
@@ -87,4 +111,8 @@ export function flagOf(value: number | null, low: number | null, high: number | 
 }
 
 /** "42", "4.5", "1.5 L" style display without float noise. */
-export const formatValue = (v: number) => (Number.isInteger(v) ? String(v) : String(Math.round(v * 100) / 100));
+export const formatValue = (v: number) => {
+  const r = Number.isInteger(v) ? v : Math.round(v * 100) / 100;
+  // Big counts grouped the Indian way: 406000 → "4,06,000".
+  return Math.abs(r) >= 10_000 ? r.toLocaleString("en-IN") : String(r);
+};
