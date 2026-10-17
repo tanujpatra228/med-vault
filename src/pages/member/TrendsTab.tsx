@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, Loading, Section } from "@/components/layout";
 import { FlagBadge } from "@/components/LabValuesEditor";
 import { LabChart, Sparkline } from "@/components/LabChart";
+import { HomeReadings } from "@/components/HomeReadings";
 import { formatDate } from "@/lib/format";
 import { changeText, groupTrends, medicineMarkers, type Trend } from "@/lib/labs";
 import { cn } from "@/lib/utils";
@@ -75,15 +76,18 @@ export function TrendsTab({ memberId }: { memberId: string }) {
   const trends = groupTrends(labs.data);
   if (!trends.length)
     return (
-      <EmptyState
-        title="No lab results yet"
-        body="Scan a report: every value on it is read, and each test gets a chart here as reports add up."
-        action={
-          <Button asChild>
-            <Link to={`/m/${memberId}/reports/new`}>Add a report</Link>
-          </Button>
-        }
-      />
+      <div>
+        <HomeReadings memberId={memberId} />
+        <EmptyState
+          title="No lab results yet"
+          body="Scan a report: every value on it is read, and each test gets a chart here as reports add up."
+          action={
+            <Button asChild>
+              <Link to={`/m/${memberId}/reports/new`}>Add a report</Link>
+            </Button>
+          }
+        />
+      </div>
     );
   const markers = medicineMarkers(meds.data ?? []);
   const numeric = trends.filter((tr) => tr.points.length > 0);
@@ -92,6 +96,8 @@ export function TrendsTab({ memberId }: { memberId: string }) {
 
   return (
     <div>
+      <HomeReadings memberId={memberId} />
+      <h2 className="mb-3 meta text-ink-faint">Lab results</h2>
       <div className="rounded-sm border border-rule bg-sheet px-4">
         {numeric.map((tr, i) => {
           const isOpen = current === tr.key;

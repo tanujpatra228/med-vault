@@ -103,3 +103,15 @@ export const visitSchema: Schema = {
   follow_up_note: { type: "text", max: 300 },
   follow_up_done: { type: "enum", values: ["0", "1"] },
 };
+
+export const readingSchema: Schema = {
+  member_id: { type: "id", ref: "members", required: true },
+  kind: { type: "enum", values: ["bp", "sugar"], required: true },
+  taken_at: { type: "datetime", required: true },
+  systolic: { type: "number", min: 50, max: 300, integer: true },
+  diastolic: { type: "number", min: 30, max: 200, integer: true },
+  pulse: { type: "number", min: 20, max: 250, integer: true },
+  sugar: { type: "number", min: 10, max: 1000 },
+  context: { type: "enum", values: ["fasting", "after_meal", "random"] },
+  notes: { type: "text", max: 500 },
+};

@@ -25,6 +25,7 @@ import type {
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
 import type { DuplicateMatch } from "@shared/reports";
+import type { Reading } from "@shared/readings";
 import { api } from "./client";
 import { compressImage, imageToDataUrl } from "@/lib/image";
 
@@ -186,3 +187,10 @@ export const saveLabValues = (reportId: string, values: LabDraft[]) => api.put<L
 /** Saved reports that look like this one (same results, or same date and type without results). */
 export const findReportDuplicates = (input: { member_id: string; report_date: string; report_type: string; values: LabDraft[]; exclude_id?: string }) =>
   api.post<DuplicateMatch[]>("/labs/duplicates", input);
+
+// ---------- home readings (BP, sugar) ----------
+
+export const useReadings = (memberId: string, since?: string) =>
+  useQuery({ queryKey: ["readings", memberId, since ?? ""], queryFn: () => api.get<Reading[]>(`/readings${qs({ member_id: memberId, since })}`) });
+export const useReading = (id: string | undefined) =>
+  useQuery({ queryKey: ["reading", id], queryFn: () => api.get<Reading>(`/readings/${id}`), enabled: !!id });

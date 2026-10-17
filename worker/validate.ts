@@ -4,6 +4,9 @@ import { badRequest } from "./http";
 export type FieldSpec =
   | { type: "text"; required?: boolean; max?: number }
   | { type: "date"; required?: boolean }
+  /** Local date and time, "2026-10-17T08:30". */
+  | { type: "datetime"; required?: boolean }
+  | { type: "number"; min: number; max: number; integer?: boolean; required?: boolean }
   | { type: "enum"; values: readonly string[]; required?: boolean }
   /** Several of `values`, comma-separated ("blood,urine"); stored deduplicated, in the order of `values`. */
   | { type: "enumList"; values: readonly string[]; required?: boolean }
@@ -50,6 +53,14 @@ export function validate(schema: Schema, input: Record<string, unknown>, partial
       case "date":
         if (!isValidDate(value)) throw badRequest(`${key} must be a date (YYYY-MM-DD)`);
         break;
+      case "datetime":
+        if (!/^\d{4}-\d{2}-\d{2}T([01]\d|2[0-3]):[0-5]\d$/.test(value) || !isValidDate(value.slice(0, 10))) throw badRequest(`${key} must be a date and time`);
+        break;
+      case "number": {
+        const n = Number(value);
+        if (!Number.isFinite(n) || n < spec.min || n > spec.max || (spec.integer && !Number.isInteger(n))) throw badRequest(`${key} must be a number from ${spec.min} to ${spec.max}`);
+        break;
+      }
       case "enum":
         if (!spec.values.includes(value)) throw badRequest(`${key} must be one of: ${spec.values.join(", ")}`);
         break;
