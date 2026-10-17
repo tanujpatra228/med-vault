@@ -121,14 +121,25 @@ export function useUploadFiles() {
 
 export type { Doctor };
 
-export type ScanResponse = ScanResult & { model: string; ai: AiUsage };
+/** `pdf` is set when a PDF was read: as its text, or as an image of page 1 (a scanned PDF). */
+export type ScanResponse = ScanResult & { model: string; ai: AiUsage; pdf?: { pages: number; as: "text" | "image" } };
 
-/** Reads a photo with Workers AI. Results are suggestions for the form, never saved directly. */
+/**
+ * Reads a photo or PDF with AI. A PDF sends its text, or page 1 as an image when it is a scan.
+ * Results are suggestions for the form, never saved directly.
+ */
 export function useScan() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ kind, file }: { kind: ScanKind; file: File }) =>
-      api.post<ScanResponse>("/ai/scan", { kind, image: await imageToDataUrl(file, SCAN_MAX_DATA_URL) }),
+    mutationFn: async ({ kind, file }: { kind: ScanKind; file: File }) => {
+      if (file.type === "application/pdf") {
+        const { pdfForScan } = await import("@/lib/pdf");
+        const { pages, ...input } = await pdfForScan(file);
+        const result = await api.post<ScanResponse>("/ai/scan", { kind, ...input });
+        return { ...result, pdf: { pages, as: "text" in input ? ("text" as const) : ("image" as const) } };
+      }
+      return api.post<ScanResponse>("/ai/scan", { kind, image: await imageToDataUrl(file, SCAN_MAX_DATA_URL) });
+    },
     onSuccess: (data) => qc.setQueryData(["ai-usage"], data.ai),
   });
 }

@@ -15,7 +15,7 @@ const LABELS: Record<ScanKind, { idle: string; busy: string }> = {
 };
 
 /**
- * Scans the first photo already picked, or opens the camera if there is none.
+ * Scans the first photo or PDF already picked, or opens the camera if there is none.
  * A newly taken photo is also handed to `onPhoto` so it gets attached to the record.
  */
 export function ScanButton({
@@ -31,7 +31,7 @@ export function ScanButton({
 }) {
   const scan = useScan();
   const cameraRef = useRef<HTMLInputElement>(null);
-  const image = photos.find((f) => f.type.startsWith("image/"));
+  const image = photos.find((f) => f.type.startsWith("image/") || f.type === "application/pdf");
   const auth = useAuth();
   const qc = useQueryClient();
   const allowed = auth.data?.authenticated ? auth.data.vault.ai_consent : false;
@@ -42,9 +42,16 @@ export function ScanButton({
     try {
       const result = await scan.mutateAsync({ kind, file });
       onResult(result);
-      toast.success("Filled from the photo. Check every field before saving.");
+      const pdf = result.pdf;
+      toast.success(
+        !pdf
+          ? "Filled from the photo. Check every field before saving."
+          : pdf.as === "image" && pdf.pages > 1
+            ? `This PDF is a scan, so only page 1 of ${pdf.pages} was read. Check every field before saving.`
+            : "Filled from the PDF. Check every field before saving.",
+      );
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not read this photo");
+      toast.error(e instanceof Error ? e.message : file.type === "application/pdf" ? "Could not read this PDF" : "Could not read this photo");
     }
   };
 
@@ -62,9 +69,9 @@ export function ScanButton({
       </Button>
       {asking && (
         <div className="flex flex-col gap-3 rounded-sm border border-iris bg-iris-surface p-4 type-label" role="dialog" aria-label="Allow AI reading">
-          <p className="font-semibold text-ink">Allow AI to read your photos?</p>
+          <p className="font-semibold text-ink">Allow AI to read your photos and PDFs?</p>
           <p className="text-ink-muted">
-            The photo is sent to our AI provider to read the text. It is not used to train AI or shared. Nothing is saved until you check the form and tap Save.
+            The photo or PDF is sent to our AI provider to read the text. It is not used to train AI or shared. Nothing is saved until you check the form and tap Save.
             You can switch this off any time in Settings.{" "}
             <Link to="/privacy" target="_blank" className="text-iris underline">
               Privacy notice
