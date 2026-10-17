@@ -1,6 +1,6 @@
 import { Plus, X } from "lucide-react";
 import type { LabDraft } from "@shared/types";
-import { flagOf, parseRange, parseValue } from "@shared/labs";
+import { flagOf, parseValue, rangeFor } from "@shared/labs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ export function LabValuesEditor({ value, onChange }: { value: LabDraft[]; onChan
       <p className="mb-4 type-caption text-ink-faint">Each result builds that test's trend chart. Copy numbers exactly as printed.</p>
       <div className="flex flex-col gap-3">
         {value.map((r, i) => {
-          const { low, high } = parseRange(r.ref_text);
+          const { low, high } = rangeFor(r.ref_text, r.value_text, r.unit);
           const flag = flagOf(parseValue(r.value_text), low, high);
           return (
             <div key={i} className="flex flex-col gap-2 rounded-sm border border-rule bg-sheet p-3">

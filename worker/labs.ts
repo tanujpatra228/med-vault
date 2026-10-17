@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { canonicalTest, flagOf, parseRange, parseValue } from "../shared/labs";
+import { canonicalTest, flagOf, parseValue, rangeFor } from "../shared/labs";
 import { findDuplicates, resultKey, type DuplicateCandidate } from "../shared/reports";
 import type { LabDraft, LabValue } from "../shared/types";
 import type { AppEnv } from "./env";
@@ -19,14 +19,15 @@ export function prepareValues(raw: unknown): Array<Omit<LabValue, "id" | "member
     const valueText = text(d.value_text, 80);
     if (!name || !valueText) continue;
     const refText = text(d.ref_text, 120);
+    const unit = text(d.unit, 40);
     const value = parseValue(valueText);
-    const { low, high } = parseRange(refText);
+    const { low, high } = rangeFor(refText, valueText, unit);
     out.push({
       test_key: canonicalTest(name).key,
       test_name: name,
       value,
       value_text: valueText,
-      unit: text(d.unit, 40),
+      unit,
       ref_low: low,
       ref_high: high,
       ref_text: refText,

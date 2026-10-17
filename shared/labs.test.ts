@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canonicalTest, flagOf, formatValue, parseRange, parseValue } from "./labs";
+import { canonicalTest, flagOf, formatValue, parseRange, parseValue, rangeFor, scaleOf } from "./labs";
 
 describe("canonicalTest", () => {
   it("maps the many ways labs print a test to one key", () => {
@@ -44,4 +44,25 @@ describe("parseValue / parseRange / flagOf", () => {
     expect(flagOf(null, 0, 1)).toBeNull();
   });
   it("formats without float noise", () => expect(formatValue(0.1 + 0.2)).toBe("0.3"));
+});
+
+describe("rangeFor: result and range printed in different scales", () => {
+  it("reads lakh, thousand and million", () => {
+    expect(scaleOf("1.5 - 4.0 lac/cmm")).toBe(100_000);
+    expect(scaleOf("Lakhs/cumm")).toBe(100_000);
+    expect(scaleOf("10^3/µL")).toBe(1_000);
+    expect(scaleOf("mill/cmm")).toBe(1_000_000);
+    expect(scaleOf("mmol/L")).toBeNull();
+    expect(scaleOf("Lactate")).toBeNull();
+  });
+  it("puts the range on the result's scale", () => {
+    // Platelets 406,000 /cmm against 1.5 - 4.0 lac/cmm: 150,000 to 400,000, so 406,000 is just high and 300,000 normal.
+    expect(rangeFor("1.5 - 4.0 lac/cmm", "406,000", "/cmm")).toEqual({ low: 150_000, high: 400_000 });
+    expect(flagOf(300_000, 150_000, 400_000)).toBeNull();
+    // Same scale on both sides: unchanged.
+    expect(rangeFor("4.0 - 11.0", "7.5", "10^3/µL")).toEqual({ low: 4, high: 11 });
+    expect(rangeFor("1.5 - 4.0", "2.6", "lac/cmm")).toEqual({ low: 1.5, high: 4 });
+    // Result in lakh, range in plain numbers.
+    expect(rangeFor("150000 - 400000", "2.5 lakh", null)).toEqual({ low: 1.5, high: 4 });
+  });
 });
