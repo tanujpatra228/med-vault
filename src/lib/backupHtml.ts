@@ -1,5 +1,5 @@
 import type { BackupData, BackupFile } from "@shared/backup";
-import { REPORT_TYPES } from "@shared/types";
+import { reportTypeLabel } from "@shared/reports";
 import { describe as describeSchedule } from "@shared/schedule";
 import { formatDate, plural, today } from "./format";
 import { medView } from "./meds";
@@ -87,7 +87,7 @@ export function backupHtml(d: BackupData): string {
       <h3>Reports · ${reports.length}</h3>${
         reports
           .map(
-            (r) => `<div class="card"><b>${formatDate(r.report_date)}</b> · ${esc(r.title)} <span class="muted">· ${esc(REPORT_TYPES.find((t) => t.value === r.report_type)?.label ?? "Report")}${r.lab_name ? ` · ${esc(r.lab_name)}` : ""}</span>
+            (r) => `<div class="card"><b>${formatDate(r.report_date)}</b> · ${esc(r.title)} <span class="muted">· ${esc(reportTypeLabel(r.report_type))}${r.lab_name ? ` · ${esc(r.lab_name)}` : ""}</span>
             ${r.notes ? `<div class="muted">${esc(r.notes)}</div>` : ""}${filesHtml(filesOf("report", r.id))}</div>`,
           )
           .join("") || '<p class="muted">None</p>'

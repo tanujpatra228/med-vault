@@ -70,7 +70,7 @@ export const reportSchema: Schema = {
   doctor_id: { type: "id", ref: "doctors" },
   condition_id: { type: "id", ref: "conditions" },
   title: { type: "text", required: true, max: 200 },
-  report_type: { type: "enum", values: ["blood", "urine", "imaging", "scan", "ecg", "other"] },
+  report_type: { type: "enumList", values: ["blood", "urine", "imaging", "scan", "ecg", "other"] },
   report_date: { type: "date", required: true },
   lab_name: short,
   notes: long,

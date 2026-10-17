@@ -5,6 +5,8 @@ export type FieldSpec =
   | { type: "text"; required?: boolean; max?: number }
   | { type: "date"; required?: boolean }
   | { type: "enum"; values: readonly string[]; required?: boolean }
+  /** Several of `values`, comma-separated ("blood,urine"); stored deduplicated, in the order of `values`. */
+  | { type: "enumList"; values: readonly string[]; required?: boolean }
   | { type: "id"; ref: RefTable; required?: boolean };
 
 export type RefTable = "members" | "doctors" | "conditions" | "prescriptions" | "reports";
@@ -51,6 +53,13 @@ export function validate(schema: Schema, input: Record<string, unknown>, partial
       case "enum":
         if (!spec.values.includes(value)) throw badRequest(`${key} must be one of: ${spec.values.join(", ")}`);
         break;
+      case "enumList": {
+        const parts = new Set(value.split(",").map((s) => s.trim()).filter(Boolean));
+        for (const v of parts) if (!spec.values.includes(v)) throw badRequest(`${key} must be one or more of: ${spec.values.join(", ")}`);
+        out[key] = spec.values.filter((v) => parts.has(v)).join(",") || null;
+        if (spec.required && !out[key]) throw badRequest(`${key} is required`);
+        continue;
+      }
       case "id":
         if (value.length > 64) throw badRequest(`${key} is invalid`);
         break;

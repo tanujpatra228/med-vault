@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { canonicalTest, flagOf, parseRange, parseValue } from "../shared/labs";
+import { findDuplicates, resultKey, type DuplicateCandidate } from "../shared/reports";
 import type { LabDraft, LabValue } from "../shared/types";
 import type { AppEnv } from "./env";
 import { badRequest, notFound, nowIso, readJson } from "./http";
@@ -74,4 +75,38 @@ labsApi.put("/report/:reportId", async (c) => {
       : []),
   ]);
   return c.json(await valuesForReport(db, vaultId, reportId));
+});
+
+/**
+ * Saved reports of this member that look like the one about to be saved: same results (the same
+ * report scanned twice, or its photo and its PDF), or same date and type when there are no results.
+ * Two statements: reports on that date, and saved results that share a test with the new ones.
+ */
+labsApi.post("/duplicates", async (c) => {
+  const db = c.env.DB;
+  const vaultId = c.get("vaultId");
+  const body = await readJson(c);
+  const memberId = typeof body.member_id === "string" ? body.member_id : "";
+  const reportDate = typeof body.report_date === "string" ? body.report_date : "";
+  if (!memberId || !/^\d{4}-\d{2}-\d{2}$/.test(reportDate)) throw badRequest("member_id and report_date are required");
+  const excludeId = typeof body.exclude_id === "string" ? body.exclude_id : "";
+  const values = prepareValues(body.values).map((v) => resultKey(v.test_key, v.value_text ?? ""));
+  const keys = [...new Set(values.map((v) => v.split("|")[0]))];
+  const [onDate, shared] = await db.batch([
+    db.prepare("SELECT id FROM reports WHERE vault_id = ? AND member_id = ? AND report_date = ? AND id != ?").bind(vaultId, memberId, reportDate, excludeId),
+    db
+      .prepare("SELECT DISTINCT report_id AS id FROM lab_values WHERE vault_id = ? AND member_id = ? AND report_id != ? AND test_key IN (SELECT value FROM json_each(?))")
+      .bind(vaultId, memberId, excludeId, JSON.stringify(keys)),
+  ]);
+  const ids = [...new Set([...onDate.results, ...shared.results].map((r) => (r as { id: string }).id))].slice(0, 50);
+  if (!ids.length) return c.json([]);
+  const [reports, saved] = await db.batch([
+    db.prepare("SELECT id, title, report_date, report_type, lab_name FROM reports WHERE vault_id = ? AND id IN (SELECT value FROM json_each(?))").bind(vaultId, JSON.stringify(ids)),
+    db.prepare("SELECT report_id, test_key, value_text FROM lab_values WHERE vault_id = ? AND report_id IN (SELECT value FROM json_each(?))").bind(vaultId, JSON.stringify(ids)),
+  ]);
+  const byReport = new Map<string, string[]>();
+  for (const v of saved.results as Array<{ report_id: string; test_key: string; value_text: string | null }>)
+    (byReport.get(v.report_id) ?? byReport.set(v.report_id, []).get(v.report_id)!).push(resultKey(v.test_key, v.value_text ?? ""));
+  const candidates = (reports.results as Array<Omit<DuplicateCandidate, "values">>).map((r) => ({ ...r, values: byReport.get(r.id) ?? [] }));
+  return c.json(findDuplicates({ report_date: reportDate, report_type: String(body.report_type ?? ""), values }, candidates));
 });

@@ -123,7 +123,8 @@ const reports: Resource = {
     FROM reports t
     LEFT JOIN doctors d ON d.id = t.doctor_id`,
   orderBy: "t.report_date DESC, t.created_at DESC",
-  filters: { member_id: "t.member_id", report_type: "t.report_type" },
+  // A report can have several types ("blood,urine"): the filter matches any of them.
+  filters: { member_id: "t.member_id", report_type: "(',' || t.report_type || ',') LIKE '%,' || ? || ',%'" },
   fileOwner: "report",
   conditionOwner: "report",
 };

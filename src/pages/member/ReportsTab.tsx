@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router";
 import { REPORT_TYPES } from "@shared/types";
+import { reportTypeLabel } from "@shared/reports";
 import { useReports } from "@/api/hooks";
 import { fileUrl } from "@/api/client";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ export function ReportsTab({ memberId }: { memberId: string }) {
                   {i === 0 && <Badge variant="focus">Latest</Badge>}
                 </span>
               }
-              subtitle={[REPORT_TYPES.find((t) => t.value === r.report_type)?.label, r.lab_name].filter(Boolean).join(" · ")}
+              subtitle={[reportTypeLabel(r.report_type), r.lab_name].filter(Boolean).join(" · ")}
               trailing={<DateStack date={r.report_date} />}
               chevron={false}
             />

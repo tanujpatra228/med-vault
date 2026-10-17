@@ -13,7 +13,7 @@ export interface Resource {
   select: string;
   /** Newest first: always a date DESC then created_at DESC. */
   orderBy: string;
-  /** Query params allowed as equality filters, mapped to columns. */
+  /** Query params allowed as filters: a column (equality) or an SQL condition with one `?`. */
   filters?: Record<string, string>;
   fileOwner?: FileOwner;
   /** Set when records can be linked to several conditions (`condition_ids`, see conditionLinks.ts). */
@@ -79,7 +79,7 @@ export function crud(app: Hono<AppEnv>, r: Resource, skip: Op[] = []) {
       for (const [param, column] of Object.entries(r.filters ?? {})) {
         const v = c.req.query(param);
         if (v) {
-          where.push(`${column} = ?`);
+          where.push(column.includes("?") ? column : `${column} = ?`);
           binds.push(v);
         }
       }
