@@ -136,7 +136,8 @@ export interface Report {
   condition_id: ID | null;
   doctor_id: ID | null;
   title: string;
-  report_type: ReportType;
+  /** One or more types, comma-separated ("blood,urine"). See shared/reports.ts. */
+  report_type: string;
   report_date: string;
   lab_name: string | null;
   notes: string | null;
@@ -371,7 +372,8 @@ export interface MedicineScan {
 
 export interface ReportScan {
   title: string | null;
-  report_type: ReportType | null;
+  /** "blood,urine" when the report has several tests. */
+  report_type: string | null;
   report_date: string | null;
   lab_name: string | null;
   findings: string | null;

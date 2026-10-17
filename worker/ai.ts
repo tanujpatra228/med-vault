@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { joinReportTypes } from "../shared/reports";
 import {
   MED_FORMS,
   SCAN_MAX_DATA_URL,
@@ -61,7 +62,7 @@ This is a photo of a medicine strip, bottle or box. Return:
  "form": one of ${JSON.stringify(MED_FORMS)} or null, "notes": string|null (generic/salt name and manufacturer if printed)}`,
   report: `${COMMON}
 This is a medical test report. Return:
-{"title": string|null (test name, e.g. "Complete Blood Count"), "report_type": one of ${JSON.stringify(REPORT_TYPES)} or null,
+{"title": string|null (test name, e.g. "Complete Blood Count"; for several tests, e.g. "CBC and urine routine"), "report_types": array of every test type on the report, each one of ${JSON.stringify(REPORT_TYPES)} (e.g. ["blood", "urine"] when it has blood and urine tests),
  "report_date": "YYYY-MM-DD"|null (collection or report date), "lab_name": string|null,
  "findings": string|null (short plain-language summary of values outside the normal range, each with its value; or "All values in normal range"),
  "values": [{"name": string (test name as printed), "value": string (result exactly as printed, e.g. "42", "<0.5", "Negative"), "unit": string|null, "range": string|null (normal/reference range as printed, e.g. "0-20")}]}
@@ -252,7 +253,7 @@ export function normalize(kind: ScanKind, raw: Record<string, unknown>): ScanRes
     case "report": {
       const data: ReportScan = {
         title: str(raw.title),
-        report_type: oneOf(raw.report_type, REPORT_TYPES),
+        report_type: scannedTypes(raw.report_types ?? raw.report_type),
         report_date: date(raw.report_date),
         lab_name: str(raw.lab_name),
         findings: str(raw.findings, 2000),
@@ -309,15 +310,24 @@ const MOCKS: Record<ScanKind, Record<string, unknown>> = {
   },
   medicine: { name: "Dolo 650", strength: "650 mg", form: "tablet", notes: "Paracetamol, Micro Labs" },
   report: {
-    title: "ESR and CRP", report_type: "blood", report_date: "2026-10-03", lab_name: "Thyrocare", findings: "ESR high (42 mm/hr), CRP high (12 mg/L)",
+    title: "ESR and CRP", report_types: ["blood", "urine"], report_date: "2026-10-03", lab_name: "Thyrocare", findings: "ESR high (42 mm/hr), CRP high (12 mg/L)",
     values: [
       { name: "E.S.R. (Westergren)", value: "42", unit: "mm/hr", range: "0 - 20" },
       { name: "C-Reactive Protein (Quantitative)", value: "12.0", unit: "mg/L", range: "< 5" },
       { name: "Haemoglobin", value: "11.2", unit: "g/dL", range: "12.0 - 15.0" },
       { name: "HLA B27", value: "Positive", unit: null, range: "Negative" },
+      { name: "Urine sugar", value: "Nil", unit: null, range: "Nil" },
     ],
   },
 };
+
+/** The model's report types (an array, or one string from older prompts) as "blood,urine"; null when none. */
+function scannedTypes(v: unknown): string | null {
+  const list = (Array.isArray(v) ? v : [v])
+    .map((t) => (typeof t === "string" ? t.trim().toLowerCase() : ""))
+    .filter((t): t is ReportType => (REPORT_TYPES as string[]).includes(t));
+  return list.length ? joinReportTypes(list) : null;
+}
 
 export type AiRunner = { run(model: string, input: unknown): Promise<unknown> };
 
