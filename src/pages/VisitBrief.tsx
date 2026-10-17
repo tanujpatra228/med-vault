@@ -2,7 +2,7 @@ import { useParams } from "react-router";
 import { toast } from "sonner";
 import { Printer, Share2 } from "lucide-react";
 import type { Medication, MemberSummary, Report } from "@shared/types";
-import { REPORT_TYPES } from "@shared/types";
+import { reportTypeLabel } from "@shared/reports";
 import { describe as describeSchedule } from "@shared/schedule";
 import { useLabs, useMedications, useReports, useReview, useSummary } from "@/api/hooks";
 import { changeText, groupTrends, type Trend } from "@/lib/labs";
@@ -43,7 +43,7 @@ function doseLines(m: Medication): string[] {
   );
 }
 
-const reportLabel = (r: Report) => REPORT_TYPES.find((t) => t.value === r.report_type)?.label ?? "Report";
+const reportLabel = (r: Report) => reportTypeLabel(r.report_type);
 
 /** WhatsApp-friendly plain text version of the brief. */
 function briefText(s: MemberSummary, current: Medication[], recent: Medication[], reports: Report[], questions: ReviewItem[], trends: Trend[]): string {

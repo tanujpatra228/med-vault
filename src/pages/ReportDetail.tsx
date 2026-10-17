@@ -1,6 +1,6 @@
 import { Link, useNavigate, useParams } from "react-router";
 import { Pencil } from "lucide-react";
-import { REPORT_TYPES } from "@shared/types";
+import { reportTypeLabel } from "@shared/reports";
 import { useDelete, useReport } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
@@ -32,7 +32,7 @@ export function ReportDetail() {
     );
   const r = q.data;
   const facts = [
-    REPORT_TYPES.find((t) => t.value === r.report_type)?.label,
+    reportTypeLabel(r.report_type),
     r.lab_name,
     r.doctor_name && `Ordered by ${r.doctor_name}`,
     r.condition_name && `For ${r.condition_name}`,

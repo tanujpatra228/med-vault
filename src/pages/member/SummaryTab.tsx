@@ -2,7 +2,7 @@ import { Link } from "react-router";
 import { ClipboardList, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Medication, MemberSummary } from "@shared/types";
-import { REPORT_TYPES } from "@shared/types";
+import { reportTypeLabel } from "@shared/reports";
 import { useSummary } from "@/api/hooks";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, ErrorState, Loading, Section, SectionLink } from "@/components/layout";
@@ -152,7 +152,7 @@ export function SummaryTab({ memberId }: { memberId: string }) {
             <Row
               to={`/reports/${s.latest_report.id}`}
               title={s.latest_report.title}
-              subtitle={[REPORT_TYPES.find((t) => t.value === s.latest_report!.report_type)?.label, s.latest_report.lab_name].filter(Boolean).join(" · ")}
+              subtitle={[reportTypeLabel(s.latest_report!.report_type), s.latest_report.lab_name].filter(Boolean).join(" · ")}
               trailing={<DateStack date={s.latest_report.report_date} />}
             />
           </RowList>
