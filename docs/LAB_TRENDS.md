@@ -9,6 +9,7 @@ Is the arthritis treatment working? ESR and CRP across reports answer that, but 
 ## How results get in
 
 - **Scan a report:** the AI copies every result row as printed (name, result, unit, normal range) into the report form's **Results** list. Every cell is editable, and rows can be added by hand.
+- **PDF reports** work too, read in the browser with pdf.js (loaded only then, legacy build for older Android Chrome). A PDF with real text (most lab-system PDFs) sends its text, up to 15,000 characters (about 3 to 5 pages): more accurate than a photo and every page is read. A scanned PDF (only images inside) sends page 1 as an image, and the app says when later pages were skipped.
 - The server works out the rest in code, not the model:
   - **Canonical test:** "ESR", "E.S.R. (Westergren)" and "Erythrocyte Sedimentation Rate" are one test, so they share a chart. Unknown tests keep their own name.
   - **Number:** "42", "<0.5" and "1,50,000" are read as numbers. Text results like "Positive" are kept as text.
