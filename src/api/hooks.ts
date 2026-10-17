@@ -24,6 +24,7 @@ import type {
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
+import type { DuplicateMatch } from "@shared/reports";
 import { api } from "./client";
 import { compressImage, imageToDataUrl } from "@/lib/image";
 
@@ -181,3 +182,7 @@ export const useLabs = (memberId: string) => useQuery({ queryKey: ["labs", membe
 
 /** Replaces a report's results. */
 export const saveLabValues = (reportId: string, values: LabDraft[]) => api.put<LabValue[]>(`/labs/report/${reportId}`, { values });
+
+/** Saved reports that look like this one (same results, or same date and type without results). */
+export const findReportDuplicates = (input: { member_id: string; report_date: string; report_type: string; values: LabDraft[]; exclude_id?: string }) =>
+  api.post<DuplicateMatch[]>("/labs/duplicates", input);
