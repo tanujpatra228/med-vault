@@ -44,7 +44,7 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
         <ul>
           <li>The vault name, and a name for each linked phone with when it was last used.</li>
           <li>For each family member you add: name, relation, date of birth, sex, blood group, photo and notes.</li>
-          <li>Health records you enter or scan: medicines and how to take them, prescriptions, reports and lab results, visits and follow-ups, allergies, health conditions and your notes.</li>
+          <li>Health records you enter or scan: medicines and how to take them, prescriptions, reports and lab results, blood pressure and sugar readings, visits and follow-ups, allergies, health conditions and your notes.</li>
           <li>Photos and PDFs you upload, and doctors' names and contact details.</li>
           <li>Security data: phone keys and the recovery key, stored only as one-way fingerprints.</li>
           <li>An email address, only if you add one for security notices.</li>

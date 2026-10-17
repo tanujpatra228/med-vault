@@ -70,3 +70,9 @@ export function sameName(a: string, b: string): boolean {
   const [xs, ys] = [x.split(" "), y.split(" ")];
   return xs.at(-1) === ys.at(-1) && xs.length > 0 && ys.length > 0 && (xs.length === 1 || ys.length === 1 || xs[0][0] === ys[0][0]);
 }
+
+/** Local now as "2026-10-17T08:30", for datetime-local inputs. */
+export function nowLocal(): string {
+  const d = new Date();
+  return `${localDate(d)}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
