@@ -15,16 +15,17 @@ Status: **built**. Code: `shared/readings.ts` (limits, flags, summary), `worker/
 
 ## Family view (home screen)
 
-**Blood pressure & sugar** on the home screen (shown once anyone has a reading) puts the whole family on one chart per measure. BP and sugar are never on one chart: they have different units, and a chart has only one axis.
+**Blood pressure & sugar** on the home screen (shown once anyone has a reading in the last 90 days) gives **one card per person**. Design chosen from the comparison mockups:
 
-- Measures: **Blood pressure**, with an **Upper / Lower** switch so there is one line per person rather than two; and **Sugar** per timing (fasting, after a meal, random), for the timings that have readings.
-- Periods: 30 or 90 days.
-- Readout: tap or hover to see everyone's reading for that day.
-- Below the chart: each person's latest reading with its High/Low flag; tap a name to open their Trends.
-- Colors: one per person in family order, the same on every chart (`--member-1` to `--member-4`, in `src/styles.css`).
-  - Validated with the dataviz palette checks, all pairs, light and dark. Four is the most that stays distinguishable.
-  - A fifth person and beyond gets a neutral line, still with their name label.
-  - Each person also has a marker shape (circle, square, triangle, diamond), a name at the line end and a legend entry, so identity never rests on color alone.
+- **BP:** one bar per reading, from the lower to the upper number. Over the normal zone, with dotted limits at 140 and 90; a high reading gets a status dot.
+- **Sugar:** underneath, on its own mg/dL scale, aligned to the same date line, so a day sits in the same column in both panels.
+  - Fasting readings are filled dots and after-meal or random readings are hollow.
+  - Each kind is joined by a faint line, with dotted limits at 100 and 140; out-of-range readings are drawn in the status color.
+- **Never one shared axis.** mmHg and mg/dL on one axis would put different meanings at the same height.
+- **Period:** 14, 30 or 90 days, the same window on every card (one request for 90 days, filtered on the phone).
+- **Reading the cards:** the header shows the latest BP and sugar, and tapping it opens that person's Trends. Tapping or dragging on the chart shows the readings at that time.
+- **Colors:** each person keeps their family color (`--member-1..4`; a neutral bar beyond four). Identity comes from the card's name, so color is only a cue.
+- People with no readings in the period get no card; a person without sugar readings gets a BP-only card.
 
 ## Limits used for High / Low
 
