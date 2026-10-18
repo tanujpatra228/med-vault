@@ -80,15 +80,15 @@ function MedicationFormInner() {
     setLoaded(true);
   }, [existing.data, loaded]);
 
-  // A copy keeps the medicine, dose, timing, doctor, notes and photos; not the conditions or prescription (they belong to the other person).
+  // A copy keeps the medicine, dose, timing, dates, doctor, notes and photos; not the conditions or prescription (they belong to the other person).
   const copied = useRef(false);
   useEffect(() => {
     const m = source.data;
     if (!m || copied.current) return;
     copied.current = true;
-    // Their course starts today: the original end date does not carry over.
-    setMed(medDraft({ ...m, end_date: null, form: m.form ?? "other", schedule: scheduleOf(m) }));
-    setExtra((x) => ({ ...x, doctor_id: m.doctor_id ?? "", notes: m.notes ?? "", start_date: today(), status: "active" }));
+    // Same course: start and end dates carry over (editable before saving).
+    setMed(medDraft({ ...m, form: m.form ?? "other", schedule: scheduleOf(m) }));
+    setExtra((x) => ({ ...x, doctor_id: m.doctor_id ?? "", notes: m.notes ?? "", start_date: m.start_date ?? today(), status: "active" }));
     setLoaded(true);
     api
       .get<FileMeta[]>(`/files?owner_type=medication&owner_id=${m.id}`)
