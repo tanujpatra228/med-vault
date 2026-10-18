@@ -190,7 +190,8 @@ export const findReportDuplicates = (input: { member_id: string; report_date: st
 
 // ---------- home readings (BP, sugar) ----------
 
+/** One member's readings, or the whole family's when memberId is "". */
 export const useReadings = (memberId: string, since?: string) =>
-  useQuery({ queryKey: ["readings", memberId, since ?? ""], queryFn: () => api.get<Reading[]>(`/readings${qs({ member_id: memberId, since })}`) });
+  useQuery({ queryKey: ["readings", memberId, since ?? ""], queryFn: () => api.get<Reading[]>(`/readings${qs({ member_id: memberId || undefined, since })}`) });
 export const useReading = (id: string | undefined) =>
   useQuery({ queryKey: ["reading", id], queryFn: () => api.get<Reading>(`/readings/${id}`), enabled: !!id });

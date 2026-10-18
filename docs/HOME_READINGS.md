@@ -13,6 +13,19 @@ Status: **built**. Code: `shared/readings.ts` (limits, flags, summary), `worker/
 - **Visit brief and its shared text:** last 30 days per series, with average, lowest to highest, number of readings, and how many were high or low.
 - Included in backup and restore.
 
+## Family view (home screen)
+
+**Blood pressure & sugar** on the home screen (shown once anyone has a reading) puts the whole family on one chart per measure. BP and sugar are never on one chart: they have different units, and a chart has only one axis.
+
+- Measures: **Blood pressure**, with an **Upper / Lower** switch so there is one line per person rather than two; and **Sugar** per timing (fasting, after a meal, random), for the timings that have readings.
+- Periods: 30 or 90 days.
+- Readout: tap or hover to see everyone's reading for that day.
+- Below the chart: each person's latest reading with its High/Low flag; tap a name to open their Trends.
+- Colors: one per person in family order, the same on every chart (`--member-1` to `--member-4`, in `src/styles.css`).
+  - Validated with the dataviz palette checks, all pairs, light and dark. Four is the most that stays distinguishable.
+  - A fifth person and beyond gets a neutral line, still with their name label.
+  - Each person also has a marker shape (circle, square, triangle, diamond), a name at the line end and a legend entry, so identity never rests on color alone.
+
 ## Limits used for High / Low
 
 | Reading | Normal | Source |

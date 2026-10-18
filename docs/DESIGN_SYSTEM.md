@@ -144,6 +144,7 @@ Lab trends follow the dataviz method:
 | `--chart-line` | `--iris` (#5b34d6) | #9575f5 |
 | `--chart-out` | `--rust` (#a8450f) | #e06f35 |
 | `--chart-band` | `--moss` | `--moss` |
+| `--member-1..4` | `#2a78d6` `#e87ba4` `#eda100` `#008300` | `#3987e5` `#d55181` `#c98500` `#008300` |
 
 The dark steps are separate because the UI's dark iris and rust are too light for chart marks. Both pairs pass the palette validator, covering the lightness band, CVD separation and 3:1 contrast against the sheet.
 
