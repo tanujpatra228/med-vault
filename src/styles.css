@@ -52,11 +52,21 @@
   --chart-line: var(--iris);
   --chart-out: var(--rust);
   --chart-band: var(--moss);
+  /* One color per family member on the family charts, in family order. Four slots, validated for all
+     pairs (light on #fff, dark on the dark sheet); always paired with a marker shape and a name label. */
+  --member-1: #2a78d6;
+  --member-2: #e87ba4;
+  --member-3: #eda100;
+  --member-4: #008300;
 }
 @media (prefers-color-scheme: dark) {
   :root {
     --chart-line: #9575f5;
     --chart-out: #e06f35;
+    --member-1: #3987e5;
+    --member-2: #d55181;
+    --member-3: #c98500;
+    --member-4: #008300;
   }
 }
 
