@@ -2,40 +2,50 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { ChevronDown } from "lucide-react";
 import { formatValue } from "@shared/labs";
-import { useLabs, useMedications } from "@/api/hooks";
+import { useLabs, useMedications, useReports } from "@/api/hooks";
+import { coursesIn, medicineCourses, type MedicineCourse } from "@shared/courses";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, Loading, Section } from "@/components/layout";
 import { FlagBadge } from "@/components/LabValuesEditor";
 import { LabChart, Sparkline } from "@/components/LabChart";
 import { HomeReadings } from "@/components/HomeReadings";
 import { formatDate } from "@/lib/format";
-import { changeText, groupTrends, medicineMarkers, type Trend } from "@/lib/labs";
+import { changeText, groupTrends, type Trend } from "@/lib/labs";
+import { today } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-function TrendDetail({ tr, markers }: { tr: Trend; markers: ReturnType<typeof medicineMarkers> }) {
-  const from = tr.points[0]?.date;
-  const changes = markers.filter((m) => from && m.date >= from);
+/** Rows shown before "Show all": medicines linked to this test's conditions, else the most recent. */
+const DEFAULT_ROWS = 3;
+
+function TrendDetail({ tr, courses, reportConditions }: { tr: Trend; courses: MedicineCourse[]; reportConditions: Map<string, string[]> }) {
+  const [allMeds, setAllMeds] = useState(false);
+  const from = tr.points[0]?.date ?? today();
+  // Medicines taken between the first result and today, linked ones (same condition as this test's reports) first.
+  const conditions = new Set(tr.results.flatMap((r) => reportConditions.get(r.report_id) ?? []));
+  const linked = (c: MedicineCourse) => c.conditionIds.some((id) => conditions.has(id));
+  const lastChange = (c: MedicineCourse) => c.segments[c.segments.length - 1].from;
+  const inPeriod = coursesIn(courses, from, today()).sort((a, b) => Number(linked(b)) - Number(linked(a)) || lastChange(b).localeCompare(lastChange(a)));
+  const preferred = conditions.size ? inPeriod.filter(linked) : [];
+  const shown = allMeds ? inPeriod : (preferred.length ? preferred : inPeriod).slice(0, DEFAULT_ROWS);
+  const hidden = inPeriod.length - shown.length;
   return (
     <div className="flex flex-col gap-4 border-t border-rule-soft pt-4 pb-2">
-      {tr.points.length > 0 && <LabChart points={tr.points} low={tr.low} high={tr.high} unit={tr.unit} markers={changes} label={tr.label} />}
+      {tr.points.length > 0 && (
+        <div>
+          <LabChart points={tr.points} low={tr.low} high={tr.high} unit={tr.unit} label={tr.label} courses={shown} />
+          {(hidden > 0 || allMeds) && (
+            <button type="button" onClick={() => setAllMeds((v) => !v)} aria-expanded={allMeds} className="mt-2 h-9 rounded-sm border border-rule px-3 type-caption text-ink-muted">
+              {allMeds ? "Show fewer medicines" : `Show all medicines (${hidden} more)`}
+            </button>
+          )}
+        </div>
+      )}
       {(tr.low !== null || tr.high !== null) && (
         <p className="-mt-2 flex items-center gap-2 type-caption text-ink-faint">
           <span aria-hidden className="inline-block h-3 w-5 rounded-[2px] bg-(--chart-band) opacity-20" />
           Normal range {tr.latest.ref_text ?? [tr.low, tr.high].map((v) => (v === null ? "" : formatValue(v))).join("–")}
           {tr.unit && !/[a-zµ%/]/i.test(tr.latest.ref_text ?? "") ? ` ${tr.unit}` : ""}
         </p>
-      )}
-      {changes.length > 0 && (
-        <div>
-          <div className="mb-1 type-label text-ink-muted">Medicine changes in this period</div>
-          <ul className="type-label text-ink-faint">
-            {changes.map((m, i) => (
-              <li key={i}>
-                {formatDate(m.date)} · {m.label}
-              </li>
-            ))}
-          </ul>
-        </div>
       )}
       <table className="w-full type-label">
         <caption className="sr-only">{tr.label} results</caption>
@@ -70,6 +80,7 @@ function TrendDetail({ tr, markers }: { tr: Trend; markers: ReturnType<typeof me
 export function TrendsTab({ memberId }: { memberId: string }) {
   const labs = useLabs(memberId);
   const meds = useMedications(memberId);
+  const reports = useReports(memberId);
   const [open, setOpen] = useState<string | null>(null);
   if (labs.isPending) return <Loading />;
   if (labs.isError) return <ErrorState error={labs.error} retry={() => labs.refetch()} />;
@@ -89,7 +100,8 @@ export function TrendsTab({ memberId }: { memberId: string }) {
         />
       </div>
     );
-  const markers = medicineMarkers(meds.data ?? []);
+  const courses = medicineCourses(meds.data ?? [], today());
+  const reportConditions = new Map((reports.data ?? []).map((r) => [r.id, (r.condition_ids ?? "").split(",").filter(Boolean)]));
   const numeric = trends.filter((tr) => tr.points.length > 0);
   const textOnly = trends.filter((tr) => tr.points.length === 0);
   const current = open ?? numeric[0]?.key ?? null;
@@ -116,7 +128,7 @@ export function TrendsTab({ memberId }: { memberId: string }) {
                 <Sparkline points={tr.points} />
                 <ChevronDown className={cn("size-5 shrink-0 text-ink-faint transition-transform", isOpen && "rotate-180")} />
               </button>
-              {isOpen && <TrendDetail tr={tr} markers={markers} />}
+              {isOpen && <TrendDetail tr={tr} courses={courses} reportConditions={reportConditions} />}
             </div>
           );
         })}

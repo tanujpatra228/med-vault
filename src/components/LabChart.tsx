@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { formatValue } from "@shared/labs";
-import { formatDate } from "@/lib/format";
+import { formatDate, today } from "@/lib/format";
+import { takingOn, type MedicineCourse } from "@shared/courses";
 
 export interface ChartPoint {
   date: string;
@@ -86,6 +87,7 @@ export function LabChart({
   second,
   limits,
   valueText,
+  courses,
 }: {
   points: ChartPoint[];
   low: number | null;
@@ -100,9 +102,12 @@ export function LabChart({
   limits?: ChartLimit[];
   /** Readout text for point i ("138/86"); defaults to the value and unit. */
   valueText?: (i: number) => string;
+  /** Medicines as rows under the chart, on the same dates; the chart then runs to today. */
+  courses?: MedicineCourse[];
 }) {
   const [ref, width] = useWidth();
   const [active, setActive] = useState<number | null>(null);
+  const [course, setCourse] = useState<{ c: MedicineCourse; i: number } | null>(null);
 
   const geo = useMemo(() => {
     const vals = [...points, ...(second ?? [])].map((p) => p.value);
@@ -128,12 +133,14 @@ export function LabChart({
       t0 -= 15 * 86_400_000;
       t1 += 15 * 86_400_000;
     }
+    // With medicine rows, run to today so medicines started after the last report still show.
+    if (courses?.length) t1 = Math.max(t1, t(today()));
     const iw = width - PAD.left - PAD.right;
     const ih = height - PAD.top - PAD.bottom;
     const x = (d: string) => PAD.left + ((t(d) - t0) / (t1 - t0)) * iw;
     const y = (v: number) => PAD.top + (1 - (v - lo) / (hi - lo)) * ih;
     return { x, y, yt, t0, t1, iw, ih, lo, hi };
-  }, [points, second, limits, low, high, width, height]);
+  }, [points, second, limits, low, high, width, height, courses]);
 
   const { x, y, yt } = geo;
   const pathOf = (pts: ChartPoint[]) =>
@@ -368,9 +375,96 @@ export function LabChart({
             {formatDate(a.date)}
             {a.date.length > 10 && `, ${a.date.slice(11, 16)}`}
           </div>
+          {courses && (
+            <div className="mt-0.5 type-caption text-ink-muted">Taking: {takingOn(courses, a.date.slice(0, 10)).join(", ") || "none of these"}</div>
+          )}
+        </div>
+      )}
+      {courses && courses.length > 0 && (
+        <MedicineLanes courses={courses} x={x} t0={geo.t0} t1={geo.t1} width={width} selected={course} onSelect={(c, i) => setCourse((cur) => (cur?.c.key === c.key && cur.i === i ? null : { c, i }))} />
+      )}
+      {course && (
+        <div className="mt-1 border-t border-rule-soft pt-2 type-caption text-ink-muted" role="status">
+          <span className="font-semibold text-ink">{course.c.name}</span>
+          {course.c.segments[course.i].dose && ` · ${course.c.segments[course.i].dose}`}
+          <span className="block">
+            {formatDate(course.c.segments[course.i].from)} to {course.c.segments[course.i].to ? formatDate(course.c.segments[course.i].to) : "now"}
+            {course.c.segments.length > 1 && ` · dose changed ${course.c.segments.slice(1).map((sg) => formatDate(sg.from)).join(", ")}`}
+          </span>
         </div>
       )}
     </div>
+  );
+}
+
+const LANE_H = 26;
+
+/**
+ * Medicines under the chart on its date scale: one row per medicine, a bar while it was taken, an
+ * arrow when it runs past either edge, and a tick where the dose changed. Tap a bar for its details.
+ */
+function MedicineLanes({
+  courses,
+  x,
+  t0,
+  t1,
+  width,
+  selected,
+  onSelect,
+}: {
+  courses: MedicineCourse[];
+  x: (d: string) => number;
+  t0: number;
+  t1: number;
+  width: number;
+  selected: { c: MedicineCourse; i: number } | null;
+  onSelect: (c: MedicineCourse, segment: number) => void;
+}) {
+  const left = PAD.left;
+  const right = width - PAD.right;
+  const height = 16 + courses.length * LANE_H;
+  const dayAfter = (d: string) => new Date(t(d) + 86_400_000).toISOString().slice(0, 10);
+  return (
+    <svg width={width} height={height} role="list" aria-label="Medicines in this period" className="mt-1 block">
+      <text x={0} y={10} className="fill-ink-muted text-[10px] font-semibold">
+        Medicines
+      </text>
+      {courses.map((c, row) => {
+        const cy = 16 + row * LANE_H + LANE_H / 2;
+        const first = c.segments[0];
+        const startsBefore = t(first.from) < t0;
+        const labelX = Math.max(left, x(first.from));
+        const labelLeft = !startsBefore && labelX - left > 76;
+        return (
+          <g key={c.key} role="listitem" aria-label={`${c.name}, ${first.from} to ${c.segments[c.segments.length - 1].to ?? "now"}`}>
+            <text
+              x={labelLeft ? labelX - 6 : labelX}
+              y={labelLeft ? cy : cy - 8}
+              dy={labelLeft ? "0.32em" : 0}
+              textAnchor={labelLeft ? "end" : "start"}
+              className="fill-ink text-[11px] font-medium"
+            >
+              {c.name}
+            </text>
+            {c.segments.map((sg, i) => {
+              if (sg.to && t(sg.to) < t0) return null;
+              const x1 = Math.max(left, x(sg.from));
+              const x2 = sg.to ? Math.min(right, x(dayAfter(sg.to))) : right;
+              const on = selected?.c.key === c.key && selected.i === i;
+              return (
+                <g key={i} className="cursor-pointer" onClick={() => onSelect(c, i)}>
+                  <rect x={x1} y={cy - 10} width={Math.max(8, x2 - x1)} height={20} fill="transparent" />
+                  <rect x={x1} y={cy - 3.5} width={Math.max(4, x2 - x1)} height={7} rx={3.5} fill="var(--ink-muted)" opacity={on ? 1 : 0.7} />
+                  {i > 0 && <line x1={x1} x2={x1} y1={cy - 8} y2={cy + 8} stroke="var(--ink)" strokeWidth={2} />}
+                  {!sg.to && t1 >= t(today()) && <path d={`M${right - 6},${cy - 6} L${right},${cy} L${right - 6},${cy + 6}`} fill="none" stroke="var(--ink-muted)" strokeWidth={2} />}
+                </g>
+              );
+            })}
+            {startsBefore && <path d={`M${left + 6},${cy - 6} L${left},${cy} L${left + 6},${cy + 6}`} fill="none" stroke="var(--ink-muted)" strokeWidth={2} />}
+          </g>
+        );
+      })}
+    </svg>
   );
 }
 
