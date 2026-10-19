@@ -34,10 +34,21 @@ describe("medicineCourses", () => {
       TODAY,
     );
     expect(c.name).toBe("Omnacortil");
-    expect(c.segments).toEqual([
+    expect(c.segments.map(({ doseKey: _, ...rest }) => rest)).toEqual([
       { medId: "a", from: "2026-09-30", to: "2026-10-16", dose: "20 mg · 1-1-0" },
       { medId: "b", from: "2026-10-17", to: null, dose: "20 mg · 1-0-0" },
     ]);
+  });
+  it("the same dose on a new prescription continues the bar, with no dose-change mark", () => {
+    const [c] = medicineCourses(
+      [
+        med({ id: "a", name: "Meditrex 5mg", strength: "5mg", dosage: "2-0-0 Sat", start_date: "2026-09-30", end_date: "2026-10-16", status: "stopped" }),
+        med({ id: "b", name: "Meditrex", strength: "5 mg", dosage: "2-0-0 sat", start_date: "2026-10-17" }),
+      ],
+      TODAY,
+    );
+    expect(c.segments).toHaveLength(1);
+    expect(c.segments[0]).toMatchObject({ from: "2026-09-30", to: null, medId: "b" });
   });
   it("a restart weeks later is a separate course", () => {
     const cs = medicineCourses(
