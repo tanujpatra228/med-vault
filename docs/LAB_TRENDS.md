@@ -23,7 +23,7 @@ Is the arthritis treatment working? ESR and CRP across reports answer that, but 
 
 | Place | Shows |
 |---|---|
-| Member → **Trends** | One row per test: latest value, High/Low, "Down from 58 to 42 · back in normal range", sparkline. Out-of-range tests first. Tap one to open its chart, medicine changes and readings table. |
+| Member → **Trends** | One row per test: latest value, High/Low, "Down from 58 to 42 · back in normal range", sparkline. Out-of-range tests first. Tap one to open its chart, the medicines taken over that period and the readings table. |
 | Report screen | The report's results table, with High/Low |
 | **Visit brief** | The latest result per test from the last year (up to 8), with direction. Also included in the shared text. |
 
@@ -36,7 +36,13 @@ Built on the dataviz method:
 - the normal range as a 10% band with dotted lines at its limits; an axis starts at 0 when the range has only an upper limit
 - **Scales:** labs often print the result and the range in different scales (406,000 /cmm against "1.5 - 4.0 lac/cmm"). `rangeFor` in `shared/labs.ts` puts the range on the result's scale (lakh, thousand / 10^3, million / 10^6) before flagging; migration 0010 fixed results saved earlier.
 - out-of-range points in the status color, always paired with "High"/"Low" text, never color alone
-- medicine starts and stops as hairline annotations, labelled where they fit, all listed under the chart
+- **medicine timeline** under the chart, on the same dates (`shared/courses.ts`, `MedicineLanes` in `LabChart.tsx`):
+  - One row per medicine, with a bar while it was taken and an arrow when it runs past either edge.
+  - The chart runs to today, so medicines started after the last report still show.
+  - **Dose changes stay one row:** the same medicine ending and starting again within a day (a new prescription changing the dose) becomes one bar with a tick, not "stopped" and "started".
+  - **Default rows:** medicines linked to the same condition as this test's reports; with no links, the 3 most recently changed. **Show all medicines** reveals the rest.
+  - **Tapping:** a bar shows its dose and dates. A result's readout lists what was being taken that day.
+  - Replaced the earlier vertical start/stop lines (Oct 2026, on trial: `medicineMarkers` is kept so a revert is clean).
 - a crosshair readout on hover or tap
 - a readings table under every chart, so no value lives only in the chart
 
