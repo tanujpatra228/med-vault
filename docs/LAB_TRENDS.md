@@ -39,7 +39,7 @@ Built on the dataviz method:
 - **medicine timeline** under the chart, on the same dates (`shared/courses.ts`, `MedicineLanes` in `LabChart.tsx`):
   - One row per medicine, with a bar while it was taken and an arrow when it runs past either edge.
   - The chart runs to today, so medicines started after the last report still show.
-  - **Dose changes stay one row:** the same medicine ending and starting again within a day (a new prescription changing the dose) becomes one bar with a tick, not "stopped" and "started".
+  - **Dose changes stay one row:** the same medicine ending and starting again within a day (a new prescription) becomes one bar, not "stopped" and "started". A tick marks it only when the dose actually changed (strength plus schedule, or the dose text when there is no schedule); the same dose continues the bar unmarked.
   - **Default rows:** medicines linked to the same condition as this test's reports; with no links, the 3 most recently changed. **Show all medicines** reveals the rest.
   - **Tapping:** a bar shows its dose and dates. A result's readout lists what was being taken that day.
   - Replaced the earlier vertical start/stop lines (Oct 2026, on trial: `medicineMarkers` is kept so a revert is clean).

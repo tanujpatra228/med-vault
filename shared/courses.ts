@@ -1,3 +1,4 @@
+import { scheduleOf } from "./schedule";
 import type { Medication } from "./types";
 
 /** One stretch of a medicine at one dose. `to` is null while still being taken. */
@@ -7,6 +8,8 @@ export interface CourseSegment {
   to: string | null;
   /** "20 mg · After meal", for the readout. */
   dose: string;
+  /** Strength, dosage and schedule together: segments with the same key are the same dose. */
+  doseKey: string;
 }
 
 /** A medicine over time: one or more segments; a new segment means the dose changed. */
@@ -39,11 +42,19 @@ export function medicineCourses(meds: Medication[], today: string): MedicineCour
   const sorted = meds.filter((m) => m.start_date).sort((a, b) => a.start_date!.localeCompare(b.start_date!));
   for (const m of sorted) {
     const key = keyOf(m.name);
-    const seg: CourseSegment = { medId: m.id, from: m.start_date!, to: lastDay(m, today), dose: [m.strength, m.dosage ?? m.timing].filter(Boolean).join(" · ") };
+    const seg: CourseSegment = {
+      medId: m.id,
+      from: m.start_date!,
+      to: lastDay(m, today),
+      dose: [m.strength, m.dosage ?? m.timing].filter(Boolean).join(" · "),
+      doseKey: doseKey(m),
+    };
     const course = byKey.get(key);
     const prev = course?.segments[course.segments.length - 1];
     if (course && prev?.to && seg.from <= addDays(prev.to, 1)) {
-      course.segments.push(seg);
+      // Picked up again right away: a new prescription. Same dose continues the bar; a different dose starts a new segment.
+      if (seg.doseKey === prev.doseKey) Object.assign(prev, { to: seg.to, medId: seg.medId });
+      else course.segments.push(seg);
     } else if (course && !prev?.to) {
       // Two open entries of the same medicine: keep the later one as the current dose.
       prev!.to = addDays(seg.from, -1) < prev!.from ? prev!.from : addDays(seg.from, -1);
@@ -60,6 +71,16 @@ export function medicineCourses(meds: Medication[], today: string): MedicineCour
   }
   return [...byKey.values()];
 }
+
+const squash = (v: string | null) => (v ?? "").toLowerCase().replace(/\s+/g, "");
+/**
+ * Strength plus the schedule when there is one (wording of the dose text can differ between scans of
+ * the same dose), else the dose text; case and spacing ignored ("5mg" equals "5 mg").
+ */
+const doseKey = (m: Medication) => {
+  const schedule = scheduleOf(m);
+  return `${squash(m.strength)}|${schedule ? JSON.stringify(schedule) : squash(m.dosage)}`;
+};
 
 const splitIds = (s: string | null | undefined) => (s ? s.split(",").filter(Boolean) : []);
 
