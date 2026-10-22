@@ -3,6 +3,9 @@ import { toast } from "sonner";
 import { Check } from "lucide-react";
 import { readingFlag, SUGAR_CONTEXTS, BP_LIMITS, SUGAR_LIMITS, type Reading, type ReadingKind, type SugarContext } from "@shared/readings";
 import { useDelete, useReading, useSave } from "@/api/hooks";
+import { ApiError } from "@/api/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { queueReading } from "@/lib/offline/outbox";
 import { Input } from "@/components/ui/input";
 import { Field, FieldRow } from "@/components/Field";
 import { FormPage } from "@/components/FormPage";
@@ -28,6 +31,7 @@ export function ReadingForm() {
   const existing = useReading(readingId);
   const save = useSave<Reading>("readings");
   const del = useDelete("readings");
+  const qc = useQueryClient();
   const f = useFields({ kind: params.get("kind") === "sugar" ? "sugar" : "bp", taken_at: nowLocal(), systolic: "", diastolic: "", pulse: "", sugar: "", context: "fasting", notes: "" });
   useLoadRecord(existing.data && { ...existing.data, taken_at: existing.data.taken_at.slice(0, 16) }, f);
   if (readingId && existing.isPending) return <Loading />;
@@ -42,7 +46,23 @@ export function ReadingForm() {
       heading={readingId ? "Edit reading" : "Log a reading"}
       submitLabel="Save reading"
       onSubmit={async () => {
-        await save.mutateAsync({ id: readingId, data: { ...toPayload(f.values), member_id: memberId } });
+        const data = { ...toPayload(f.values), member_id: memberId };
+        // The server's checks, here too: an offline reading is only checked when it is sent.
+        if (kind === "bp" && (n(f.values.systolic) === null || n(f.values.diastolic) === null)) throw new Error("Enter both blood pressure numbers");
+        if (kind === "bp" && n(f.values.systolic)! <= n(f.values.diastolic)!) throw new Error("The upper number (systolic) should be higher than the lower one (diastolic)");
+        if (kind === "sugar" && n(f.values.sugar) === null) throw new Error("Enter the sugar reading");
+        const saveOffline = async () => {
+          await queueReading(data, qc);
+          toast.success("Saved on this phone. It will be sent when you are back online.");
+          back();
+        };
+        if (!readingId && !navigator.onLine) return saveOffline();
+        try {
+          await save.mutateAsync({ id: readingId, data });
+        } catch (e) {
+          if (!readingId && e instanceof ApiError && e.status === 0) return saveOffline();
+          throw e;
+        }
         toast.success("Reading saved");
         back();
       }}

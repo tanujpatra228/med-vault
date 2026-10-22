@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { ChevronDown, Droplet, HeartPulse } from "lucide-react";
 import { BP_LIMITS, readingFlag, readingText, SUGAR_CONTEXTS, SUGAR_LIMITS, type Reading, type SugarContext } from "@shared/readings";
 import { useReadings } from "@/api/hooks";
+import { usePendingReadings } from "@/lib/offline/useOnline";
 import { Button } from "@/components/ui/button";
 import { FlagBadge } from "@/components/LabValuesEditor";
 import { LabChart, Sparkline, type ChartPoint } from "@/components/LabChart";
@@ -113,11 +114,20 @@ function SeriesDetail({ s }: { s: Series }) {
               <tr key={r.id} className="border-t border-rule-soft first:border-t-0">
                 <td className="py-1.5 num text-[12px] whitespace-nowrap text-ink-muted">{when(r)}</td>
                 <td className="py-1.5 text-right">
-                  <Link to={`/readings/${r.id}`} className="hover:underline">
-                    <span className="font-semibold">{readingText(r)}</span>
-                    {r.pulse ? <span className="text-ink-faint"> · {r.pulse} bpm</span> : null}
-                    {readingFlag(r) && <span className="text-ink-muted"> · {readingFlag(r) === "high" ? "High" : "Low"}</span>}
-                  </Link>
+                  {"pending" in r ? (
+                    // Saved on this phone while offline: it can be edited once it has been sent.
+                    <span>
+                      <span className="font-semibold">{readingText(r)}</span>
+                      {r.pulse ? <span className="text-ink-faint"> · {r.pulse} bpm</span> : null}
+                      <span className="block type-caption text-iris">Waiting to send</span>
+                    </span>
+                  ) : (
+                    <Link to={`/readings/${r.id}`} className="hover:underline">
+                      <span className="font-semibold">{readingText(r)}</span>
+                      {r.pulse ? <span className="text-ink-faint"> · {r.pulse} bpm</span> : null}
+                      {readingFlag(r) && <span className="text-ink-muted"> · {readingFlag(r) === "high" ? "High" : "Low"}</span>}
+                    </Link>
+                  )}
                   {r.notes && <span className="block type-caption text-ink-faint">{r.notes}</span>}
                 </td>
               </tr>
@@ -137,10 +147,13 @@ function SeriesDetail({ s }: { s: Series }) {
 /** Trends → Home readings: blood pressure and sugar logged at home, with quick log buttons. */
 export function HomeReadings({ memberId }: { memberId: string }) {
   const q = useReadings(memberId);
+  // Readings logged offline show at once, marked as waiting to send.
+  const pending = (usePendingReadings().data ?? []).filter((r) => r.member_id === memberId);
+  const all = [...(q.data ?? []), ...pending];
   const [open, setOpen] = useState<string | null>(null);
-  const series = seriesOf(q.data ?? []);
+  const series = seriesOf(all);
   const current = open ?? series[0]?.key ?? null;
-  const loggedToday = (q.data ?? []).some((r) => r.taken_at.startsWith(today()));
+  const loggedToday = all.some((r) => r.taken_at.startsWith(today()));
 
   return (
     <section className="mb-8">
