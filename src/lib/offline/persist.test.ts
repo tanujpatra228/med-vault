@@ -29,12 +29,12 @@ describe("trimClient: only the latest records stay on the phone", () => {
     expect(kept.every((v) => v.report_date >= "2026-03-01")).toBe(true);
   });
   it("keeps members whole, drops AI usage, and keeps only the most recently opened records", () => {
-    const details = Array.from({ length: 30 }, (_, i) => q(["report", `r${i}`], { id: `r${i}` }, i));
+    const details = Array.from({ length: 90 }, (_, i) => q(["report", `r${i}`], { id: `r${i}` }, i));
     const out = trimClient(client([q(["members"], [{ id: 1 }, { id: 2 }]), q(["ai-usage"], { used: 1 }), ...details]));
     expect(data(out, "members")).toHaveLength(2);
     expect(out.clientState.queries.some((x) => x.queryKey[0] === "ai-usage")).toBe(false);
     const opened = out.clientState.queries.filter((x) => x.queryKey[0] === "report");
-    expect(opened).toHaveLength(25);
+    expect(opened).toHaveLength(80);
     expect(opened.map((x) => x.queryKey[1])).not.toContain("r0");
   });
 });

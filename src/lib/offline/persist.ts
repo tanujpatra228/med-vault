@@ -7,15 +7,15 @@ import { kv } from "./store";
 export const KEEP = 10;
 /** Home readings are small and feed the charts, so more of them stay. */
 const KEEP_READINGS = 60;
-/** Opened records (one report, one prescription...) kept, most recently viewed first. */
-const KEEP_DETAILS = 25;
+/** Single records (one report, one prescription...) kept, most recently loaded first. Links on screen are prefetched, so this covers the latest lists. */
+const KEEP_DETAILS = 80;
 /** Saved data older than this is not shown offline. */
 export const MAX_AGE = 30 * 86_400_000;
 
 type Query = PersistedClient["clientState"]["queries"][number];
 
 const LISTS_NEWEST_FIRST = new Set(["reports", "visits", "prescriptions"]);
-const DETAILS = new Set(["report", "prescription", "visit", "medication", "reading", "allergy", "condition", "doctors"]);
+const DETAILS = new Set(["report", "prescription", "visit", "medication", "reading", "allergy", "condition", "condition-timeline", "files", "doctors"]);
 const NEVER = new Set(["ai-usage", "privacy", "vault", "outbox"]);
 
 /** Keeps the newest few of a query's data; lists that matter in full (members, medicines in use) stay whole. */

@@ -14,6 +14,7 @@ import { ReportsTab } from "./member/ReportsTab";
 import { HealthTab } from "./member/HealthTab";
 import { VisitsTab } from "./member/VisitsTab";
 import { TrendsTab } from "./member/TrendsTab";
+import { usePrefetchTabs } from "@/lib/offline/prefetch";
 
 const TABS = [
   { key: "summary", label: "Summary" },
@@ -29,6 +30,7 @@ export function MemberPage() {
   const { memberId = "", tab = "summary" } = useParams();
   const navigate = useNavigate();
   const member = useMember(memberId);
+  usePrefetchTabs(memberId);
 
   if (member.isPending)
     return (

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   Allergy,
   Condition,
@@ -21,6 +21,7 @@ import type {
   Visit,
   LabValue,
   LabDraft,
+  ConditionTimeline,
 } from "@shared/types";
 import { SCAN_MAX_DATA_URL } from "@shared/types";
 import type { ReviewResponse } from "@shared/review";
@@ -38,36 +39,54 @@ const qs = (params: Record<string, string | undefined>) => {
 // ---------- queries ----------
 
 export const useMembers = () => useQuery({ queryKey: ["members"], queryFn: () => api.get<MemberListItem[]>("/members") });
-export const useMember = (id: string | undefined) =>
-  useQuery({ queryKey: ["members", id], queryFn: () => api.get<MemberListItem>(`/members/${id}`), enabled: !!id });
-export const useSummary = (id: string) =>
-  useQuery({ queryKey: ["summary", id], queryFn: () => api.get<MemberSummary>(`/members/${id}/summary`) });
+/**
+ * Query definitions by screen, shared by the hooks below and by link prefetching (`lib/offline/prefetch.ts`),
+ * so a prefetched record lands in exactly the cache entry its screen reads.
+ */
+export const queries = {
+  member: (id: string) => queryOptions({ queryKey: ["members", id], queryFn: () => api.get<MemberListItem>(`/members/${id}`) }),
+  summary: (id: string) => queryOptions({ queryKey: ["summary", id], queryFn: () => api.get<MemberSummary>(`/members/${id}/summary`) }),
+  doctor: (id: string) => queryOptions({ queryKey: ["doctors", id], queryFn: () => api.get<DoctorListItem>(`/doctors/${id}`) }),
+  allergies: (memberId: string) => queryOptions({ queryKey: ["allergies", memberId], queryFn: () => api.get<Allergy[]>(`/allergies${qs({ member_id: memberId })}`) }),
+  conditions: (memberId: string) =>
+    queryOptions({ queryKey: ["conditions", memberId], queryFn: () => api.get<Condition[]>(`/conditions${qs({ member_id: memberId })}`) }),
+  medications: (memberId: string) =>
+    queryOptions({ queryKey: ["medications", memberId], queryFn: () => api.get<Medication[]>(`/medications${qs({ member_id: memberId })}`) }),
+  medication: (id: string) => queryOptions({ queryKey: ["medication", id], queryFn: () => api.get<Medication>(`/medications/${id}`) }),
+  prescriptions: (memberId: string) =>
+    queryOptions({ queryKey: ["prescriptions", memberId], queryFn: () => api.get<Prescription[]>(`/prescriptions${qs({ member_id: memberId })}`) }),
+  prescription: (id: string) => queryOptions({ queryKey: ["prescription", id], queryFn: () => api.get<PrescriptionDetail>(`/prescriptions/${id}`) }),
+  reports: (memberId: string, type?: string) =>
+    queryOptions({ queryKey: ["reports", memberId, type ?? "all"], queryFn: () => api.get<Report[]>(`/reports${qs({ member_id: memberId, report_type: type })}`) }),
+  report: (id: string) => queryOptions({ queryKey: ["report", id], queryFn: () => api.get<ReportDetail>(`/reports/${id}`) }),
+  allergy: (id: string) => queryOptions({ queryKey: ["allergy", id], queryFn: () => api.get<Allergy>(`/allergies/${id}`) }),
+  condition: (id: string) => queryOptions({ queryKey: ["condition", id], queryFn: () => api.get<Condition>(`/conditions/${id}`) }),
+  visits: (memberId: string) => queryOptions({ queryKey: ["visits", memberId], queryFn: () => api.get<Visit[]>(`/visits${qs({ member_id: memberId })}`) }),
+  visit: (id: string) => queryOptions({ queryKey: ["visit", id], queryFn: () => api.get<Visit>(`/visits/${id}`) }),
+  /** Every result for a member, oldest first. */
+  labs: (memberId: string) => queryOptions({ queryKey: ["labs", memberId], queryFn: () => api.get<LabValue[]>(`/labs${qs({ member_id: memberId })}`) }),
+  /** One member's readings, or the whole family's when memberId is "". */
+  readings: (memberId: string, since?: string) =>
+    queryOptions({ queryKey: ["readings", memberId, since ?? ""], queryFn: () => api.get<Reading[]>(`/readings${qs({ member_id: memberId || undefined, since })}`) }),
+  medicationFiles: (id: string) => queryOptions({ queryKey: ["files", "medication", id], queryFn: () => api.get<FileMeta[]>(`/files?owner_type=medication&owner_id=${id}`) }),
+  conditionTimeline: (id: string) => queryOptions({ queryKey: ["condition-timeline", id], queryFn: () => api.get<ConditionTimeline>(`/conditions/${id}/timeline`) }),
+  reading: (id: string) => queryOptions({ queryKey: ["reading", id], queryFn: () => api.get<Reading>(`/readings/${id}`) }),
+};
+
+export const useMember = (id: string | undefined) => useQuery({ ...queries.member(id ?? ""), enabled: !!id });
+export const useSummary = (id: string) => useQuery(queries.summary(id));
 export const useDoctors = () => useQuery({ queryKey: ["doctors"], queryFn: () => api.get<DoctorListItem[]>("/doctors") });
-export const useDoctor = (id: string | undefined) =>
-  useQuery({ queryKey: ["doctors", id], queryFn: () => api.get<DoctorListItem>(`/doctors/${id}`), enabled: !!id });
-export const useAllergies = (memberId: string) =>
-  useQuery({ queryKey: ["allergies", memberId], queryFn: () => api.get<Allergy[]>(`/allergies${qs({ member_id: memberId })}`) });
-export const useConditions = (memberId: string) =>
-  useQuery({ queryKey: ["conditions", memberId], queryFn: () => api.get<Condition[]>(`/conditions${qs({ member_id: memberId })}`) });
-export const useMedications = (memberId: string) =>
-  useQuery({ queryKey: ["medications", memberId], queryFn: () => api.get<Medication[]>(`/medications${qs({ member_id: memberId })}`) });
-export const useMedication = (id: string | undefined) =>
-  useQuery({ queryKey: ["medication", id], queryFn: () => api.get<Medication>(`/medications/${id}`), enabled: !!id });
-export const usePrescriptions = (memberId: string) =>
-  useQuery({ queryKey: ["prescriptions", memberId], queryFn: () => api.get<Prescription[]>(`/prescriptions${qs({ member_id: memberId })}`) });
-export const usePrescription = (id: string | undefined) =>
-  useQuery({ queryKey: ["prescription", id], queryFn: () => api.get<PrescriptionDetail>(`/prescriptions/${id}`), enabled: !!id });
-export const useReports = (memberId: string, type?: string) =>
-  useQuery({
-    queryKey: ["reports", memberId, type ?? "all"],
-    queryFn: () => api.get<Report[]>(`/reports${qs({ member_id: memberId, report_type: type })}`),
-  });
-export const useReport = (id: string | undefined) =>
-  useQuery({ queryKey: ["report", id], queryFn: () => api.get<ReportDetail>(`/reports/${id}`), enabled: !!id });
-export const useAllergy = (id: string | undefined) =>
-  useQuery({ queryKey: ["allergy", id], queryFn: () => api.get<Allergy>(`/allergies/${id}`), enabled: !!id });
-export const useCondition = (id: string | undefined) =>
-  useQuery({ queryKey: ["condition", id], queryFn: () => api.get<Condition>(`/conditions/${id}`), enabled: !!id });
+export const useDoctor = (id: string | undefined) => useQuery({ ...queries.doctor(id ?? ""), enabled: !!id });
+export const useAllergies = (memberId: string) => useQuery(queries.allergies(memberId));
+export const useConditions = (memberId: string) => useQuery(queries.conditions(memberId));
+export const useMedications = (memberId: string) => useQuery(queries.medications(memberId));
+export const useMedication = (id: string | undefined) => useQuery({ ...queries.medication(id ?? ""), enabled: !!id });
+export const usePrescriptions = (memberId: string) => useQuery(queries.prescriptions(memberId));
+export const usePrescription = (id: string | undefined) => useQuery({ ...queries.prescription(id ?? ""), enabled: !!id });
+export const useReports = (memberId: string, type?: string) => useQuery(queries.reports(memberId, type));
+export const useReport = (id: string | undefined) => useQuery({ ...queries.report(id ?? ""), enabled: !!id });
+export const useAllergy = (id: string | undefined) => useQuery({ ...queries.allergy(id ?? ""), enabled: !!id });
+export const useCondition = (id: string | undefined) => useQuery({ ...queries.condition(id ?? ""), enabled: !!id });
 
 // ---------- mutations ----------
 
@@ -168,10 +187,8 @@ export const useAiUsage = () => useQuery({ queryKey: ["ai-usage"], queryFn: () =
 
 // ---------- visits ----------
 
-export const useVisits = (memberId: string) =>
-  useQuery({ queryKey: ["visits", memberId], queryFn: () => api.get<Visit[]>(`/visits${qs({ member_id: memberId })}`) });
-export const useVisit = (id: string | undefined) =>
-  useQuery({ queryKey: ["visit", id], queryFn: () => api.get<Visit>(`/visits/${id}`), enabled: !!id });
+export const useVisits = (memberId: string) => useQuery(queries.visits(memberId));
+export const useVisit = (id: string | undefined) => useQuery({ ...queries.visit(id ?? ""), enabled: !!id });
 /** Open follow-ups, overdue first; for one member or the whole family. */
 export const useFollowUps = (memberId?: string) =>
   useQuery({ queryKey: ["follow-ups", memberId ?? "all"], queryFn: () => api.get<FollowUp[]>(`/visits/follow-ups${qs({ member_id: memberId })}`) });
@@ -179,7 +196,7 @@ export const useFollowUps = (memberId?: string) =>
 // ---------- lab results ----------
 
 /** Every result for a member, oldest first. */
-export const useLabs = (memberId: string) => useQuery({ queryKey: ["labs", memberId], queryFn: () => api.get<LabValue[]>(`/labs${qs({ member_id: memberId })}`) });
+export const useLabs = (memberId: string) => useQuery(queries.labs(memberId));
 
 /** Replaces a report's results. */
 export const saveLabValues = (reportId: string, values: LabDraft[]) => api.put<LabValue[]>(`/labs/report/${reportId}`, { values });
@@ -191,7 +208,5 @@ export const findReportDuplicates = (input: { member_id: string; report_date: st
 // ---------- home readings (BP, sugar) ----------
 
 /** One member's readings, or the whole family's when memberId is "". */
-export const useReadings = (memberId: string, since?: string) =>
-  useQuery({ queryKey: ["readings", memberId, since ?? ""], queryFn: () => api.get<Reading[]>(`/readings${qs({ member_id: memberId || undefined, since })}`) });
-export const useReading = (id: string | undefined) =>
-  useQuery({ queryKey: ["reading", id], queryFn: () => api.get<Reading>(`/readings/${id}`), enabled: !!id });
+export const useReadings = (memberId: string, since?: string) => useQuery(queries.readings(memberId, since));
+export const useReading = (id: string | undefined) => useQuery({ ...queries.reading(id ?? ""), enabled: !!id });
