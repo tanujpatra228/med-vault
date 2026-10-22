@@ -80,7 +80,7 @@ public/        PWA manifest, service worker, icons
 ## 6. PWA rules
 
 1. `public/manifest.webmanifest` with 192px and 512px icons plus a maskable icon.
-2. The service worker caches the app shell only. **Never cache `/api/*` responses** in v1 (medical data must be fresh; offline mode is a later phase).
+2. The service worker caches the app shell and recently opened photos/PDFs (`/api/files/*`). **Never cache other `/api/*` responses** there: record data for offline use lives only in the app's trimmed IndexedDB copy, cleared on logout. See [OFFLINE.md](./OFFLINE.md).
 3. New deploys activate on next launch; no stale app shells.
 
 ## 7. Code style

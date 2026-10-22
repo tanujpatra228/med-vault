@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { ChevronRight } from "lucide-react";
 import { BP_LIMITS, readingFlag, readingText, SUGAR_LIMITS, type Reading } from "@shared/readings";
 import { useMembers, useReadings } from "@/api/hooks";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePendingReadings } from "@/lib/offline/useOnline";
 import { Section } from "@/components/layout";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -210,13 +212,18 @@ export function FamilyVitals() {
   const members = useMembers();
   const [days, setDays] = useState<(typeof PERIODS)[number]>(30);
   // One request for the longest period; shorter periods filter it here.
+  const qc = useQueryClient();
   const q = useReadings("", new Date(Date.now() - PERIODS[PERIODS.length - 1] * 86_400_000).toISOString().slice(0, 10));
-  if (!members.data || !q.data?.length) return null;
+  const pending = usePendingReadings().data ?? [];
+  // Offline on a later day the query's date (and key) differ from the saved one: fall back to any saved family readings.
+  const saved = q.data ?? qc.getQueriesData<Reading[]>({ queryKey: ["readings", ""] }).find(([, d]) => d?.length)?.[1];
+  const loaded = [...(saved ?? []), ...pending];
+  if (!members.data || !loaded.length) return null;
 
   // Same window for every card, so the same day sits in the same place on each.
   const t1 = localNowMs();
   const t0 = t1 - days * 86_400_000;
-  const readings = q.data.filter((r) => ms(r.taken_at) >= t0);
+  const readings = loaded.filter((r) => ms(r.taken_at) >= t0);
   const byTime = (a: Reading, b: Reading) => a.taken_at.localeCompare(b.taken_at);
   const cards = members.data
     .map((p, i) => ({

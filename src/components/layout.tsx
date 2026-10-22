@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useOnline } from "@/lib/offline/useOnline";
 import { Link, useNavigate } from "react-router";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,10 +57,13 @@ export function SectionLink({ to, children }: { to: string; children: ReactNode 
 }
 
 export function Loading({ label = "Loading" }: { label?: string }) {
+  const online = useOnline();
   return (
     <div className="flex flex-col items-center gap-3 py-16 text-ink-faint" role="status">
       <Mark size={40} variant="loading" />
-      <span className="type-caption">{label}</span>
+      <span className="max-w-[28ch] text-center type-caption">
+        {online ? label : "Offline, and this is not saved on this phone. Only the latest records are kept for offline use."}
+      </span>
     </div>
   );
 }

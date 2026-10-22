@@ -28,6 +28,8 @@ const readings: Resource = {
   orderBy: "t.taken_at DESC, t.created_at DESC",
   filters: { member_id: "t.member_id", kind: "t.kind", since: "t.taken_at >= ?" },
   prepare: prepareReading,
+  // Readings can be logged offline and sent later.
+  clientIds: true,
 };
 
 export const readingsApi = new Hono<AppEnv>();

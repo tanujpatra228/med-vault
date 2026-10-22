@@ -5,7 +5,11 @@ import { PrivacyPage } from "@/pages/Privacy";
 import { SearchPage } from "@/pages/Search";
 import { ConditionDetail } from "@/pages/ConditionDetail";
 import { ReConsent } from "@/components/ReConsent";
-import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
+import { onlineManager, QueryClient, useQueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { dehydrateOptions, MAX_AGE, persister } from "@/lib/offline/persist";
+import { clearOfflineData } from "@/lib/offline/store";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/api/auth";
 import { Toaster } from "@/components/ui/sonner";
@@ -28,12 +32,21 @@ import { MedicationForm } from "@/pages/forms/MedicationForm";
 import { PrescriptionEdit, PrescriptionNew } from "@/pages/forms/PrescriptionForm";
 import { ReportForm } from "@/pages/forms/ReportForm";
 
+// React Query assumes a connection until an "offline" event fires; an app opened offline must not
+// try (and fail) every fetch, which would also drop those records from the saved copy.
+onlineManager.setOnline(navigator.onLine);
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 30_000,
+      // Kept in memory while the app is open, so the saved copy on the phone keeps every screen's records.
+      // (Not MAX_AGE: 30 days overflows setTimeout and would drop them at once.)
+      gcTime: Infinity,
       retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
     },
+    // Saves fail straight away when offline with a clear message, instead of waiting silently.
+    mutations: { networkMode: "always" },
   },
 });
 
@@ -47,8 +60,16 @@ function AuthGate() {
     return () => window.removeEventListener("mv:unauthorized", onUnauthorized);
   }, [qc]);
 
+  // This phone was logged out or unlinked: remove the records it saved for offline use.
+  const signedOut = me.data && !me.data.authenticated;
+  useEffect(() => {
+    if (signedOut) clearOfflineData();
+  }, [signedOut]);
+
   const { pathname } = useLocation();
-  if (me.isPending) return <Loading label="Opening Med Vault" />;
+  // Offline with nothing saved yet: say so instead of offering to create a new vault.
+  const offlineEmpty = !me.data && me.error instanceof ApiError && me.error.status === 0;
+  if (me.isPending || offlineEmpty) return <Loading label="Opening Med Vault" />;
   if (!me.data?.authenticated) return <Welcome />;
   // Agree to the current privacy notice first; Settings stays open to back up or delete instead.
   const consent = me.data.vault.consent_version;
@@ -102,9 +123,10 @@ const router = createBrowserRouter([
 
 export function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider client={queryClient} persistOptions={{ persister, maxAge: MAX_AGE, buster: "1", dehydrateOptions }}>
       <RouterProvider router={router} />
+      <OfflineBanner />
       <Toaster />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { clearOfflineData } from "@/lib/offline/store";
 import { useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -143,6 +144,7 @@ export function SettingsPage() {
 
   const signedOut = async () => {
     qc.clear();
+    await clearOfflineData();
     navigate("/", { replace: true });
     await qc.invalidateQueries({ queryKey: ["auth"] });
   };

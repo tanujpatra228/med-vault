@@ -21,7 +21,7 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 
 1. **Newest first, everywhere.** Reports, prescriptions, medications, documents. The latest item is always at the top.
 2. **Must-haves first.** Ship a working vault, then add extras.
-3. **Simple over clever.** No signup, no passwords, no roles, no app lock (the phone PIN is enough), no offline sync in v1.
+3. **Simple over clever.** No signup, no passwords, no roles, no app lock (the phone PIN is enough).
 6. **Shareable.** Anyone given the URL can create their own vault for their family. Vaults never see each other.
 4. **Manual entry always works.** AI (later) only pre-fills forms you can edit.
 5. **Stay on Cloudflare.** Prefer a Cloudflare service over a third-party one. Flag anything that needs a paid plan.
@@ -45,7 +45,7 @@ Med Vault puts every member's medicines, prescriptions, reports, allergies and c
 | App lock | Skipped. Phone PIN is enough. |
 | Medicine database | None. Free-text medication entry. |
 | Data storage | Cloud (D1/R2). Every logged-in phone sees the same data immediately. |
-| Offline mode | Later phase. Will be a local cache layered on top, not a rewrite. |
+| Offline mode | Built: the latest records cached on the phone, BP and sugar logged offline and sent later. See [OFFLINE.md](./OFFLINE.md). |
 | Interaction checks | Later phase, AI "ask your doctor" hints, advisory only. |
 | Design | Visual language of the Lekha design system (fonts, colors, spacing, components), not its wording. |
 
@@ -127,8 +127,8 @@ Build order and status: [TODO.md](./TODO.md).
 
 ## 7. Phase 4: Later
 
-- **Offline mode:** local cache (IndexedDB) of data and photos, outbox for edits made offline, sync when online.
-- **Optional PIN lock.**
+- ~~**Offline mode**~~ **(built):** the latest records and photos cached on the phone, BP and sugar logged offline and sent when back online. Details: [OFFLINE.md](./OFFLINE.md).
+- ~~**Optional PIN lock**~~ **(dropped):** the phone's own lock is enough.
 - **Hindi / regional language UI.**
 
 ---
