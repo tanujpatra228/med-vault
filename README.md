@@ -19,6 +19,7 @@ A private vault for your whole family's medical records: current medicines, pres
 - **Search** across every record and note, for the family or one person.
 - **Reminders** on each phone: medicine times (weekly doses and tapers included), follow-up visits and a monthly backup nudge.
 - **Backup and restore:** one ZIP with every record and photo, readable on any computer; restore into a new vault.
+- **Works offline:** the latest records stay on the phone and open without a connection; BP and sugar can be logged offline and are sent later.
 - Installable on the Android home screen.
 
 What comes next is in [docs/PLAN.md](docs/PLAN.md).
@@ -65,6 +66,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [ASK_YOUR_DOCTOR.md](docs/ASK_YOUR_DOCTOR.md) | Medicine review: built-in checks and AI |
 | [VISITS.md](docs/VISITS.md) | Visits log and follow-ups |
 | [LAB_TRENDS.md](docs/LAB_TRENDS.md) | Lab results and trend charts |
+| [OFFLINE.md](docs/OFFLINE.md) | What stays on the phone, logging readings offline |
 | [SEARCH.md](docs/SEARCH.md) | What search covers and how |
 | [HOME_READINGS.md](docs/HOME_READINGS.md) | Blood pressure and sugar logged at home |
 | [REMINDERS.md](docs/REMINDERS.md) | Push reminders: what, when, how, limits |

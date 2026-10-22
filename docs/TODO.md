@@ -13,4 +13,6 @@ The agreed order for the remaining Phase 3 features (see [PLAN.md](./PLAN.md) se
 | 6 | **Condition timeline** | Built | Tap a condition: its current medicines, the doctors involved and every linked prescription, report and visit in one timeline. Condition-to-condition links were dropped as low value (multi-condition records already cover them). |
 | 7 | **Reminders** | Built | Medicine times (weekly doses and tapers included), follow-ups and a monthly backup nudge by Web Push from a 5-minute cron. Set up per phone; no secrets (the VAPID key lives in D1). Refills left out: no pill count to base them on. See [REMINDERS.md](./REMINDERS.md). |
 
-Phase 4 (offline mode, PIN lock, Hindi UI) comes after this list.
+| 8 | **Offline mode** | Built | The latest 10 of each kind of record stay on the phone and open offline; BP and sugar can be logged offline and are sent when back online. See [OFFLINE.md](./OFFLINE.md). |
+
+Phase 4 (Hindi UI) comes after this list. PIN lock dropped: the phone's own lock is enough.
