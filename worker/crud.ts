@@ -20,6 +20,11 @@ export interface Resource {
   conditionOwner?: ConditionOwner;
   /** Child records that follow this record's conditions when they change (a prescription's medicines and visit). */
   conditionChildren?: Array<{ owner: ConditionOwner; table: string; fk: string }>;
+  /**
+   * Create accepts an `id` (a UUID) from the app, for records saved on the phone while offline: a
+   * repeated send returns the existing record instead of making a second one.
+   */
+  clientIds?: boolean;
   /** Runs on the raw body before validation (create and update). */
   prepare?: (input: Record<string, unknown>) => Record<string, unknown>;
 }
@@ -97,7 +102,14 @@ export function crud(app: Hono<AppEnv>, r: Resource, skip: Op[] = []) {
       const data = validate(r.schema, (r.prepare ?? ((x) => x))(body));
       await assertRefs(c.env.DB, r.schema, vault(c), data);
       if (conditionIds) await assertConditions(c.env.DB, vault(c), conditionIds);
-      const id = crypto.randomUUID();
+      const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
+      const clientId = r.clientIds && typeof body.id === "string" && UUID.test(body.id) ? body.id : null;
+      if (clientId) {
+        const seen = await c.env.DB.prepare(`SELECT vault_id FROM ${r.table} WHERE id = ?`).bind(clientId).first<{ vault_id: string }>();
+        if (seen?.vault_id === vault(c)) return c.json(await getOne(c.env.DB, r, vault(c), clientId), 200);
+        if (seen) throw badRequest("id is already in use");
+      }
+      const id = clientId ?? crypto.randomUUID();
       await c.env.DB.batch([
         insertStmt(c.env.DB, r.table, id, vault(c), data),
         ...(conditionIds && r.conditionOwner ? setLinksStmts(c.env.DB, vault(c), r.conditionOwner, [id], conditionIds) : []),
