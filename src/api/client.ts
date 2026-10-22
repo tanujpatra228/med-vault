@@ -7,6 +7,9 @@ export class ApiError extends Error {
   }
 }
 
+/** Shown when a save needs the server and there is no connection. */
+export const OFFLINE = "You're offline. This needs a connection; your latest records stay readable.";
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, credentials: "same-origin", headers: {} };
   if (body instanceof FormData) init.body = body;
@@ -14,7 +17,13 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     init.body = JSON.stringify(body);
     (init.headers as Record<string, string>)["Content-Type"] = "application/json";
   }
-  const res = await fetch(`/api${path}`, init);
+  if (!navigator.onLine) throw new ApiError(0, OFFLINE);
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, init);
+  } catch {
+    throw new ApiError(0, OFFLINE);
+  }
   const data = res.headers.get("content-type")?.includes("application/json") ? await res.json() : null;
   if (!res.ok) {
     if (res.status === 401 && !path.startsWith("/auth")) window.dispatchEvent(new Event("mv:unauthorized"));
