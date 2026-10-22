@@ -1,8 +1,8 @@
 import { Link, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarCheck, FileText, FlaskConical, Pencil, Pill } from "lucide-react";
-import type { ConditionTimeline, TimelineItem } from "@shared/types";
-import { api } from "@/api/client";
+import type { TimelineItem } from "@shared/types";
+import { queries } from "@/api/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState, ErrorState, Loading, Page, Section, TopBar } from "@/components/layout";
@@ -33,7 +33,7 @@ function byMonth(items: TimelineItem[]) {
  */
 export function ConditionDetail() {
   const { conditionId = "" } = useParams();
-  const q = useQuery({ queryKey: ["condition-timeline", conditionId], queryFn: () => api.get<ConditionTimeline>(`/conditions/${conditionId}/timeline`) });
+  const q = useQuery(queries.conditionTimeline(conditionId));
   if (q.isPending)
     return (
       <>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router";
 import { toast } from "sonner";
-import { useDelete, useMedication, useMedications, useMembers, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
+import { queries, useDelete, useMedication, useMedications, useMembers, useSave, useUploadFiles, type ScanResponse } from "@/api/hooks";
 import { Copy } from "lucide-react";
 import { fileUrl } from "@/api/client";
 import { AiNotice, ScanButton } from "@/components/Scan";
@@ -194,7 +194,7 @@ function MedicationFormInner() {
 }
 
 function MedicationFiles({ id }: { id: string }) {
-  const q = useQuery({ queryKey: ["files", "medication", id], queryFn: () => api.get<FileMeta[]>(`/files?owner_type=medication&owner_id=${id}`) });
+  const q = useQuery(queries.medicationFiles(id));
   return q.data?.length ? <FileGallery files={q.data} /> : null;
 }
 
