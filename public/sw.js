@@ -1,5 +1,9 @@
-// Med Vault service worker: caches the app shell only. Never caches /api/* (medical data must be fresh).
-const CACHE = "mv-shell-v2";
+// Med Vault service worker: caches the app shell, and the photos/PDFs opened most recently so they open
+// offline. Record data is never cached here (the app keeps its own small offline copy of the latest records).
+const CACHE = "mv-shell-v3";
+const FILES = "mv-files";
+/** Photos and PDFs kept for offline use; the oldest go first. */
+const MAX_FILES = 40;
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -9,14 +13,38 @@ self.addEventListener("install", (event) => {
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== FILES).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
   );
 });
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
-  if (request.method !== "GET" || url.origin !== self.location.origin || url.pathname.startsWith("/api/")) return;
+  if (request.method !== "GET" || url.origin !== self.location.origin) return;
+
+  // Photos and PDFs: never change once uploaded (a new upload gets a new id), so the network first and
+  // the saved copy when offline. Downloads (?download=1) and thumbnails share the same saved copy.
+  if (/^\/api\/files\/[\w-]+$/.test(url.pathname)) {
+    const key = new Request(url.origin + url.pathname);
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const copy = res.clone();
+            caches.open(FILES).then(async (c) => {
+              await c.delete(key);
+              await c.put(key, copy);
+              const keys = await c.keys();
+              await Promise.all(keys.slice(0, Math.max(0, keys.length - MAX_FILES)).map((k) => c.delete(k)));
+            });
+          }
+          return res;
+        })
+        .catch(() => caches.open(FILES).then((c) => c.match(key)).then((hit) => hit || Response.error())),
+    );
+    return;
+  }
+  if (url.pathname.startsWith("/api/")) return;
 
   // Pages: network first so a new deploy shows up, shell from cache when offline.
   if (request.mode === "navigate") {
