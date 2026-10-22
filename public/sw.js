@@ -1,9 +1,11 @@
 // Med Vault service worker: caches the app shell, and the photos/PDFs opened most recently so they open
 // offline. Record data is never cached here (the app keeps its own small offline copy of the latest records).
-const CACHE = "mv-shell-v3";
+const CACHE = "mv-shell-v4";
 const FILES = "mv-files";
 /** Photos and PDFs kept for offline use; the oldest go first. */
 const MAX_FILES = 40;
+/** How long a page load waits for the network before opening the saved app. */
+const NAV_TIMEOUT = 2500;
 const SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
@@ -46,16 +48,23 @@ self.addEventListener("fetch", (event) => {
   }
   if (url.pathname.startsWith("/api/")) return;
 
-  // Pages: network first so a new deploy shows up, shell from cache when offline.
+  // Pages: network first so a new deploy shows up, shell from cache when offline. Offline, or on a
+  // connection that hangs (no data, weak signal), the saved shell opens at once or after NAV_TIMEOUT.
   if (request.mode === "navigate") {
+    const network = fetch(request).then((res) => {
+      if (res.ok) {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put("/", copy));
+      }
+      return res;
+    });
     event.respondWith(
-      fetch(request)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put("/", copy));
-          return res;
-        })
-        .catch(() => caches.match("/")),
+      caches.match("/").then((shell) => {
+        if (!shell) return network;
+        if (!navigator.onLine) return shell;
+        const late = new Promise((resolve) => setTimeout(() => resolve(shell), NAV_TIMEOUT));
+        return Promise.race([network.catch(() => shell), late]);
+      }),
     );
     return;
   }

@@ -10,6 +10,8 @@ export class ApiError extends Error {
 /** Shown when a save needs the server and there is no connection. */
 export const OFFLINE = "You're offline. This needs a connection; your latest records stay readable.";
 
+const GET_TIMEOUT = 12_000;
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const init: RequestInit = { method, credentials: "same-origin", headers: {} };
   if (body instanceof FormData) init.body = body;
@@ -18,6 +20,9 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     (init.headers as Record<string, string>)["Content-Type"] = "application/json";
   }
   if (!navigator.onLine) throw new ApiError(0, OFFLINE);
+  // Reads give up on a connection that hangs, so screens fall back to the copy on the phone.
+  // Saves are left alone: a scan or an upload can take a while.
+  if (method === "GET") init.signal = AbortSignal.timeout(GET_TIMEOUT);
   let res: Response;
   try {
     res = await fetch(`/api${path}`, init);
