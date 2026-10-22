@@ -8,6 +8,7 @@ import { ReConsent } from "@/components/ReConsent";
 import { onlineManager, QueryClient, useQueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { dehydrateOptions, MAX_AGE, persister } from "@/lib/offline/persist";
+import { useLinkPrefetch } from "@/lib/offline/prefetch";
 import { clearOfflineData } from "@/lib/offline/store";
 import { OfflineBanner } from "@/components/OfflineBanner";
 import { ApiError } from "@/api/client";
@@ -54,6 +55,7 @@ const queryClient = new QueryClient({
 function AuthGate() {
   const qc = useQueryClient();
   const me = useAuth();
+  useLinkPrefetch();
   useEffect(() => {
     const onUnauthorized = () => qc.invalidateQueries({ queryKey: ["auth"] });
     window.addEventListener("mv:unauthorized", onUnauthorized);
