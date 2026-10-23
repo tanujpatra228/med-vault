@@ -16,7 +16,7 @@ type Query = PersistedClient["clientState"]["queries"][number];
 
 const LISTS_NEWEST_FIRST = new Set(["reports", "visits", "prescriptions"]);
 const DETAILS = new Set(["report", "prescription", "visit", "medication", "reading", "allergy", "condition", "condition-timeline", "files", "doctors"]);
-const NEVER = new Set(["ai-usage", "privacy", "vault", "outbox"]);
+const NEVER = new Set(["ai-usage", "privacy", "vault", "outbox", "activity"]);
 
 /** Keeps the newest few of a query's data; lists that matter in full (members, medicines in use) stay whole. */
 function trim(q: Query): Query | null {

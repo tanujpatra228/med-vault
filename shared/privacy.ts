@@ -2,7 +2,7 @@
 // must agree to again. See docs/COMPLIANCE.md.
 
 export const PRIVACY_VERSION = 1;
-export const PRIVACY_UPDATED = "2026-10-14";
+export const PRIVACY_UPDATED = "2026-10-23";
 
 /** Public details shown in the notice (configured per deployment in wrangler.jsonc "vars"). */
 export interface PrivacyMeta {

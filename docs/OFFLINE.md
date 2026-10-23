@@ -22,7 +22,7 @@ Status: **built**. Code: `src/lib/offline/` (store, persist, outbox, useOnline, 
 ## How it works
 
 - **Saved copy:** TanStack Query's cache is written to IndexedDB (`med-vault-offline` / `kv` / `query-cache`) at most every 2 seconds, trimmed by `trimClient()` on the way out. Restored on launch before any screen renders.
-- **Never saved:** AI usage, the privacy notice, vault settings and the outbox query.
+- **Never saved:** AI usage, the privacy notice, vault settings, the security log (Activity) and the outbox query.
 - **Last good copy wins:** a query whose refetch failed offline is still saved with its last data, so the next offline launch still shows it.
 - **Outbox:** readings go to `kv` key `outbox` with an id made on the phone (UUID). The server accepts that id (`clientIds: true` on the readings resource) and returns the existing record if it was already saved, so a retry after a lost reply never creates a second reading. A reading the server rejects (400) is dropped; any other failure keeps the queue for later.
 - **Logging out, or the server saying this phone is no longer linked,** deletes the saved copy, the outbox and the cached files.
