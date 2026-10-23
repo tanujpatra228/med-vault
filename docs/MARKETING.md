@@ -59,6 +59,19 @@ Format for all: vertical 9:16, 30 to 60 s, Hinglish (record a pure Hindi and an 
 | 22 to 27 s | "And it never asks for your phone number or email. No OTP. No spam calls." |
 | 27 to 30 s | "It's free. Link in bio." |
 
+### Script 0c: Split screen, you + app recording (30 s)
+
+Landscape 16:9 for YouTube and LinkedIn: you on the left, phone recording on the right. For Reels, stack it: app on top two-thirds, you in the bottom third (side by side in 9:16 makes the UI too small to read).
+
+| Time | You say | App recording |
+|---|---|---|
+| 0 to 4 s | "Quick question. What medicines is your mom taking right now? All of them." | Home screen: family members with medicine counts |
+| 4 to 11 s | "Most of us can't answer. I couldn't. And because nobody remembered, we once paid for the same blood test twice." | Search "CBC": the old report appears with its date |
+| 11 to 17 s | "So I built Med Vault. Take a photo of a prescription or report, it fills itself in." | Camera snaps a prescription, form fills: medicines, 1-0-1, doctor |
+| 17 to 22 s | "Every medicine, report, BP and sugar reading for the whole family. At the doctor, you show one screen." | Mom's summary, swipe to BP chart, open Visit brief |
+| 22 to 27 s | "And it never asks for your phone number or email. No OTP. No spam calls." | Welcome screen: Create vault, done in one tap |
+| 27 to 30 s | "It's free. Link in bio." | Visit brief, tap Share on WhatsApp; end card with link |
+
 ### Script 1: "We paid twice" (hero story, 45 s)
 
 | Time | On screen | You say |
