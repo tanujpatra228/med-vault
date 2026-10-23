@@ -24,12 +24,13 @@ Do not target young singles, iPhone users (Android PWA only today) or doctors as
 |---|---|---|
 | No signup | **Yes, lead with it** | "No phone number. No email. No OTP. No spam calls." Indians are tired of giving their number to every app. |
 | Anonymous | Careful | "We don't ask who you are." Avoid "anonymous": the photos of reports still contain names. |
-| Complies with Indian health record regulations | **No** | Our own [COMPLIANCE.md](./COMPLIANCE.md) says the audit log is open, data may be stored outside India, and it is not legal-reviewed. India has no health-record certification to claim. An unprovable "compliant" claim invites an ASCI complaint and kills trust if questioned. Say: **"Built around India's new data protection law (DPDP): you own your data, export it anytime, delete it in one tap."** Upgrade the claim only after a lawyer review. |
+| Complies with Indian health record regulations | **No** | The DPDP duties are covered, including the one-year audit log ([COMPLIANCE.md](./COMPLIANCE.md)), but data may be stored outside India and nothing is legal-reviewed yet. India has no health-record certification to claim. An unprovable "compliant" claim invites an ASCI complaint and kills trust if questioned. Say: **"Built around India's new data protection law (DPDP): you own your data, export it anytime, delete it in one tap."** Upgrade the claim only after a lawyer review. |
 | AI reads prescriptions and reports | Yes | Show it, don't say it. It is the most "wow" moment on camera. |
 | Visit brief on WhatsApp | **Yes, core demo** | The doctor-facing payoff of the whole app. |
 | Lab trends and BP charts | Yes | "See if mom's sugar is actually improving." |
 | Medicine conflict questions | Yes, carefully | "Questions to ask your doctor", never "detects dangerous interactions". Medical claims are a legal risk. |
 | Works offline | Yes | Clinic basements and hospital corridors have no signal. Real pain. |
+| Activity log (Settings → Activity) | **Yes, trust proof** | "See every phone that opened or changed mom's records. Lost a phone? Remove it in one tap." Concrete proof beats the word "secure". |
 | Free | Yes, with "for early families" | Sets up the paid tier without a bait-and-switch feel. |
 
 **The weakness we must address upfront:** no signup means a lost phone plus a lost recovery key loses the vault. Every onboarding video ends with "save your recovery key and link a second phone". Turn it into a feature: "Link your brother's phone too. Both of you see mom's records."
@@ -63,7 +64,7 @@ Format for all: vertical 9:16, 30 to 60 s, Hinglish (record a pure Hindi and an 
 |---|---|---|
 | 0 to 4 s | Phone ringing, "Spam" label | "Every health app wants your number. Then the calls start." |
 | 4 to 15 s | Open Med Vault, tap Create vault, done in one tap | "Med Vault doesn't ask. No phone, no email, no OTP. One tap, your vault is ready." |
-| 15 to 24 s | Settings: Backup ZIP, Delete vault | "Your data is yours. Download all of it anytime. Delete it in one tap. Built around India's DPDP law." |
+| 15 to 24 s | Settings: Activity, then Backup ZIP, Delete vault | "See which phone changed what. Lost a phone? Remove it. Download everything anytime, delete in one tap. Built around India's DPDP law." |
 | 24 to 30 s | Recovery key screen | "Just save this recovery key. That's the only key." |
 
 ### Script 4: "Photo to record in 5 seconds" (AI demo, 25 s)
@@ -133,7 +134,7 @@ Add a `?src=` tag to every link (reel, LinkedIn, WhatsApp) and store only the so
 
 | Week | Do |
 |---|---|
-| 0 | Set `OPERATOR_NAME`, `GRIEVANCE_EMAIL`. Simple landing page with the hero story and a 30 s demo. Add `?src=` tracking. Decide the audit log. |
+| 0 | Set `OPERATOR_NAME`, `GRIEVANCE_EMAIL`. Simple landing page with the hero story and a 30 s demo. Add `?src=` tracking. |
 | 1 to 2 | **Warm 50:** personally onboard 50 families from friends, colleagues, relatives. Sit with them while they add 3 records. Watch where they get stuck. |
 | 2 to 4 | Post scripts 1 to 5, one per 2 days, on Instagram Reels and YouTube Shorts. Founder story on LinkedIn. Answer every comment. |
 | 3 to 5 | Reddit: a genuine "I built this after paying twice for a test" post in r/india, r/IndiaInvestments-style personal finance subs, r/nri. Give, don't spam. |
@@ -164,7 +165,7 @@ Price anchor: less than one repeated blood test. "₹499 a year. One repeated CB
 ## 7. Product gaps that will hurt marketing (fix before scaling)
 
 1. **"Have I done this test?" in one tap.** The hero story promises it. Search works, but a test-name lookup from the home screen with "last done: 12 Aug, result: normal" would make the demo land in 2 seconds.
-2. **Recovery anxiety.** Nudge to link a second phone on day 1, not only show the key.
+2. **Recovery anxiety.** Nudge to link a second phone on day 1, not only show the key. Settings → Activity already lets families remove a lost phone; say so in onboarding.
 3. **Hindi interface.** The parents' generation is the real end user.
 4. **iPhone.** NRIs skew iPhone. Confirm the PWA works on iOS Safari before targeting them, or exclude them from that campaign.
-5. **Trust page:** who runs this, where data lives, how it's protected, in plain words. "No signup" from an unknown name raises "who's behind this?" Show your face and name.
+5. **Trust page:** who runs this, where data lives, how it's protected, in plain words, with a screenshot of the Activity log. "No signup" from an unknown name raises "who's behind this?" Show your face and name.
