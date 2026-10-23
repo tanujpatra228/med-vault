@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { Loading } from "@/components/layout";
 import { Welcome } from "@/pages/Welcome";
 import { SettingsPage } from "@/pages/Settings";
+import { ActivityPage } from "@/pages/Activity";
 import { RestorePage } from "@/components/Backup";
 import { VisitForm } from "@/pages/forms/VisitForm";
 import { ReadingForm } from "@/pages/forms/ReadingForm";
@@ -113,6 +114,7 @@ const router = createBrowserRouter([
       { path: "/conditions/:conditionId/edit", element: <ConditionForm /> },
       { path: "/search", element: <SearchPage /> },
       { path: "/settings", element: <SettingsPage /> },
+      { path: "/settings/activity", element: <ActivityPage /> },
       { path: "/restore", element: <RestorePage /> },
       { path: "/link", element: <Navigate to="/" replace /> },
       { path: "/doctors", element: <DoctorsPage /> },

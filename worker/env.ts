@@ -16,6 +16,9 @@ export interface Env {
 export interface AuthVars {
   vaultId: string;
   deviceId: string;
+  deviceName: string;
+  /** Facts a route adds to its security log entry (worker/audit.ts), e.g. a removed phone's name. */
+  auditDetail?: Record<string, unknown>;
 }
 
 export type AppEnv = { Bindings: Env; Variables: AuthVars };

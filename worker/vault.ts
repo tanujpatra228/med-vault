@@ -5,8 +5,11 @@ import { exportVault, restoreLinks, restoreVault } from "./backup";
 import { assertConsent, createLinkCode, rotateRecoveryKey } from "./auth";
 import { EMAIL_RE, PRIVACY_VERSION } from "../shared/privacy";
 import { badRequest, HttpError, notFound, readJson } from "./http";
+import type { AuditEntry } from "../shared/audit";
 
 export const vaultApi = new Hono<AppEnv>();
+
+const ACTIVITY_PAGE = 50;
 
 vaultApi.get("/", async (c) => {
   const vaultId = c.get("vaultId");
@@ -57,6 +60,28 @@ vaultApi.put("/ai-consent", async (c) => {
   return c.json({ ok: true, ai_consent: body.allow });
 });
 
+// The security log for this vault, newest first, 50 at a time (`before` = last id seen). Optional `device_id`.
+vaultApi.get("/activity", async (c) => {
+  const deviceId = c.req.query("device_id");
+  const before = Number(c.req.query("before"));
+  const where = ["a.vault_id = ?"];
+  const binds: unknown[] = [c.get("vaultId")];
+  if (deviceId) where.push("a.device_id = ?"), binds.push(deviceId);
+  if (Number.isInteger(before) && before > 0) where.push("a.id < ?"), binds.push(before);
+  const { results } = await c.env.DB.prepare(
+    `SELECT a.id, a.at, a.device_id, a.device_name, a.client, a.country, a.action, a.record_type, a.record_id, a.member_id, a.detail,
+            m.name AS member_name, d.id IS NOT NULL AS linked
+     FROM audit_log a
+     LEFT JOIN members m ON m.id = a.member_id AND m.vault_id = a.vault_id
+     LEFT JOIN devices d ON d.id = a.device_id AND d.vault_id = a.vault_id
+     WHERE ${where.join(" AND ")} ORDER BY a.id DESC LIMIT ${ACTIVITY_PAGE + 1}`,
+  )
+    .bind(...binds)
+    .all<Omit<AuditEntry, "detail" | "linked"> & { detail: string | null; linked: number }>();
+  const entries: AuditEntry[] = results.slice(0, ACTIVITY_PAGE).map((r) => ({ ...r, detail: r.detail ? JSON.parse(r.detail) : null, linked: !!r.linked }));
+  return c.json({ entries, more: results.length > ACTIVITY_PAGE });
+});
+
 // Backup: every record as JSON (the app adds the files and builds the ZIP), and restore into an empty vault.
 vaultApi.get("/export", exportVault);
 vaultApi.post("/restore", restoreVault);
@@ -71,6 +96,8 @@ vaultApi.post("/recovery-key", async (c) => c.json({ recovery_key: await rotateR
 vaultApi.delete("/devices/:id", async (c) => {
   const id = c.req.param("id");
   if (id === c.get("deviceId")) throw badRequest("Use 'Log out this device' to remove the phone you are using");
+  const name = await c.env.DB.prepare("SELECT name FROM devices WHERE id = ? AND vault_id = ?").bind(id, c.get("vaultId")).first<string>("name");
+  c.set("auditDetail", { device_name: name });
   const res = await c.env.DB.prepare("DELETE FROM devices WHERE id = ? AND vault_id = ?").bind(id, c.get("vaultId")).run();
   if (!res.meta.changes) throw notFound("Device not found");
   return c.json({ ok: true });

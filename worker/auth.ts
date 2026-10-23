@@ -4,6 +4,8 @@ import type { AppEnv } from "./env";
 import { normalizeCode, randomCode, randomToken, recoveryKey, sha256Hex } from "./crypto";
 import { badRequest, HttpError, readJson } from "./http";
 import { PRIVACY_UPDATED, PRIVACY_VERSION, type PrivacyMeta } from "../shared/privacy";
+import { auditStmt, whoOf } from "./audit";
+import type { AuditAction } from "../shared/audit";
 
 const COOKIE = "mv_device";
 const DEVICE_DAYS = 400; // browsers cap cookie lifetime at ~400 days; refreshed on use
@@ -46,16 +48,15 @@ function setDeviceCookie(c: Context, token: string) {
   });
 }
 
-/** Adds a device to a vault and logs this browser in as it. Returns the statements to batch. */
-async function newDevice(c: Context<AppEnv>, vaultId: string, name: string) {
+/** Adds a device to a vault and logs this browser in as it, with its security log entry. Returns the statements to batch. */
+async function newDevice(c: Context<AppEnv>, vaultId: string, name: string, action: AuditAction) {
   const token = randomToken();
   setDeviceCookie(c, token);
-  return c.env.DB.prepare("INSERT INTO devices (id, vault_id, name, token_hash) VALUES (?, ?, ?, ?)").bind(
-    crypto.randomUUID(),
-    vaultId,
-    name,
-    await sha256Hex(token),
-  );
+  const id = crypto.randomUUID();
+  return [
+    c.env.DB.prepare("INSERT INTO devices (id, vault_id, name, token_hash) VALUES (?, ?, ?, ?)").bind(id, vaultId, name, await sha256Hex(token)),
+    auditStmt(c.env.DB, whoOf(c, vaultId, id, name), { action }),
+  ];
 }
 
 export const auth = new Hono<AppEnv>();
@@ -114,7 +115,7 @@ auth.post("/vault", async (c) => {
     ),
     // Rate-limit records hold IP addresses: keep them only as long as the longest limit (1 day).
     c.env.DB.prepare("DELETE FROM rate_events WHERE at < ? AND ip NOT LIKE 'vault:%'").bind(new Date(Date.now() - 2 * 86_400_000).toISOString()),
-    await newDevice(c, vaultId, deviceName(c, body.device_name)),
+    ...(await newDevice(c, vaultId, deviceName(c, body.device_name), "vault.create")),
     recordRate(c, "create"),
   ]);
   return c.json({ vault: { id: vaultId, name }, recovery_key: key }, 201);
@@ -135,7 +136,7 @@ auth.post("/link", async (c) => {
   }
   await c.env.DB.batch([
     c.env.DB.prepare("DELETE FROM link_codes WHERE code_hash = ? OR expires_at < ?").bind(hash, new Date().toISOString()),
-    await newDevice(c, row.vault_id, deviceName(c, body.device_name)),
+    ...(await newDevice(c, row.vault_id, deviceName(c, body.device_name), "device.link")),
   ]);
   return c.json({ ok: true });
 });
@@ -152,14 +153,21 @@ auth.post("/recover", async (c) => {
     await recordRate(c, "join_fail").run();
     throw new HttpError(400, "That recovery key does not match any vault");
   }
-  await (await newDevice(c, row.id, deviceName(c, body.device_name))).run();
+  await c.env.DB.batch(await newDevice(c, row.id, deviceName(c, body.device_name), "device.recover"));
   return c.json({ ok: true });
 });
 
 // Unlink this device. Other devices keep access.
 auth.post("/logout", async (c) => {
   const token = getCookie(c, COOKIE);
-  if (token) await c.env.DB.prepare("DELETE FROM devices WHERE token_hash = ?").bind(await sha256Hex(token)).run();
+  const device = token
+    ? await c.env.DB.prepare("SELECT id, vault_id, name FROM devices WHERE token_hash = ?").bind(await sha256Hex(token)).first<{ id: string; vault_id: string; name: string }>()
+    : null;
+  if (device)
+    await c.env.DB.batch([
+      c.env.DB.prepare("DELETE FROM devices WHERE id = ?").bind(device.id),
+      auditStmt(c.env.DB, whoOf(c, device.vault_id, device.id, device.name), { action: "device.logout" }),
+    ]);
   deleteCookie(c, COOKIE, { path: "/" });
   return c.json({ ok: true });
 });
@@ -181,13 +189,14 @@ export async function rotateRecoveryKey(db: D1Database, vaultId: string) {
 export const requireDevice: MiddlewareHandler<AppEnv> = async (c, next) => {
   const token = getCookie(c, COOKIE);
   const row = token
-    ? await c.env.DB.prepare("SELECT id, vault_id, last_seen_at FROM devices WHERE token_hash = ?")
+    ? await c.env.DB.prepare("SELECT id, vault_id, name, last_seen_at FROM devices WHERE token_hash = ?")
         .bind(await sha256Hex(token))
-        .first<{ id: string; vault_id: string; last_seen_at: string }>()
+        .first<{ id: string; vault_id: string; name: string; last_seen_at: string }>()
     : null;
   if (!row) throw new HttpError(401, "This device is not linked to a vault");
   c.set("vaultId", row.vault_id);
   c.set("deviceId", row.id);
+  c.set("deviceName", row.name);
   // At most one write per device per day: keeps the cookie fresh without spending D1 writes on every request.
   if (Date.now() - Date.parse(row.last_seen_at) > 86_400_000) {
     c.executionCtx.waitUntil(c.env.DB.prepare("UPDATE devices SET last_seen_at = ? WHERE id = ?").bind(new Date().toISOString(), row.id).run());
