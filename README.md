@@ -72,6 +72,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [REMINDERS.md](docs/REMINDERS.md) | Push reminders: what, when, how, limits |
 | [COMPLIANCE.md](docs/COMPLIANCE.md) | India privacy law (DPDP), consent, breach runbook |
 | [TODO.md](docs/TODO.md) | Build order for what is next |
+| [MARKETING.md](docs/MARKETING.md) | Positioning, video scripts, 8-week validation plan |
 
 ## Project layout
 
