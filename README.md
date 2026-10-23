@@ -69,6 +69,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [LAB_TRENDS.md](docs/LAB_TRENDS.md) | Lab results and trend charts |
 | [OFFLINE.md](docs/OFFLINE.md) | What stays on the phone, logging readings offline |
 | [AUDIT_LOG.md](docs/AUDIT_LOG.md) | Security log: what is kept, for how long, what it answers |
+| [AI_SAFETY.md](docs/AI_SAFETY.md) | AI calls: prompt-injection guardrails and access checks |
 | [SEARCH.md](docs/SEARCH.md) | What search covers and how |
 | [HOME_READINGS.md](docs/HOME_READINGS.md) | Blood pressure and sugar logged at home |
 | [REMINDERS.md](docs/REMINDERS.md) | Push reminders: what, when, how, limits |
