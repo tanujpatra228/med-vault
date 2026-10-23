@@ -1,6 +1,6 @@
 # Privacy and Compliance (India)
 
-Status: privacy notice and consent **built**. The audit log is **open**: decide it before building (see the end of this file).
+Status: privacy notice, consent and audit log **built**. Audit log details: [AUDIT_LOG.md](./AUDIT_LOG.md).
 
 This is a working summary for the project, not legal advice. Before opening Med Vault beyond family and close friends, or registering a company, review it with an Indian data-protection lawyer.
 
@@ -37,13 +37,12 @@ There is no HIPAA equivalent. DPDP treats health data like any other personal da
 | Breach notice to the Board and to individuals | Runbook below. Optional per-vault security contact email (Settings → Privacy) plus an in-app notice. |
 | Processor contract | Cloudflare's self-serve terms and data processing addendum. Reminders pass through the phone's push service (Google FCM on Android) end-to-end encrypted (RFC 8291), so it cannot read them; "Show medicine and doctor names" off keeps medical words off the lock screen. Workers AI documentation says Cloudflare does not use inputs or outputs to train models or share them with other customers. |
 | Cross-border transfer | Allowed unless the government restricts a country. Cloudflare may store data outside India, as the notice says. |
-| Logs for 1 year (Rule 6) | **Open: audit log not built yet.** |
+| Logs for 1 year (Rule 6) | Security log of every change, sign-in event, backup and AI use, kept one year (also after the vault is deleted), then purged daily. No medical content, no IP. The family sees it in Settings → Activity. See [AUDIT_LOG.md](./AUDIT_LOG.md). The notice says so; it is a legal-obligation use, so no new consent was asked (`PRIVACY_VERSION` unchanged). |
 
 ## Before sharing beyond your own family
 
 1. Set `OPERATOR_NAME` and `GRIEVANCE_EMAIL` in `wrangler.jsonc` and deploy. Until then, the notice says "the person who shared this app with you".
 2. Add your own security contact email in Settings → Privacy.
-3. Decide on the audit log (below).
 
 ## Breach runbook
 
@@ -60,12 +59,6 @@ A breach is any unauthorised access to, or loss of, personal data: for example a
 Finding the affected vaults' contacts:
 `npx wrangler d1 execute med-vault --remote --command "SELECT id, name, contact_email FROM vaults WHERE contact_email IS NOT NULL"`
 
-## Open decision: audit log
+## Audit log
 
-Rule 6 expects logs of access to personal data, kept for a year, so a breach can be detected and investigated. Open questions to settle before building:
-
-- **What is logged:** every read, or only sign-ins, device links, exports, deletions and AI use?
-- **What a log row holds:** device and time only, or also IP and which record? More detail helps investigations but is itself personal data.
-- **Retention:** 1 year (Rule 6), then automatic deletion.
-- **Who can see it:** the family in Settings ("who opened the vault and when"), the operator only, or both?
-- **Cost:** a row per read can be thousands of D1 writes a day (free tier: 100k/day).
+Built: see [AUDIT_LOG.md](./AUDIT_LOG.md) for what is logged, retention, and the questions it answers (lost phones, unknown access, who changed what, breach investigation).
