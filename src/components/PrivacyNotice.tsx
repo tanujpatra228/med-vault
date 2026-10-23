@@ -50,6 +50,10 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
           <li>An email address, only if you add one for security notices.</li>
           <li>If you turn on reminders: the phone's push address, time zone and reminder settings, and which reminders were sent in the last 3 days.</li>
           <li>Your internet (IP) address for up to 2 days, only to stop abuse such as mass vault creation; and a count of AI use per vault.</li>
+          <li>
+            A security log of changes: which phone added, edited or deleted which kind of record, linked or removed a phone, downloaded a backup or used AI, with the time, kind of phone
+            and country. It never holds medical details or your IP address. Your family can see it in Settings → Activity.
+          </li>
         </ul>
         <p>No account, phone number, Aadhaar or payment details are asked for. No advertising, no tracking, no analytics, and your data is never sold.</p>
       </Part>
@@ -58,7 +62,7 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
         <ul>
           <li>To show and organise your family's records on the phones linked to your vault.</li>
           <li>If you allow it: to read photos of prescriptions, medicine strips and reports with AI, and to check your medicines together. You check everything before it is saved.</li>
-          <li>To keep the service safe and fair (limits on vault creation and AI use).</li>
+          <li>To keep the service safe and fair (limits on vault creation and AI use), and to find out what happened if a phone is lost or the vault is misused (the security log).</li>
           <li>To tell you about a security problem, if you added an email.</li>
         </ul>
       </Part>
@@ -89,7 +93,8 @@ export function PrivacyNotice({ meta }: { meta: PrivacyMeta | undefined }) {
       <Part title="How long it is kept">
         <p>
           Until you delete it. Deleting a record, a family member or the whole vault removes it straight away. Database recovery copies can hold deleted data for up to 30 days, after
-          which it is gone for good.
+          which it is gone for good. The security log is the one exception: each entry is kept for one year, as the law requires, and then deleted automatically, also if the vault was
+          deleted before that. It holds no medical details.
         </p>
       </Part>
 
