@@ -39,6 +39,16 @@ Do not target young singles, iPhone users (Android PWA only today) or doctors as
 
 Format for all: vertical 9:16, 30 to 60 s, Hinglish (record a pure Hindi and an English cut of the top 2 later). Real phone screen, real (dummy) records, your face for the first 3 seconds. Captions burned in: most people watch muted.
 
+### Script 0: Founder intro (talking head, 30 s, about 80 words)
+
+| Time | B-roll cut-in | You say (to camera) |
+|---|---|---|
+| 0 to 4 s | None: your face, close | "We paid for the same blood test twice. Nobody remembered we'd done it two months earlier." |
+| 4 to 10 s | Pile of files, bag of medicine strips | "Mom sees three doctors. Every one asks: what medicines? Any recent reports? We never knew." |
+| 10 to 20 s | Snap a prescription, form fills in; scroll a member's summary | "So I built Med Vault. Snap a prescription or report, it fills itself in. Medicines, reports, BP and sugar for the whole family, on one phone." |
+| 20 to 25 s | Visit brief, tap Share on WhatsApp | "At the clinic, show one screen or send it on WhatsApp." |
+| 25 to 30 s | Your face, then logo + link | "No phone number. No email. No OTP. It's free. Link in bio." |
+
 ### Script 1: "We paid twice" (hero story, 45 s)
 
 | Time | On screen | You say |
