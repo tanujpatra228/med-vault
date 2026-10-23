@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { clearOfflineData } from "@/lib/offline/store";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Copy, Link2, Share2 } from "lucide-react";
+import { Copy, History, Link2, Share2 } from "lucide-react";
 import type { LinkCode } from "@shared/types";
 import { authApi, linkUrl, useVault } from "@/api/auth";
 import { Button } from "@/components/ui/button";
@@ -201,9 +201,10 @@ export function SettingsPage() {
             {v.devices.map((d) => (
               <Row
                 key={d.id}
+                to={`/settings/activity?device=${d.id}`}
                 title={d.name}
                 subtitle={d.current ? "This device" : `Last used ${relativeDays(d.last_seen_at)}`}
-                trailing={
+                action={
                   d.current ? (
                     <Badge variant="focus">You</Badge>
                   ) : (
@@ -225,6 +226,11 @@ export function SettingsPage() {
               />
             ))}
           </RowList>
+          <Button asChild variant="secondary" className="mb-3 w-full">
+            <Link to="/settings/activity">
+              <History /> See activity: which phone changed what
+            </Link>
+          </Button>
           <LinkDevice />
         </Section>
 
