@@ -49,6 +49,16 @@ Format for all: vertical 9:16, 30 to 60 s, Hinglish (record a pure Hindi and an 
 | 20 to 25 s | Visit brief, tap Share on WhatsApp | "At the clinic, show one screen or send it on WhatsApp." |
 | 25 to 30 s | Your face, then logo + link | "No phone number. No email. No OTP. It's free. Link in bio." |
 
+### Script 0b: Founder intro, face only (30 s, no B-roll)
+
+| Time | You say (to camera) |
+|---|---|
+| 0 to 4 s | "Quick question. What medicines is your mom taking right now? All of them." |
+| 4 to 11 s | *(beat)* "Most of us can't answer. I couldn't. And because nobody remembered, we once paid for the same blood test twice." |
+| 11 to 22 s | "So I built Med Vault. Every prescription, report, BP and sugar reading for your whole family, in one app. Take a photo, it fills itself in. At the doctor, you show one screen." |
+| 22 to 27 s | "And it never asks for your phone number or email. No OTP. No spam calls." |
+| 27 to 30 s | "It's free. Link in bio." |
+
 ### Script 1: "We paid twice" (hero story, 45 s)
 
 | Time | On screen | You say |
