@@ -18,7 +18,7 @@ import { isWeekly, normalizeSchedule, parseDoseText, scheduleFromDosage, totalDa
 import type { AppEnv } from "./env";
 import { assertAiBudget, aiUsage, hasAiConsent, neuronsFor, recordAiUsage, type TokenUsage } from "./aiBudget";
 import { badRequest, HttpError, readJson } from "./http";
-import { fence, GUARD, notMedical, scrub } from "./aiGuard";
+import { fence, GUARD, scrub } from "./aiGuard";
 
 // Tried in order: if a model is unavailable or returns nothing usable, the next one is used.
 export const MODELS = ["@cf/meta/llama-4-scout-17b-16e-instruct", "@cf/mistralai/mistral-small-3.1-24b-instruct"];
@@ -410,9 +410,10 @@ aiApi.post("/scan", async (c) => {
   const { obj, model, usage } =
     c.env.AI_MOCK === "1" ? { obj: MOCKS[kind], model: "mock", usage: undefined } : await runModels(c.env.AI as unknown as AiRunner, kind, input);
   await recordAiUsage(db, vaultId, kind, model, neuronsFor(model, kind, usage), usage);
-  // Off-task: not a medical document (or one that only tries to give the model orders), or nothing medical came back.
+  // Off-task: nothing medical came back (an image that only gives orders reads as empty). The model's own
+  // "not a medical document" answer is not enough on its own: it can be wrong about poor handwriting.
   const result = normalize(kind, obj);
-  if (notMedical(obj) || isEmptyScan(result)) throw new HttpError(422, `This does not look like ${KIND_WORDS[kind]}. Try a clearer photo, or fill the form by hand.`);
+  if (isEmptyScan(result)) throw new HttpError(422, `This does not look like ${KIND_WORDS[kind]}. Try a clearer photo, or fill the form by hand.`);
   return c.json({ ...result, model, ai: await aiUsage(db, vaultId) });
 });
 
