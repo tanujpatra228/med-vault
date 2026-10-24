@@ -75,6 +75,7 @@ Every push to `main` deploys via GitHub Actions (`.github/workflows/deploy.yml`)
 | [COMPLIANCE.md](docs/COMPLIANCE.md) | India privacy law (DPDP), consent, breach runbook |
 | [TODO.md](docs/TODO.md) | Build order for what is next |
 | [MARKETING.md](docs/MARKETING.md) | Positioning, video scripts, 8-week validation plan |
+| [LAUNCH.md](docs/LAUNCH.md) | Launch plan for Reddit, HN, Product Hunt, Indie Hackers, Uneed |
 
 ## Project layout
 
