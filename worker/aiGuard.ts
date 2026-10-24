@@ -24,11 +24,14 @@ export function fence(text: string): string {
   const clean = text
     .replace(/<\s*\/?\s*document\s*>/gi, " ")
     // Control characters other than tab and newline can hide text from people but not from models.
-    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁦-⁩]/g, "");
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, "");
   return `${OPEN}\n${clean}\n${CLOSE}`;
 }
 
-/** The model said this is not a medical document (it was told to, e.g. for an image full of instructions). */
+/**
+ * The model said this is not a medical document. Only a hint: a scan is refused when nothing medical was
+ * read (isEmptyScan), so a hard-to-read prescription the model wrongly flags is still kept.
+ */
 export const notMedical = (raw: Record<string, unknown>) => raw.not_medical_document === true;
 
 /**
@@ -40,6 +43,9 @@ export function scrub(s: string): string {
     .replace(/\b(?:https?:\/\/|www\.)\S+/gi, "")
     .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g, "")
     .replace(/<\/?[a-z][^>]*>/gi, "")
-    .replace(/\s{2,}/g, " ")
+    // Tidy spaces but keep line breaks (notes and dose text are often several lines); at most one blank line.
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }

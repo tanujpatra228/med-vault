@@ -75,4 +75,21 @@ describe("scrub", () => {
   it("keeps ordinary medical text", () => {
     expect(scrub("ESR high (42 mm/hr), CRP < 5 mg/L")).toBe("ESR high (42 mm/hr), CRP < 5 mg/L");
   });
+  it("keeps line breaks, tidies spaces and blank lines", () => {
+    expect(scrub("Avoid oily food.  \n\n\n\nReview after 2 weeks\n  with CBC")).toBe("Avoid oily food.\n\nReview after 2 weeks\n with CBC");
+    expect(scrub("हर शनिवार 2-0-0\nहर रविवार 1-0-0")).toBe("हर शनिवार 2-0-0\nहर रविवार 1-0-0");
+  });
+  it("still removes links from multi-line text", () => {
+    expect(scrub("Line one\nvisit https://x.com now")).toBe("Line one\nvisit now");
+  });
+});
+
+describe("refusing a scan depends on what was read, not on the model's say-so", () => {
+  it("a prescription the model calls not medical is kept when medicines were read", () => {
+    const r = normalize("prescription", { not_medical_document: true, medications: [{ name: "Dolo 650", dosage: "1-0-1" }] });
+    expect(isEmptyScan(r)).toBe(false);
+  });
+  it("is refused when the model calls it not medical and nothing was read", () => {
+    expect(isEmptyScan(normalize("prescription", { not_medical_document: true }))).toBe(true);
+  });
 });
