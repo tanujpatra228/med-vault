@@ -1,0 +1,79 @@
+@import "tailwindcss";
+@import "../../design/tokens.css";
+
+/* Landing-only type: the app's scale, plus larger serif sizes for a full-width page. */
+@utility display-hero {
+  font-family: var(--font-serif);
+  font-size: clamp(38px, 7vw, 64px);
+  line-height: 1.05;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+@utility display-section {
+  font-family: var(--font-serif);
+  font-size: clamp(28px, 4.2vw, 40px);
+  line-height: 1.15;
+  font-weight: 500;
+  letter-spacing: -0.015em;
+}
+@utility type-lead {
+  font-size: 18px;
+  line-height: 28px;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html,
+  body {
+    overflow-x: clip;
+  }
+  body {
+    @apply bg-paper text-ink font-sans type-body antialiased;
+  }
+  :focus-visible {
+    outline: 2px solid var(--iris);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+/* A phone screenshot in a hairline frame (no shadows: the design system uses hairlines only). */
+@utility phone {
+  border: 1px solid var(--rule);
+  border-radius: 28px;
+  padding: 8px;
+  background: var(--sheet);
+  & > img {
+    display: block;
+    width: 100%;
+    border-radius: 20px;
+    border: 1px solid var(--rule-soft);
+    aspect-ratio: 9 / 16;
+    object-fit: cover;
+    object-position: top;
+  }
+}
+
+/* A screen with little on it (search results): a shorter frame. */
+.phone-short > img {
+  aspect-ratio: 9 / 10;
+}
+
+/* FAQ: native <details>, styled like the app's row lists. */
+details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+details > summary::-webkit-details-marker {
+  display: none;
+}
+details[open] .faq-chevron {
+  transform: rotate(90deg);
+}

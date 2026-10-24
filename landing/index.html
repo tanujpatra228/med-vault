@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Med Vault: your family's medical file, on your phone</title>
+    <meta
+      name="description"
+      content="Every prescription, report, medicine and BP reading for your whole family, in one place. Snap a photo and it fills itself in. Free, with no phone number, email or OTP."
+    />
+    <meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14101c" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Med Vault" />
+    <meta property="og:title" content="Your family's medical file, on your phone" />
+    <meta
+      property="og:description"
+      content="Prescriptions, reports, medicines and BP for the whole family. Snap a photo, it fills itself in. Free, no phone number or OTP."
+    />
+    <meta property="og:image" content="%VITE_SITE_URL%/og.png" />
+    <meta property="og:url" content="%VITE_SITE_URL%/" />
+    <link rel="canonical" href="%VITE_SITE_URL%/" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap"
+    />
+    <link rel="stylesheet" href="/src/landing.css" />
+  </head>
+  <body>
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-sm focus:bg-sheet focus:px-3 focus:py-2">Skip to content</a>
+
+    <!-- Header -->
+    <header class="sticky top-0 z-40 border-b border-rule bg-paper/95 backdrop-blur">
+      <div class="mx-auto flex h-16 max-w-[1120px] items-center gap-6 px-5">
+        <a href="/" class="flex items-center gap-2.5" aria-label="Med Vault home">
+          <img src="/icons/icon.svg" alt="" width="28" height="28" />
+          <span class="font-serif text-[22px] font-semibold tracking-tight">Med Vault</span>
+        </a>
+        <nav class="ml-auto hidden items-center gap-6 type-label text-ink-muted md:flex" aria-label="Sections">
+          <a href="#features" class="hover:text-ink">Features</a>
+          <a href="#how" class="hover:text-ink">How it works</a>
+          <a href="#privacy" class="hover:text-ink">Privacy</a>
+          <a href="#faq" class="hover:text-ink">Questions</a>
+        </nav>
+        <a
+          href="%VITE_APP_URL%"
+          class="ml-auto inline-flex h-10 items-center rounded-sm border border-rule bg-sheet px-4 type-label hover:bg-rule-soft md:ml-0"
+          >Open the app</a
+        >
+      </div>
+    </header>
+
+    <main id="main">
+      <!-- Hero -->
+      <section class="mx-auto grid max-w-[1120px] items-center gap-12 px-5 pt-12 pb-16 md:grid-cols-[1.1fr_0.9fr] md:pt-20 md:pb-24">
+        <div>
+          <p class="meta mb-5 text-ink-faint">Family health records · Free</p>
+          <h1 class="display-hero">Your family's medical file, on your phone.</h1>
+          <p class="type-lead mt-6 max-w-[34rem] text-ink-muted">
+            Every prescription, report, medicine and BP reading for your parents, your kids and you, in one place. Snap a photo and it fills itself in. Show
+            the doctor one screen.
+          </p>
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <a
+              href="%VITE_APP_URL%"
+              class="inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-iris px-6 text-[16px] font-semibold text-on-iris hover:bg-iris-strong"
+            >
+              Create your family's vault, free <i data-icon="ArrowRight" class="size-5"></i>
+            </a>
+          </div>
+          <p class="type-caption mt-4 text-ink-faint">
+            Takes 30 seconds. No phone number, no email, no OTP. Works in any phone browser; add it to your home screen like an app.
+          </p>
+        </div>
+        <div class="relative mx-auto w-full max-w-[300px] md:max-w-[380px]">
+          <div class="phone">
+            <img
+              src="/shots/home.webp"
+              width="720"
+              height="1280"
+              alt="Med Vault home screen: the Sharma family, three people and sixteen medicines, with upcoming doctor follow-ups"
+              fetchpriority="high"
+            />
+          </div>
+        </div>
+      </section>
+
+      <!-- Proof strip -->
+      <section class="border-y border-rule bg-sheet">
+        <ul class="mx-auto grid max-w-[1120px] gap-6 px-5 py-8 sm:grid-cols-3">
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 text-iris"><i data-icon="Camera"></i></span>
+            <span><strong class="font-semibold">Photo to record.</strong> <span class="text-ink-muted">Prescriptions and reports fill themselves in.</span></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 text-iris"><i data-icon="Users"></i></span>
+            <span><strong class="font-semibold">The whole family.</strong> <span class="text-ink-muted">Parents, grandparents, kids, you.</span></span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-0.5 text-iris"><i data-icon="ShieldCheck"></i></span>
+            <span><strong class="font-semibold">No signup.</strong> <span class="text-ink-muted">We never ask for your number or email.</span></span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Story -->
+      <section class="mx-auto grid max-w-[1120px] items-center gap-12 px-5 py-20 md:grid-cols-2 md:py-28">
+        <div class="order-2 mx-auto w-full max-w-[300px] md:order-1 md:max-w-[340px]">
+          <div class="phone phone-short">
+            <img src="/shots/search-cbc.webp" width="720" height="1280" alt="Searching CBC finds the blood test from 22 Aug 2026" loading="lazy" />
+          </div>
+        </div>
+        <div class="order-1 md:order-2">
+          <p class="meta mb-4 text-ink-faint">Why we built it</p>
+          <h2 class="display-section">We paid for the same blood test twice.</h2>
+          <div class="type-lead mt-6 space-y-4 text-ink-muted">
+            <p>Mummy sees three doctors. Every visit starts with the same questions: which medicines? any recent reports? We never had the full answer.</p>
+            <p>Two months after a blood test, a doctor asked for it again. Nobody remembered we had done it. We paid twice.</p>
+            <p class="text-ink">
+              Now we search before we pay. Two seconds: <span class="font-semibold">CBC, 22 Aug, done.</span> The doctor sees the old result.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Features -->
+      <section id="features" class="scroll-mt-20 border-t border-rule">
+        <div class="mx-auto max-w-[1120px] px-5 pt-20 md:pt-28">
+          <p class="meta mb-4 text-ink-faint">What it does</p>
+          <h2 class="display-section max-w-[36rem]">Everything the doctor asks for, already in your pocket.</h2>
+        </div>
+
+        <div class="mx-auto max-w-[1120px] divide-y divide-rule-soft px-5">
+          <!-- 1. Scan -->
+          <article class="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16 md:py-20">
+            <div>
+              <p class="meta mb-3 flex items-center gap-2 text-iris"><i data-icon="Camera" class="size-4"></i> Snap and save</p>
+              <h3 class="display-section">Take a photo of a prescription. It fills itself in.</h3>
+              <p class="type-lead mt-5 text-ink-muted">
+                Medicines, doses like 1-0-1, timing, the doctor and the next visit, read from the photo. Even when the dose is written in Hindi or Gujarati. You
+                check it, then save.
+              </p>
+              <ul class="mt-6 space-y-2.5">
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Reports become results you can chart.</li>
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Typing it in by hand always works too.</li>
+              </ul>
+            </div>
+            <div class="mx-auto w-full max-w-[272px] md:max-w-[320px]">
+              <div class="phone">
+                <img src="/shots/medicines.webp" width="720" height="1280" alt="Medicines list with doses such as 1-0-1 and today's timing for each" loading="lazy" />
+              </div>
+            </div>
+          </article>
+
+          <!-- 2. Summary -->
+          <article class="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16 md:py-20">
+            <div class="md:order-2">
+              <p class="meta mb-3 flex items-center gap-2 text-iris"><i data-icon="Pill" class="size-4"></i> One summary</p>
+              <h3 class="display-section">Every medicine from every doctor, on one screen.</h3>
+              <p class="type-lead mt-5 text-ink-muted">
+                “Sunita is taking 8 medicines from three doctors.” Each person opens with one plain sentence, their allergies, and what to take this morning.
+              </p>
+              <ul class="mt-6 space-y-2.5">
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Allergies always on top, in their own colour.</li>
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Weekly doses and tapering doses handled.</li>
+              </ul>
+            </div>
+            <div class="mx-auto w-full max-w-[272px] md:order-1 md:max-w-[320px]">
+              <div class="phone">
+                <img src="/shots/member-summary.webp" width="720" height="1280" alt="Sunita Sharma's summary: 8 medicines from three doctors, a sulfa drug allergy and today's medicines" loading="lazy" />
+              </div>
+            </div>
+          </article>
+
+          <!-- 3. Visit brief -->
+          <article class="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16 md:py-20">
+            <div>
+              <p class="meta mb-3 flex items-center gap-2 text-iris"><i data-icon="ClipboardList" class="size-4"></i> Visit brief</p>
+              <h3 class="display-section">At the clinic, show one screen. Or send it on WhatsApp.</h3>
+              <p class="type-lead mt-5 text-ink-muted">
+                Allergies, conditions, every current medicine grouped by doctor, recent reports. The answer to “any other medicines?” before the doctor finishes
+                asking.
+              </p>
+              <ul class="mt-6 space-y-2.5">
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Print or save as PDF.</li>
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Share as plain text in one tap.</li>
+              </ul>
+            </div>
+            <div class="mx-auto w-full max-w-[272px] md:max-w-[320px]">
+              <div class="phone">
+                <img src="/shots/visit-brief.webp" width="720" height="1280" alt="Visit brief for Sunita Sharma with allergies, health conditions and current medicines by doctor" loading="lazy" />
+              </div>
+            </div>
+          </article>
+
+          <!-- 4. Trends -->
+          <article class="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16 md:py-20">
+            <div class="md:order-2">
+              <p class="meta mb-3 flex items-center gap-2 text-iris"><i data-icon="TrendingUp" class="size-4"></i> Trends</p>
+              <h3 class="display-section">Is Mummy's sugar actually improving?</h3>
+              <p class="type-lead mt-5 text-ink-muted">
+                Every lab result becomes a chart with its normal range, and the medicines she was on at the time. Log BP and sugar at home in five seconds.
+              </p>
+              <ul class="mt-6 space-y-2.5">
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>See HbA1c fall after a medicine change.</li>
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>BP and sugar for the whole family at a glance.</li>
+              </ul>
+            </div>
+            <div class="mx-auto w-full max-w-[272px] md:order-1 md:max-w-[320px]">
+              <div class="phone">
+                <img src="/shots/lab-trend-hba1c.webp" width="720" height="1280" alt="HbA1c chart falling from 8.4 to 7.2 percent, with the normal range and a medicine timeline underneath" loading="lazy" />
+              </div>
+            </div>
+          </article>
+
+          <!-- 5. Questions -->
+          <article class="grid items-center gap-10 py-16 md:grid-cols-2 md:gap-16 md:py-20">
+            <div>
+              <p class="meta mb-3 flex items-center gap-2 text-iris"><i data-icon="MessageCircleQuestion" class="size-4"></i> Questions for the doctor</p>
+              <h3 class="display-section">Three doctors, one list. Know what to ask.</h3>
+              <p class="type-lead mt-5 text-ink-muted">
+                Doctors rarely see each other's prescriptions. Med Vault looks across all of them and suggests questions for your next visit: a medicine that may
+                clash with an allergy, or the same medicine twice.
+              </p>
+              <ul class="mt-6 space-y-2.5">
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Written as questions, never as advice.</li>
+                <li class="flex gap-2.5"><span class="mt-0.5 text-moss"><i data-icon="Check" class="size-5"></i></span>Your doctor always decides.</li>
+              </ul>
+            </div>
+            <div class="mx-auto w-full max-w-[272px] md:max-w-[320px]">
+              <div class="phone">
+                <img src="/shots/allergy-check.webp" width="720" height="1280" alt="A question for the doctor: is Amoxicillin plus Clavulanic acid safe with the penicillin allergy?" loading="lazy" />
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- More -->
+      <section class="border-t border-rule bg-sheet">
+        <div class="mx-auto max-w-[1120px] px-5 py-20 md:py-24">
+          <p class="meta mb-4 text-ink-faint">And the small things that matter</p>
+          <h2 class="display-section max-w-[36rem]">Built for real clinics, real phones and real families.</h2>
+          <ul class="mt-12 grid gap-px overflow-hidden rounded-sm border border-rule bg-rule sm:grid-cols-2 lg:grid-cols-3">
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="Bell"></i></span>
+              <h3 class="type-title mt-3">Medicine reminders</h3>
+              <p class="mt-2 text-ink-muted">On each phone, at the right time. Weekly doses and tapers included.</p>
+            </li>
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="WifiOff"></i></span>
+              <h3 class="type-title mt-3">Works without signal</h3>
+              <p class="mt-2 text-ink-muted">The latest records open in the hospital basement. BP logged offline is sent later.</p>
+            </li>
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="Search"></i></span>
+              <h3 class="type-title mt-3">Search everything</h3>
+              <p class="mt-2 text-ink-muted">Any medicine, test, doctor or note, for one person or the whole family.</p>
+            </li>
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="Link2"></i></span>
+              <h3 class="type-title mt-3">Share with family</h3>
+              <p class="mt-2 text-ink-muted">Link your brother's or sister's phone with a one-time code. Everyone sees the same records.</p>
+            </li>
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="HeartPulse"></i></span>
+              <h3 class="type-title mt-3">Follow-ups</h3>
+              <p class="mt-2 text-ink-muted">“Review after 2 weeks” becomes a date on the home screen, so no visit is missed.</p>
+            </li>
+            <li class="bg-sheet p-6">
+              <span class="text-iris"><i data-icon="Download"></i></span>
+              <h3 class="type-title mt-3">Your data, your copy</h3>
+              <p class="mt-2 text-ink-muted">Download everything as one file that opens on any computer. Delete it all in one tap.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- How it works -->
+      <section id="how" class="scroll-mt-20 border-t border-rule">
+        <div class="mx-auto max-w-[1120px] px-5 py-20 md:py-28">
+          <p class="meta mb-4 text-ink-faint">How it works</p>
+          <h2 class="display-section">Ready before your next doctor's visit.</h2>
+          <ol class="mt-12 grid gap-8 md:grid-cols-3">
+            <li class="border-t border-rule pt-6">
+              <span class="num text-[15px] text-ink-faint">01</span>
+              <h3 class="type-title mt-2">Create your vault</h3>
+              <p class="mt-2 text-ink-muted">One tap. Give it your family's name. No phone number, email or password.</p>
+            </li>
+            <li class="border-t border-rule pt-6">
+              <span class="num text-[15px] text-ink-faint">02</span>
+              <h3 class="type-title mt-2">Add your family</h3>
+              <p class="mt-2 text-ink-muted">Mummy, Papa, Dadi, the kids, you. Snap their latest prescription and report.</p>
+            </li>
+            <li class="border-t border-rule pt-6">
+              <span class="num text-[15px] text-ink-faint">03</span>
+              <h3 class="type-title mt-2">Link a second phone</h3>
+              <p class="mt-2 text-ink-muted">Your sibling sees the same records, and your vault is safe even if one phone is lost.</p>
+            </li>
+          </ol>
+          <div class="mt-12">
+            <a
+              href="%VITE_APP_URL%"
+              class="inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-iris px-6 text-[16px] font-semibold text-on-iris hover:bg-iris-strong"
+            >
+              Create your family's vault, free <i data-icon="ArrowRight" class="size-5"></i>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy -->
+      <section id="privacy" class="scroll-mt-20 border-t border-rule bg-sheet">
+        <div class="mx-auto grid max-w-[1120px] gap-12 px-5 py-20 md:grid-cols-[0.9fr_1.1fr] md:py-28">
+          <div>
+            <p class="meta mb-4 text-ink-faint">Privacy</p>
+            <h2 class="display-section">We never ask who you are.</h2>
+            <p class="type-lead mt-6 text-ink-muted">
+              Your vault opens only on the phones you link. No account to hack, no number to sell, no spam calls. Built around India's data protection law
+              (DPDP): you own your data.
+            </p>
+          </div>
+          <ul class="divide-y divide-rule-soft rounded-sm border border-rule bg-paper px-5">
+            <li class="flex gap-4 py-5">
+              <span class="mt-0.5 text-iris"><i data-icon="KeyRound"></i></span>
+              <div>
+                <h3 class="font-semibold">No phone number, email or OTP</h3>
+                <p class="mt-1 text-ink-muted">You get a vault and a recovery key. Keep the key safe; it is the only way back in if every phone is lost.</p>
+              </div>
+            </li>
+            <li class="flex gap-4 py-5">
+              <span class="mt-0.5 text-iris"><i data-icon="History"></i></span>
+              <div>
+                <h3 class="font-semibold">See which phone changed what</h3>
+                <p class="mt-1 text-ink-muted">Settings → Activity lists every change, from which phone and country. Lost a phone? Remove it in one tap.</p>
+              </div>
+            </li>
+            <li class="flex gap-4 py-5">
+              <span class="mt-0.5 text-iris"><i data-icon="Download"></i></span>
+              <div>
+                <h3 class="font-semibold">Take it with you, or delete it</h3>
+                <p class="mt-1 text-ink-muted">Download a full backup anytime. Delete a record, a person or the whole vault, straight away.</p>
+              </div>
+            </li>
+            <li class="flex gap-4 py-5">
+              <span class="mt-0.5 text-iris"><i data-icon="ShieldCheck"></i></span>
+              <div>
+                <h3 class="font-semibold">AI only if you allow it</h3>
+                <p class="mt-1 text-ink-muted">Photo reading is off until you turn it on, and never trains AI models. No ads, no tracking.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Example stories -->
+      <section class="border-t border-rule">
+        <div class="mx-auto max-w-[1120px] px-5 py-20 md:py-28">
+          <p class="meta mb-4 text-ink-faint">Example stories</p>
+          <h2 class="display-section max-w-[36rem]">For the one in the family who keeps track.</h2>
+          <p class="type-caption mt-4 text-ink-faint">Illustrative examples of how families use Med Vault, not customer reviews.</p>
+          <div class="mt-12 grid gap-6 md:grid-cols-3">
+            <figure class="flex flex-col rounded-sm border border-rule bg-sheet p-6">
+              <blockquote class="statement-md flex-1">
+                “Mummy sees a diabetologist, a cardiologist and an ortho. Now I open one screen and read out every medicine. The doctor stopped sighing.”
+              </blockquote>
+              <figcaption class="mt-6 flex items-center gap-3 border-t border-rule-soft pt-4">
+                <span class="flex size-10 items-center justify-center rounded-md bg-iris-surface text-xs font-semibold tracking-wide text-ink-muted" aria-hidden="true">PK</span>
+                <span><span class="block font-semibold">Priya, 29</span><span class="type-label text-ink-faint">Pune · manages her mother's care</span></span>
+              </figcaption>
+            </figure>
+            <figure class="flex flex-col rounded-sm border border-rule bg-sheet p-6">
+              <blockquote class="statement-md flex-1">
+                “Papa lives in Lucknow, I work in Bengaluru. He logs his BP every morning and I see the chart before our evening call.”
+              </blockquote>
+              <figcaption class="mt-6 flex items-center gap-3 border-t border-rule-soft pt-4">
+                <span class="flex size-10 items-center justify-center rounded-md bg-iris-surface text-xs font-semibold tracking-wide text-ink-muted" aria-hidden="true">AM</span>
+                <span><span class="block font-semibold">Arjun, 33</span><span class="type-label text-ink-faint">Bengaluru · tracks his father's BP</span></span>
+              </figcaption>
+            </figure>
+            <figure class="flex flex-col rounded-sm border border-rule bg-sheet p-6">
+              <blockquote class="statement-md flex-1">
+                “Dadi's reports were in four plastic folders. I snapped them all in one Sunday. Now the whole family can find anything in seconds.”
+              </blockquote>
+              <figcaption class="mt-6 flex items-center gap-3 border-t border-rule-soft pt-4">
+                <span class="flex size-10 items-center justify-center rounded-md bg-iris-surface text-xs font-semibold tracking-wide text-ink-muted" aria-hidden="true">KR</span>
+                <span><span class="block font-semibold">Kavya, 25</span><span class="type-label text-ink-faint">Hyderabad · organised her grandmother's files</span></span>
+              </figcaption>
+            </figure>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="scroll-mt-20 border-t border-rule bg-sheet">
+        <div class="mx-auto max-w-[760px] px-5 py-20 md:py-28">
+          <p class="meta mb-4 text-ink-faint">Questions</p>
+          <h2 class="display-section">Before you start</h2>
+          <div class="mt-10 divide-y divide-rule-soft rounded-sm border border-rule bg-paper px-5">
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Is it really free?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">Yes, free for early families. AI photo reading has a fair daily limit per family; everything else is unlimited.</p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Why no phone number or email?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">
+                Because we don't need them, and you are tired of spam calls. Your phone itself is the key. Add more phones with a one-time code, and keep the
+                recovery key somewhere safe.
+              </p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                What if I lose my phone?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">
+                From any other linked phone, remove the lost one in Settings and it loses access straight away. Lost every phone? Open the vault on a new phone
+                with your recovery key. That's why we ask you to link a second phone and save the key on day one.
+              </p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Who can see our records?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">Only the phones linked to your vault. Every change is listed in Settings → Activity. Vaults never see each other.</p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Does it work on iPhone?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">
+                Yes. It runs in the browser on any phone. To add it to your home screen: on Android, tap “Install” or the menu → Add to Home screen; on iPhone,
+                open it in Safari, tap Share → Add to Home Screen.
+              </p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Is this medical advice?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">
+                No. Med Vault keeps your records and suggests questions to ask. Your doctor decides everything. Never stop or change a medicine without asking
+                them.
+              </p>
+            </details>
+            <details class="group py-1">
+              <summary class="flex min-h-14 items-center justify-between gap-4 py-3 font-semibold">
+                Can I get my data out?<span class="faq-chevron text-ink-faint transition-transform"><i data-icon="ChevronRight"></i></span>
+              </summary>
+              <p class="pb-5 text-ink-muted">Anytime. Settings → Backup downloads every record, photo and PDF, with a page that opens in any browser.</p>
+            </details>
+          </div>
+        </div>
+      </section>
+
+      <!-- Final CTA -->
+      <section class="border-t border-rule">
+        <div class="mx-auto max-w-[1120px] px-5 py-20 text-center md:py-28">
+          <h2 class="display-section mx-auto max-w-[40rem]">The next time the doctor asks, have the answer.</h2>
+          <p class="type-lead mx-auto mt-5 max-w-[34rem] text-ink-muted">Start with one person and one prescription. It takes a minute.</p>
+          <a
+            href="%VITE_APP_URL%"
+            class="mt-8 inline-flex h-14 items-center justify-center gap-2 rounded-sm bg-iris px-6 text-[16px] font-semibold text-on-iris hover:bg-iris-strong"
+          >
+            Create your family's vault, free <i data-icon="ArrowRight" class="size-5"></i>
+          </a>
+          <p class="type-caption mt-4 text-ink-faint">No phone number, no email, no OTP.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-rule bg-sheet">
+      <div class="mx-auto flex max-w-[1120px] flex-col gap-4 px-5 py-10 type-label text-ink-faint md:flex-row md:items-center md:justify-between">
+        <div class="flex items-center gap-2.5">
+          <img src="/icons/icon.svg" alt="" width="20" height="20" />
+          <span>Med Vault · Your family's medical file. Not medical advice.</span>
+        </div>
+        <nav class="flex gap-6" aria-label="Footer">
+          <a href="%VITE_APP_URL%/privacy" class="hover:text-ink">Privacy notice</a>
+          <a href="%VITE_APP_URL%" class="hover:text-ink">Open the app</a>
+        </nav>
+      </div>
+    </footer>
+  </body>
+</html>
