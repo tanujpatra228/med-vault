@@ -23,6 +23,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - run: npm run landing:build
 
   deploy:
     needs: check
@@ -88,3 +89,7 @@ jobs:
 
       - name: Build and deploy
         run: npm run build && npx wrangler deploy
+
+      # The marketing site (medvault.com): a separate static Worker. See docs/LANDING.md.
+      - name: Deploy landing page
+        run: npm run landing:deploy

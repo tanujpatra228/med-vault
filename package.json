@@ -12,7 +12,10 @@
     "db:migrate:remote": "wrangler d1 migrations apply med-vault --remote",
     "deploy": "npm run build && wrangler deploy",
     "cf-typegen": "wrangler types",
-    "test": "vitest run"
+    "test": "vitest run",
+    "landing:dev": "vite --config landing/vite.config.ts",
+    "landing:build": "vite build --config landing/vite.config.ts",
+    "landing:deploy": "npm run landing:build && wrangler deploy --config landing/wrangler.jsonc"
   },
   "dependencies": {
     "@tanstack/query-async-storage-persister": "5.104.1",

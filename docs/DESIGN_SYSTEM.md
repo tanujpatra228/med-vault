@@ -2,7 +2,7 @@
 
 Med Vault uses the **visual language of the Lekha design system** (fonts, colors, spacing, radii, components). Lekha's wording and finance-specific rules are not used. Source: https://claude.ai/artifact/7cBQoeZi3DgXvhr13T2LpE
 
-The implementation lives in `src/styles.css` as CSS variables and Tailwind theme tokens. Always use tokens; never hard-code a hex value in a component.
+The tokens live in `design/tokens.css` (CSS variables and Tailwind theme tokens), shared by the app (`src/styles.css`) and the landing page (`landing/src/landing.css`). Always use tokens; never hard-code a hex value in a component.
 
 ---
 
